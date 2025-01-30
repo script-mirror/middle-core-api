@@ -1,0 +1,198 @@
+[
+    {
+      "nome": "Relatório de Acompanhamento Hidrológico",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "vazoes_observadas"
+    },
+    {
+      "nome": "Precipitação por Satélite.",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "psat_file"
+    },
+    {
+      "nome": "Modelo GEFS",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "modelo_gefs"
+    },
+    {
+      "nome": "Resultados preliminares não consistidos  (vazões semanais - PMO)",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "resultados_nao_consistidos_semanal"
+    },
+    {
+      "nome": "Relatório dos resultados finais consistidos da previsão diária (PDP)",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "relatorio_resutados_finais_consistidos"
+    },
+    {
+      "nome": "Níveis de Partida para o DESSEM",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "niveis_partida_dessem"
+    },
+    {
+      "nome": "DADVAZ – Arquivo de Previsão de Vazões Diárias (PDP)",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "dadvaz_vaz_prev"
+    },
+    {
+      "nome": "Deck e Resultados DECOMP - Valor Esperado",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "deck_resultados_decomp"
+    },
+    {
+      "nome": "Resultados finais consistidos (vazões diárias - PDP)",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "resultados_finais_consistidos"
+    },
+    {
+      "nome": "Resultados preliminares consistidos (vazões semanais - PMO)",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "resultados_preliminares_consistidos"
+    },
+    {
+      "nome": "Arquivos dos modelos de previsão de vazões semanais - PMO",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "entrada_saida_previvaz"
+    },
+    {
+      "nome": "Arquivos dos modelos de previsão de vazões diárias - PDP",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "arquivos_modelo_pdp"
+    },
+    {
+      "nome": "Acomph",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "arquivo_acomph"
+    },
+    {
+      "nome": "RDH",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "arquivo_rdh"
+    },
+    {
+      "nome": "Histórico de Precipitação por Satélite",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "historico_preciptacao"
+    },
+    {
+      "nome": "Modelo ETA",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "modelo_eta"
+    },
+    {
+      "nome": "Carga por patamar - DECOMP",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "carga_patamar"
+    },
+    {
+      "nome": "Deck Preliminar DECOMP - Valor Esperado",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "deck_preliminar_decomp"
+    },
+    {
+      "nome": "Decks de entrada e saída - Modelo DESSEM",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "deck_entrada_saida_dessem"
+    },
+    {
+      "nome": "Arquivos de Previsão de Carga para o DESSEM",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "previsao_carga_dessem"
+    },
+    {
+      "nome": "Decks de entrada do PrevCargaDESSEM",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "prevCarga_dessem"
+    },
+    {
+      "nome": "Previsões de carga mensal e por patamar - NEWAVE",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "carga_patamar_nw"
+    },
+    {
+      "nome": "IPDO (Informativo Preliminar Diário da Operação)",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "carga_IPDO"
+    },
+    {
+      "nome": "Modelo ECMWF",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "modelo_ECMWF"
+    },
+    {
+      "nome": "Dados utilizados na previsão de geração eólica",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "dados_geracaoEolica"
+    },
+    {
+      "nome": "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "prevCarga_dessem_saida"
+    },
+    {
+      "nome": "Deck NEWAVE Preliminar",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "carga_newave_preliminar"
+    },
+    {
+      "nome": "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM",
+      "urlBase": "",
+      "datetimePattern": "",
+      "dataProduto": "",
+      "funcName": "deck_prev_eolica_semanal_weol"
+    }
+  ]

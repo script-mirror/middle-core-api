@@ -1,0 +1,255 @@
+[
+  {
+    "name": "Relatório de Acompanhamento Hidrológico",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/234/Vaz%C3%B5es%20Observadas%20-%20{}%20a%20{}.xlsx",
+    "datePattern": "%d-%m-%Y",
+    "dateDiff": [-90, -1],
+    "dateDiffUnit":"day",
+    "funcName": "vazoes_observadas",
+    "updatedAt": "12:06"
+  },
+  {
+    "name": "Precipitação por Satélite.",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/487/psat_{}.txt",
+    "datePattern": "%d%m%Y",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "psat_file",
+    "updatedAt": "14:55"
+
+  },
+  {
+    "name": "Modelo GEFS",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/550/GEFS50_precipitacao14d.zip",
+    "datePattern": "",
+    "dateDiff": [],
+    "dateDiffUnit":"day",
+    "funcName": "modelo_gefs",
+    "updatedAt":"09:17"
+  },
+  {
+    "name": "Resultados preliminares não consistidos  (vazões semanais - PMO)",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/246/Nao_Consistido_{}.zip",
+    "datePattern": "%Y%m_REV{%Y-%m-%d}",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "resultados_nao_consistidos_semanal",
+    "updatedAt": ""
+  },
+  {
+    "name": "Relatório dos resultados finais consistidos da previsão diária (PDP)",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/_layouts/download.aspx?SourceUrl=/sites/9/13/82/Produtos/548/Relatorio_previsao_diaria_{}_para_{}.xls",
+    "datePattern": "%d_%m_%Y",
+    "dateDiff":[0,2],
+    "dateDiffUnit":"day",
+    "funcName": "relatorio_resutados_finais_consistidos",
+    "updatedAt": "18:45"
+  },
+  {
+    "name": "Níveis de Partida para o DESSEM",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/51/_layouts/download.aspx?SourceUrl=/sites/9/51/Produtos/518/NP{}.xlsx",
+    "datePattern": "%d%m%Y",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "niveis_partida_dessem",
+    "updatedAt": "10:01"
+  },
+  {
+    "name": "DADVAZ – Arquivo de Previsão de Vazões Diárias (PDP)",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/Produtos/547/dadvaz_{}_para_{}.DAT",
+    "datePattern": "%d_%m_%Y",
+    "dateDiff": [0,2],
+    "dateDiffUnit":"day",
+    "funcName": "dadvaz_vaz_prev",
+    "updatedAt": ""
+  },
+  {
+    "name": "Deck e Resultados DECOMP - Valor Esperado",
+    "baseUrl": "",
+    "datePattern": "",
+    "dateDiff": [],
+    "dateDiffUnit":"day",
+    "funcName": "deck_resultados_decomp",
+    "updatedAt": ""
+  },
+  {
+    "name": "Resultados finais consistidos (vazões diárias - PDP)",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/Produtos/243/Resultado_Final_{}_para_{}.zip",
+    "datePattern": "%d_%m_%Y",
+    "dateDiff": [0,2],
+    "dateDiffUnit":"day",
+    "funcName": "resultados_finais_consistidos",
+    "updatedAt": "18:45"
+  },
+  {
+    "name": "Resultados preliminares consistidos (vazões semanais - PMO)",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/245/Consistido_{}.zip",
+    "datePattern": "%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "resultados_preliminares_consistidos",
+    "updatedAt": "23:42"
+  },
+  {
+    "name": "Arquivos dos modelos de previsão de vazões semanais - PMO",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/424/Arq_Entrada_e_Saida_PREVIVAZ_{}.zip",
+    "datePattern": "%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "entrada_saida_previvaz",
+    "updatedAt": "23:40"
+  },
+  {
+    "name": "Arquivos dos modelos de previsão de vazões diárias - PDP",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/Produtos/238/Modelos_Chuva_Vazao_{}.zip",
+    "datePattern": "%Y%m%d",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "arquivos_modelo_pdp",
+    "updatedAt": "18:50"
+  },
+  {
+    "name": "Acomph",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/230/ACOMPH_{}.xls",
+    "datePattern": "%d.%m.%Y",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "arquivo_acomph",
+    "updatedAt": "12:05"
+  },
+  {
+    "name": "RDH",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/233/RDH_{}.xlsx",
+    "datePattern": "%d%mM%Y",
+    "dateDiff": [-1],
+    "dateDiffUnit":"day",
+    "funcName": "arquivo_rdh",
+    "updatedAt": "12:05"
+  },
+  {
+    "name": "Histórico de Precipitação por Satélite",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/521/psath_{}.zip",
+    "datePattern": "%d%m%Y",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "historico_preciptacao",
+    "updatedAt": "15:49"
+  },
+  {
+    "name": "Modelo ETA",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/549/Eta40_precipitacao10d.zip",
+    "datePattern": "",
+    "dateDiff": [],
+    "dateDiffUnit":"day",
+    "funcName": "modelo_eta",
+    "updatedAt": "09:05"
+  },
+  {
+    "name": "Carga por patamar - DECOMP",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/228/{}_carga_semanal.zip",
+    "datePattern": "RV{%Y-%m-%d}_PMO_%B_%Y",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "carga_patamar",
+    "updatedAt": ""
+  },
+  {
+    "name": "Deck Preliminar DECOMP - Valor Esperado",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/52/Produtos/297/PMO_deck_preliminar.zip",
+    "datePattern": "",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "deck_preliminar_decomp",
+    "updatedAt": "20:50"
+  },
+  {
+    "name": "Decks de entrada e saída - Modelo DESSEM",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/51/Produtos/277/ds_ons_{}.zip",
+    "datePattern": "%m%Y_rv{%Y-%m-%d}d%d",
+    "dateDiff": [1],
+    "dateDiffUnit":"day",
+    "funcName": "deck_entrada_saida_dessem",
+    "updatedAt": ""
+  },
+  {
+    "name": "Arquivos de Previsão de Carga para o DESSEM",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/46/Produtos/275/Blocos_{}.zip",
+    "datePattern": "%Y-%m-%d",
+    "dateDiff": [1],
+    "dateDiffUnit":"day",
+    "funcName": "previsao_carga_dessem",
+    "updatedAt": "10:40"
+  },
+  {
+    "name": "Decks de entrada do PrevCargaDESSEM",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/46/Produtos/480/Deck_{}.zip",
+    "datePattern": "%Y-%m-%d",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "prevCarga_dessem",
+    "updatedAt": "10:42"
+  },
+  {
+    "name": "Previsões de carga mensal e por patamar - NEWAVE",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/229/RV0_PMO_{}_carga_mensal.zip",
+    "datePattern": "%B_%Y",
+    "dateDiff": [1],
+    "dateDiffUnit":"month",
+    "funcName": "carga_patamar_nw",
+    "updatedAt": ""
+  },
+  {
+    "name": "IPDO (Informativo Preliminar Diário da Operação)",
+    "baseUrl": "",
+    "datePattern": "",
+    "dateDiff": [],
+    "dateDiffUnit":"day",
+    "funcName": "carga_IPDO",
+    "updatedAt": ""
+  },
+  {
+    "name": "Modelo ECMWF",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/551/ECMWF_precipitacao14d.zip",
+    "datePattern": "",
+    "dateDiff": [],
+    "dateDiffUnit":"day",
+    "funcName": "modelo_ECMWF",
+    "updatedAt": "09:04"
+  },
+  {
+    "name": "Dados utilizados na previsão de geração eólica",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/78/Produtos/149/Deck_Previsao_{}.zip",
+    "datePattern": "%Y%m%d",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "dados_geracaoEolica",
+    "updatedAt": "09:25"
+  },
+  {
+    "name": "Arquivos de Previsão de Carga para o DESSEM - PrevCargaDESSEM",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/46/Produtos/479/PrevCargaDESSEM_{}.zip",
+    "datePattern": "%Y-%m-%d",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "prevCarga_dessem_saida",
+    "updatedAt": "10:42"
+  },
+  {
+    "name": "Deck NEWAVE Preliminar",
+    "baseUrl": "",
+    "datePattern": "",
+    "dateDiff": [],
+    "dateDiffUnit":"day",
+    "funcName": "carga_newave_preliminar",
+    "updatedAt": ""
+  },
+  {
+    "name": "DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM",
+    "baseUrl": "https://sintegre.ons.org.br/sites/8/103/105/Produtos/785/Deck_PrevMes_{}.zip",
+    "datePattern": "%Y%m%d",
+    "dateDiff": [-1],
+    "dateDiffUnit":"day",
+    "funcName": "deck_prev_eolica_semanal_weol",
+    "updatedAt": "09:01"
+  }
+]

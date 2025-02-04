@@ -1,6 +1,7 @@
 import os
 import pdb
 import json
+import locale
 import datetime
 from time import sleep
 from typing import List, Dict
@@ -10,8 +11,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.support import expected_conditions as EC
 from utils import *
 
+locale.setlocale(locale.LC_ALL, 'pt_pt.UTF-8')
 
 def get_products():
     with open('produtos-sintegre.json', encoding="UTF8") as products_file:
@@ -50,11 +53,21 @@ def login(driver: webdriver.Firefox, email: str, password: str) -> None:
     
 
 
-def download_product(driver:webdriver.Firefox, products: List[dict], product_date:datetime.date) -> None:
+def download_product(driver:webdriver.Firefox, products: List[dict]) -> None:
     airflow_webhook_payload:List[dict] = []
     for product in products:
-        url = product.get("url")
-    driver.get(url)
+        url = product["baseUrl"]
+        print(url)
+        driver.set_page_load_timeout(1)
+        try:
+            driver.get(url)
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, "//*[contains(text(), 'Download')]"))
+            )
+            print(f"Download iniciado para {url}")
+        except Exception as e:
+            print(f"Erro ao acessar {url}: {e}")
+
     
     
     
@@ -67,65 +80,71 @@ def teste():
     login(driver, __email, __password)
     sleep(5)
     produtos = get_products()
-    download_product(driver, produtos, datetime.date(2025, 1, 19))
+    produtos = get_url_datetime_pattern(produtos, product_date=datetime.date(2025, 1, 3))
     
-    driver.get("https://sintegre.ons.org.br/sites/9/46/Produtos/479/PrevCargaDESSEM_2025-01-19.zip")
+    download_product(driver, produtos)
+    
+    # driver.get("https://sintegre.ons.org.br/sites/9/46/Produtos/479/PrevCargaDESSEM_2025-01-19.zip")
 
     # waits for all the files to be completed and returns the paths
-    paths = WebDriverWait(driver, 120, 1).until(every_downloads_chrome)
+    # paths = WebDriverWait(driver, 120, 1).until(every_downloads_chrome)
     print(paths)
     driver.quit()
     
     
 def main() -> None:
+    load_dotenv()
+    __email = os.getenv("EMAIL")
+    __password = os.getenv("PASSWORD")
+    print("init")
+    driver = initialize_driver()
+    print("login")
+    login(driver, __email, __password)
+    print("logado, pegando produtos")
     produtos = get_products()
+    produtos = get_url_datetime_pattern(produtos, product_date=datetime.date(2025, 1, 3))
+    print("iniciando downloads")
+    download_product(driver, produtos)
     
-    get_url_datetime_pattern(produtos, product_date=datetime.date(2025, 1, 19))
-    
-    return None
+    # driver.get("https://sintegre.ons.org.br/sites/9/46/Produtos/479/PrevCargaDESSEM_2025-01-19.zip")
+
+    # waits for all the files to be completed and returns the paths
+    # paths = WebDriverWait(driver, 120, 1).until(every_downloads_chrome)
+    # print(paths)
+    driver.quit()
 
 
-def get_url_datetime_pattern(produtos, product_date:datetime.date) -> str:
-    elec_formats = ['%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO', 'RV{%Y-%m-%d}_PMO_%B_%Y', '%m%Y_rv{%Y-%m-%d}%d', '%Y%m_REV{%Y-%m-%d}']
-    default_formats = ['', '%d.%m.%Y', '%B_%Y', '%d%mM%Y', '%Y-%m-%d', '%d_%m_%Y',  '%Y%m%d', '%d%m%Y']
-    print('-'*50)
+def get_url_datetime_pattern(produtos, product_date:datetime.date) -> List[dict]:
+
     for prod in produtos:
         date_params = []
         for date_diff in prod['dateDiff']:
             if prod['dateDiffUnit'] == 'day':
                 date_params.append(product_date + datetime.timedelta(days=date_diff))
             elif prod['dateDiffUnit'] == 'month':
-                product_date.day = 1
-                product_date.month = product_date.month + date_diff
-                date_params.append(product_date + datetime.timedelta(days=date_diff))
-        url_params = [x.strftime(prod['datePattern']) if prod['datePattern'] not in elec_formats else elec_date_to_str(x, prod['datePattern']) for x in date_params]
+                date_params.append(product_date.replace(day=15) + datetime.timedelta(days=(30 * date_diff)))
+        url_params = [x.strftime(prod['datePattern']).encode('utf-8').decode('utf-8') if "{" not in prod['datePattern'] else elec_date_to_str(x, prod['datePattern']) for x in date_params]
         
-        print(prod['baseUrl'].format(*url_params))
-        print('-'*50)
+        if prod['baseUrl'].format(*url_params) != "":
+            prod['baseUrl'] = prod['baseUrl'].format(*url_params)
     
-    pdb.set_trace()
-
-    abc = datetime.datetime.now()
-    datetime.datetime.strftime()
-    abc.strftime('%B')
-    return ""
+    return produtos
 
 def elec_date_to_str(date:datetime.date, format:str) -> str:
     elec_date_str = ""
     elec_date = ElecData(date)
     rev = elec_date.current_revision
-    
-    if format == '%Y%m_REV{%Y-%m-%d}':
-        elec_date_str = f"{date.strftime('%Y%m_REV')}{rev}"
         
-    elif format == '%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO':
+    if format == '%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO':
         if rev == 0:
             elec_date_str = f"{date.strftime('%Y%m_PMO')}"
         else:
             elec_date_str = f"{date.strftime('%Y%m_REV')}{rev}"
 
     elif format == 'RV{%Y-%m-%d}_PMO_%B_%Y':
-        elec_date_str = f"RV{rev}_PMO_{date.strftime('%B_%Y')}"
+        elec_date_str = f"RV{rev}_PMO_{(date.strftime('%B_%Y')).title()}"
+    elif format == 'RV{%Y-%m-%d}_PMO_%B%Y':
+        elec_date_str = f"RV{rev}_PMO_{(date.strftime('%B%Y')).title()}"
 
     elif format == '%m%Y_rv{%Y-%m-%d}d%d':
         elec_date_str = f"{date.strftime('%m%Y_rv')}{rev}d{str(date.day).zfill(2)}"

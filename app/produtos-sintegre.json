@@ -30,7 +30,7 @@
   {
     "name": "Resultados preliminares não consistidos  (vazões semanais - PMO)",
     "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/246/Nao_Consistido_{}.zip",
-    "datePattern": "%Y%m_REV{%Y-%m-%d}",
+    "datePattern": "%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO",
     "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "resultados_nao_consistidos_semanal",
@@ -148,6 +148,15 @@
     "name": "Carga por patamar - DECOMP",
     "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/228/{}_carga_semanal.zip",
     "datePattern": "RV{%Y-%m-%d}_PMO_%B_%Y",
+    "dateDiff": [0],
+    "dateDiffUnit":"day",
+    "funcName": "carga_patamar",
+    "updatedAt": ""
+  },
+  {
+    "name": "Carga por patamar - DECOMP",
+    "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/228/{}_carga_semanal.zip",
+    "datePattern": "RV{%Y-%m-%d}_PMO_%B%Y",
     "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "carga_patamar",

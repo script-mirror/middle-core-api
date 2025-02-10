@@ -26,19 +26,10 @@ def get_products():
         products = json.load(products_file)
     return products
     
-def every_downloads_chrome(driver):
-    if not driver.current_url.startswith("chrome://downloads"):
-        driver.get("chrome://downloads/")
-    return driver.execute_script("""
-        var items = document.querySelector('downloads-manager')
-            .shadowRoot.getElementById('downloadsList').items;
-        if (items.every(e => e.state === "COMPLETE"))
-            return items.map(e => e.fileUrl || e.file_url);
-        """)
 
 def initialize_driver() -> webdriver.Chrome:
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     options.page_load_strategy = "eager"
     options.add_experimental_option("prefs", {
     "download.default_directory": PATH_DOWNLOAD,
@@ -105,7 +96,11 @@ def send_to_webhook(paths_download:List[str]) -> None:
     print("-"*60)
     for product in paths_download:
         if os.path.exists(product['url']):
-            trigger_airflow_dag("WEEBHOOK", {"product_details":product})
+            res = trigger_airflow_dag("WEEBHOOK", {"product_details":product})
+            if res:
+                print(f"Produto {product['nome']} enviado para o webhook")
+            else:
+                print(f"Erro ao enviar para o webhook {product['nome']}")
         else:
             print(product)
             print('produto nao encontrado')
@@ -123,29 +118,28 @@ def main() -> None:
     __password = os.getenv("PASSWORD")
     print("init")
     driver = initialize_driver()
-    print("login")
+    print("Realizando login")
     login(driver, __email, __password)
-    print("logado, pegando produtos")
+
     produtos = get_products()
     product_date = datetime.date(2025, 2, 6)
     produtos = get_url_datetime_pattern(produtos, product_date=product_date)
+
     print("iniciando downloads")
 
     paths_download:List[dict] = download_products(driver, produtos, product_date=product_date)
-    
     timeout = 300
     start_time = time.time()
 
     while not is_download_complete(PATH_DOWNLOAD):
+        print("Download em andamento...")    
         if time.time() - start_time > timeout:
             raise Exception("O download não foi concluído dentro do tempo limite.")
         time.sleep(1)
-    
     driver.quit()
+    print("Enviando para o webhook")
     send_to_webhook(paths_download)
-    # driver.get("https://sintegre.ons.org.br/sites/9/46/Produtos/479/PrevCargaDESSEM_2025-01-19.zip")
-
-    # waits for all the files to be completed and returns the paths
+    print("Fim")
 
 
 

@@ -22,7 +22,7 @@
     "name": "Modelo GEFS",
     "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/550/GEFS50_precipitacao14d.zip",
     "datePattern": "",
-    "dateDiff": [],
+    "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "modelo_gefs",
     "updatedAt":"09:17"
@@ -67,7 +67,7 @@
     "name": "Deck e Resultados DECOMP - Valor Esperado",
     "baseUrl": "",
     "datePattern": "",
-    "dateDiff": [],
+    "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "deck_resultados_decomp",
     "updatedAt": ""
@@ -120,7 +120,7 @@
   {
     "name": "RDH",
     "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/233/RDH_{}.xlsx",
-    "datePattern": "%d%mM%Y",
+    "datePattern": "%d%b%Y",
     "dateDiff": [-1],
     "dateDiffUnit":"day",
     "funcName": "arquivo_rdh",
@@ -139,7 +139,7 @@
     "name": "Modelo ETA",
     "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/549/Eta40_precipitacao10d.zip",
     "datePattern": "",
-    "dateDiff": [],
+    "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "modelo_eta",
     "updatedAt": "09:05"
@@ -211,7 +211,7 @@
     "name": "IPDO (Informativo Preliminar Diário da Operação)",
     "baseUrl": "",
     "datePattern": "",
-    "dateDiff": [],
+    "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "carga_IPDO",
     "updatedAt": ""
@@ -220,7 +220,7 @@
     "name": "Modelo ECMWF",
     "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/551/ECMWF_precipitacao14d.zip",
     "datePattern": "",
-    "dateDiff": [],
+    "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "modelo_ECMWF",
     "updatedAt": "09:04"
@@ -247,7 +247,7 @@
     "name": "Deck NEWAVE Preliminar",
     "baseUrl": "",
     "datePattern": "",
-    "dateDiff": [],
+    "dateDiff": [0],
     "dateDiffUnit":"day",
     "funcName": "carga_newave_preliminar",
     "updatedAt": ""

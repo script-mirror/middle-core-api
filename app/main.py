@@ -206,7 +206,7 @@ def main() -> None:
     parser.add_argument('--download_timeout', type=int, default=300, help='Download timeout maximo em segundos')
 
     args = parser.parse_args()
-    execute_bot(product_date=args.product_date, trigger_webhook=args.trigger_webhook, download_timeout=args.download_timeout)
+    execute_bot(product_date=args.product_date, trigger_webhook=args.no_trigger, download_timeout=args.download_timeout)
 
     
     

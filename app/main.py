@@ -106,8 +106,6 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
 
     
 def send_to_webhook(airflow_products:List[str]) -> None:
-    logging.info("-"*60)
-    pdb.set_trace()
     for product in airflow_products:
         if os.path.exists(product['product_details']['url']):
             res = trigger_airflow_dag("WEBHOOK", product)
@@ -118,7 +116,6 @@ def send_to_webhook(airflow_products:List[str]) -> None:
         else:
             logging.info(product)
             logging.info('produto nao encontrado')
-            logging.info("-"*60)
 
 
 def is_download_complete(download_dir:str) -> bool:
@@ -213,15 +210,4 @@ def main() -> None:
 
     
 if __name__ == "__main__":
-
-    # send_to_webhook(    [{
-    #     "function_name": "arquivo_acomph",
-    #     "product_details": {
-    #         "origem": "botSintegre",
-    #         "dataProduto": "09/02/2025",
-    #         "nome": "Acomph",
-    #         "url": "/WX2TB/Documentos/fontes/PMO/scripts_unificados/apps/webhook/arquivos/tmp2/ACOMPH_09.02.2025.xls",
-    #         "enviar": True
-    #     }
-    # }])
     main()

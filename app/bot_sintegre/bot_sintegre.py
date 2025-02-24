@@ -2,23 +2,23 @@ import os
 import pdb
 import json
 import time
+import base64
 import locale
 import datetime
-import argparse
 from typing import List, Dict
-from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support import expected_conditions as EC
-
-from utils import *
-from airflow import trigger_airflow_dag
+from app.bot_sintegre.utils import *
+from app.airflow.service import trigger_airflow_dag
 locale.setlocale(locale.LC_ALL, 'pt_BR.utf-8')
-
 import logging
+from app.core.config import settings
+
+
+
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
@@ -26,13 +26,13 @@ logging.basicConfig(level=logging.INFO,
                         logging.StreamHandler()
                     ])
 
-load_dotenv()
 
-PATH_DOWNLOAD = os.getenv("PATH_DOWNLOAD")
 
-def get_products():
+def get_products(product_id):
     with open('produtos-sintegre.json', encoding="UTF8") as products_file:
         products = json.load(products_file)
+    if product_id:
+        return [x for x in products if x['id'] == product_id]
     return products
     
 
@@ -41,7 +41,7 @@ def initialize_driver() -> webdriver.Chrome:
     options.add_argument("--headless")
     options.page_load_strategy = "eager"
     options.add_experimental_option("prefs", {
-    "download.default_directory": PATH_DOWNLOAD,
+    "download.default_directory": "/tmp",
     "download.prompt_for_download": False,
     "download.directory_upgrade": True,
     "safebrowsing.enabled": True
@@ -64,19 +64,24 @@ def login(driver: webdriver.Chrome, email: str, password: str) -> None:
     
 
 
-def download_products(driver:webdriver.Chrome, products: List[dict], product_date:datetime.date) -> List[dict]:
+def download_products(driver:webdriver.Chrome, products: List[dict], product_date:datetime.date) -> Dict[str, List[dict]]:
     webhook_payload:List[dict] = []
     failed:List[str] = []
 
     paths_download = []
     for product in products:
         url = product["baseUrl"]
-        path_arquivo = f'{PATH_DOWNLOAD}{url[url.rfind("/"):]}'
+        
+        path_arquivo = f'/tmp/{url[url.rfind("/")+1:]}'
+        try:
+            os.remove(path_arquivo)
+            logging.info(f"{path_arquivo} removido")
+        except:
+            pass
         paths_download.append(path_arquivo)
         
-        driver.set_page_load_timeout(10)
+        driver.set_page_load_timeout(20)
         try:
-            print('\n')
             driver.get(url)
             logging.info(url)
             if '.txt' in url:
@@ -84,30 +89,30 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
                 txt:str = driver.page_source[driver.page_source.index('pre-wrap;">')+11:driver.page_source.index('</pre></body></html>')]
                 with open(path_arquivo, "w", encoding="utf-8") as file:
                     file.write(txt)
-                
-            time.sleep(1)
-            logging.info(f"\033[92mDownload iniciado para {product['name']}\033[0m")
+            filename = path_arquivo[path_arquivo.rfind("/")+1:]
+            logging.info(f"Download iniciado para {filename}")
+            time.sleep(2)
+
             webhook_payload.append({
                 "function_name":product['funcName'],
                 "product_details":
                 {"origem": "botSintegre",
                 "dataProduto": (product_date + (datetime.timedelta(days=product['dateDiff'][-1]))).strftime("%d/%m/%Y"),
                 "nome": product["name"],
-                "url": path_arquivo,
+                "base64": path_arquivo,
+                "filename": filename,
                 "enviar":False}
             })
             
         except Exception as e:
-            logging.warning(f"\033[91mErro no produto {product['name']}\033[0m")
-            
+            logging.warning(f"Erro no produto {product['name']}")
             failed.append(product)
-        # if not os.path.exists(path_arquivo):
-    return webhook_payload
+    return {"success":webhook_payload, "failed":failed}
 
     
 def send_to_webhook(airflow_products:List[str]) -> None:
     for product in airflow_products:
-        if os.path.exists(product['product_details']['url']):
+        if os.path.exists(product['product_details']['base64']):
             res = trigger_airflow_dag("WEBHOOK", product)
             if res:
                 logging.info(f"Produto {product['product_details']['nome']} enviado para o webhook")
@@ -116,7 +121,6 @@ def send_to_webhook(airflow_products:List[str]) -> None:
         else:
             logging.info(product)
             logging.info('produto nao encontrado')
-
 
 def is_download_complete(download_dir:str) -> bool:
     for filename in os.listdir(download_dir):
@@ -161,53 +165,46 @@ def elec_date_to_str(date:datetime.date, format:str) -> str:
 
     return elec_date_str
 
-def execute_bot(product_date:datetime.date = datetime.date.today(), trigger_webhook:bool = False, download_timeout:int = 300) -> None:
-    __email = os.getenv("EMAIL")
-    __password = os.getenv("PASSWORD")
-
-    logging.info("Limpando pasta de produtos...")
-    os.system(f'rm -r {PATH_DOWNLOAD}/*')
+def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook:bool=False, download_timeout:int = 300) -> None:
+    __email = settings.sintegre_email
+    __password = settings.sintegre_password
     
     driver = initialize_driver()
     logging.info("Realizando login")
     login(driver, __email, __password)
 
-    produtos = get_url_datetime_pattern(get_products(), product_date=product_date)
+    produtos = get_url_datetime_pattern(get_products(product_id), product_date=product_date)
 
     logging.info("Iniciando downloads")
 
     airflow_products:List[dict] = download_products(driver, produtos, product_date=product_date)
+    products_to_remove = []
+    for product in airflow_products['success']:
+        url = product['product_details']['base64']
+        if url != "":        
+            try:
+                with open(url, "rb") as f:
+                    data = f.read()
+            except:
+                products_to_remove.append(product)
+                continue
+            file_base64 = base64.b64encode(data).decode('utf-8')
+            product['product_details']['base64'] = file_base64
+            product['product_details']['filename'] = url[url.rfind("/")+1:]
 
+    for product in products_to_remove:
+        airflow_products['success'].remove(product)
+        
     start_time = time.time()
-    while not is_download_complete(PATH_DOWNLOAD):
+    while not is_download_complete("/tmp"):
         logging.info(f"Download em andamento... {time.time() - start_time:.2f}s")
    
         if time.time() - start_time > download_timeout:
             raise Exception("O download não foi concluído dentro do tempo limite.")
         time.sleep(1)
     driver.quit()
+
     if trigger_webhook:
         logging.info("Enviando para o webhook")
-        send_to_webhook(airflow_products)
-    logging.info("Fim")
-
-
-
-
-
-def main() -> None:
-    print("python main.py --help\n")
-    parser = argparse.ArgumentParser(description='Execute o bot com os seguintes parametros.')
-    parser.add_argument('--product_date', type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(), default=datetime.date.today(), help='Product date no formato YYYY-MM-DD')
-    parser.add_argument('--no_trigger', action='store_false', help='Nao triga webhook')
-    parser.add_argument('--download_timeout', type=int, default=300, help='Download timeout maximo em segundos')
-
-    args = parser.parse_args()
-    execute_bot(product_date=args.product_date, trigger_webhook=args.no_trigger, download_timeout=args.download_timeout)
-
-    
-    
-
-    
-if __name__ == "__main__":
-    main()
+        send_to_webhook(airflow_products['success'])
+    return {'failed':airflow_products['failed']}

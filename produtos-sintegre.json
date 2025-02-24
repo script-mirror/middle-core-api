@@ -1,0 +1,354 @@
+[
+    {
+      "name": "Modelo_ETA",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/549/Eta40_precipitacao10d.zip",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "modelo_eta",
+      "updatedAt": "09:05",
+      "id": 1
+    },
+    {
+      "name": "Modelo_GEFS",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/550/GEFS50_precipitacao14d.zip",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "modelo_gefs",
+      "updatedAt": "09:17",
+      "id": 2
+    },
+    {
+      "name": "Modelo_ECMWF",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/551/ECMWF_precipitacao14d.zip",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "modelo_ECMWF",
+      "updatedAt": "09:04",
+      "id": 3
+    },
+    {
+      "name": "Deck_NEWAVE_Preliminar",
+      "baseUrl": "",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "carga_newave_preliminar",
+      "updatedAt": "",
+      "id": 4
+    },
+    {
+      "name": "Carga_por_patamar_DECOMP",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/228/{}_carga_semanal.zip",
+      "datePattern": "RV{%Y-%m-%d}_PMO_%B%Y",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "carga_patamar",
+      "updatedAt": "",
+      "id": 5
+    },
+    {
+      "name": "Carga_por_patamar_DECOMP",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/228/{}_carga_semanal.zip",
+      "datePattern": "RV{%Y-%m-%d}_PMO_%B_%Y",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "carga_patamar",
+      "updatedAt": "",
+      "id": 6
+    },
+    {
+      "name": "Precipitacao_por_Satelite",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/487/psat_{}.txt",
+      "datePattern": "%d%m%Y",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "psat_file",
+      "updatedAt": "14:55",
+      "id": 7
+    },
+    {
+      "name": "Niveis_de_Partida_para_o_DESSEM",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/51/_layouts/download.aspx?SourceUrl=/sites/9/51/Produtos/518/NP{}.xlsx",
+      "datePattern": "%d%m%Y",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "niveis_partida_dessem",
+      "updatedAt": "10:01",
+      "id": 8
+    },
+    {
+      "name": "Decks_de_entrada_do_PrevCargaDESSEM",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/46/Produtos/480/Deck_{}.zip",
+      "datePattern": "%Y-%m-%d",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "prevCarga_dessem",
+      "updatedAt": "10:42",
+      "id": 9
+    },
+    {
+      "name": "Deck_Preliminar_DECOMP_Valor_Esperado",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/52/Produtos/297/PMO_deck_preliminar.zip",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "deck_preliminar_decomp",
+      "updatedAt": "20:50",
+      "id": 10
+    },
+    {
+      "name": "Decks_de_entrada_e_saida_Modelo_DESSEM",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/51/Produtos/277/ds_ons_{}.zip",
+      "datePattern": "%m%Y_rv{%Y-%m-%d}d%d",
+      "dateDiff": [
+        1
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "deck_entrada_saida_dessem",
+      "updatedAt": "",
+      "id": 11
+    },
+    {
+      "name": "Historico_de_Precipitacao_por_Satelite",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/38/Produtos/521/psath_{}.zip",
+      "datePattern": "%d%m%Y",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "historico_preciptacao",
+      "updatedAt": "15:49",
+      "id": 12
+    },
+    {
+      "name": "Deck_e_Resultados_DECOMP_Valor_Esperado",
+      "baseUrl": "",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "deck_resultados_decomp",
+      "updatedAt": "",
+      "id": 13
+    },
+    {
+      "name": "Relatorio_de_Acompanhamento_Hidrologico",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/234/Vaz%C3%B5es%20Observadas%20-%20{}%20a%20{}.xlsx",
+      "datePattern": "%d-%m-%Y",
+      "dateDiff": [
+        -90,
+        -1
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "vazoes_observadas",
+      "updatedAt": "12:06",
+      "id": 14
+    },
+    {
+      "name": "Arquivos_de_Previsao_de_Carga_para_o_DESSEM",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/46/Produtos/275/Blocos_{}.zip",
+      "datePattern": "%Y-%m-%d",
+      "dateDiff": [
+        1
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "previsao_carga_dessem",
+      "updatedAt": "10:40",
+      "id": 15
+    },
+    {
+      "name": "Dados_utilizados_na_previsao_de_geracao_eolica",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/78/Produtos/149/Deck_Previsao_{}.zip",
+      "datePattern": "%Y%m%d",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "dados_geracaoEolica",
+      "updatedAt": "09:25",
+      "id": 16
+    },
+    {
+      "name": "IPDO_Informativo_Preliminar_Diario_da_Operacao",
+      "baseUrl": "",
+      "datePattern": "",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "carga_IPDO",
+      "updatedAt": "",
+      "id": 17
+    },
+    {
+      "name": "Previsoes_de_carga_mensal_e_por_patamar_NEWAVE",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/47/Produtos/229/RV0_PMO_{}_carga_mensal.zip",
+      "datePattern": "%B_%Y",
+      "dateDiff": [
+        1
+      ],
+      "dateDiffUnit": "month",
+      "funcName": "carga_patamar_nw",
+      "updatedAt": "",
+      "id": 18
+    },
+    {
+      "name": "DADVAZ_Arquivo_de_Previsao_de_Vazoes_Diarias_PDP",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/Produtos/547/dadvaz_{}_para_{}.DAT",
+      "datePattern": "%d_%m_%Y",
+      "dateDiff": [
+        0,
+        2
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "dadvaz_vaz_prev",
+      "updatedAt": "",
+      "id": 19
+    },
+    {
+      "name": "Resultados_finais_consistidos_vazoes_diarias_PDP",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/Produtos/243/Resultado_Final_{}_para_{}.zip",
+      "datePattern": "%d_%m_%Y",
+      "dateDiff": [
+        0,
+        2
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "resultados_finais_consistidos",
+      "updatedAt": "18:45",
+      "id": 20
+    },
+    {
+      "name": "DECKS_DA_PREVISAO_DE_GERACAO_EOLICA_SEMANAL_WEOLSM",
+      "baseUrl": "https://sintegre.ons.org.br/sites/8/103/105/Produtos/785/Deck_PrevMes_{}.zip",
+      "datePattern": "%Y%m%d",
+      "dateDiff": [
+        -1
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "deck_prev_eolica_semanal_weol",
+      "updatedAt": "09:01",
+      "id": 21
+    },
+    {
+      "name": "Arquivos_dos_modelos_de_previsao_de_vazoes_diarias_PDP",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/Produtos/238/Modelos_Chuva_Vazao_{}.zip",
+      "datePattern": "%Y%m%d",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "arquivos_modelo_pdp",
+      "updatedAt": "18:50",
+      "id": 22
+    },
+    {
+      "name": "Arquivos_dos_modelos_de_previsao_de_vazoes_semanais_PMO",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/424/Arq_Entrada_e_Saida_PREVIVAZ_{}.zip",
+      "datePattern": "%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "entrada_saida_previvaz",
+      "updatedAt": "23:40",
+      "id": 23
+    },
+    {
+      "name": "Resultados_preliminares_consistidos_vazoes_semanais_PMO",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/245/Consistido_{}.zip",
+      "datePattern": "%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "resultados_preliminares_consistidos",
+      "updatedAt": "23:42",
+      "id": 24
+    },
+    {
+      "name": "Arquivos_de_Previsao_de_Carga_para_o_DESSEM_PrevCargaDESSEM",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/46/Produtos/479/PrevCargaDESSEM_{}.zip",
+      "datePattern": "%Y-%m-%d",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "prevCarga_dessem_saida",
+      "updatedAt": "10:42",
+      "id": 25
+    },
+    {
+      "name": "Resultados_preliminares_nao_consistidos_vazoes_semanais_PMO",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/79/Produtos/246/Nao_Consistido_{}.zip",
+      "datePattern": "%Y%m_REV{%Y-%m-%d} OU %Y%m_PMO",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "resultados_nao_consistidos_semanal",
+      "updatedAt": "",
+      "id": 26
+    },
+    {
+      "name": "Relatorio_dos_resultados_finais_consistidos_da_previsao_diaria_PDP",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/82/_layouts/download.aspx?SourceUrl=/sites/9/13/82/Produtos/548/Relatorio_previsao_diaria_{}_para_{}.xls",
+      "datePattern": "%d_%m_%Y",
+      "dateDiff": [
+        0,
+        2
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "relatorio_resutados_finais_consistidos",
+      "updatedAt": "18:45",
+      "id": 28
+    },
+    {
+      "name": "RDH",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/233/RDH_{}.xlsx",
+      "datePattern": "%d%b%Y",
+      "dateDiff": [
+        -1
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "arquivo_rdh",
+      "updatedAt": "12:05",
+      "id": 29
+    },
+    {
+      "name": "Acomph",
+      "baseUrl": "https://sintegre.ons.org.br/sites/9/13/56/_layouts/download.aspx?SourceUrl=/sites/9/13/56/Produtos/230/ACOMPH_{}.xls",
+      "datePattern": "%d.%m.%Y",
+      "dateDiff": [
+        0
+      ],
+      "dateDiffUnit": "day",
+      "funcName": "arquivo_acomph",
+      "updatedAt": "12:05",
+      "id": 30
+    }
+  ]

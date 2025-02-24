@@ -3,19 +3,18 @@ import requests
 import pdb
 import datetime
 from typing import Optional
-from dotenv import load_dotenv
-load_dotenv()
+from app.core.config import settings
 
-__API_URL_AIRFLOW = os.getenv('API_URL_AIRFLOW') 
-__USER_AIRFLOW = os.getenv('USER_AIRFLOW')  
-__PASSWORD_AIRFLOW = os.getenv('PASSWORD_AIRFLOW') 
+__url_airflow_api = settings.url_airflow_api 
+__user_airflow = settings.user_airflow  
+__password_airflow = settings.password_airflow 
 
 def get_airflow_auth():
-    return requests.auth.HTTPBasicAuth(__USER_AIRFLOW, __PASSWORD_AIRFLOW)
+    return requests.auth.HTTPBasicAuth(__user_airflow, __password_airflow)
 
 def trigger_airflow_dag(dag_id:str,json_produtos:dict={}, momento_req:Optional[datetime.datetime]=None):
 
-    trigger_dag_url = f"{__API_URL_AIRFLOW}/dags/{dag_id}/dagRuns"
+    trigger_dag_url = f"{__url_airflow_api}/dags/{dag_id}/dagRuns"
     json = {"conf": json_produtos}
     if momento_req != None:
         json["dag_run_id"]=f"{json_produtos['modelos'][0][0]}{momento_req.strftime('_%d_%m_%Y_%H_%M_%S')}"
@@ -25,7 +24,7 @@ def trigger_airflow_dag(dag_id:str,json_produtos:dict={}, momento_req:Optional[d
     return answer
     
 def get_dag_run_state(dag_id:str, dag_run_id:str):
-    get_dag_url = f"{__API_URL_AIRFLOW}/dags/{dag_id}/dagRuns/{dag_run_id}"
+    get_dag_url = f"{__url_airflow_api}/dags/{dag_id}/dagRuns/{dag_run_id}"
 
     # Faz a chamada para a API do Airflow com autenticação
     answer = requests.get(get_dag_url, auth=get_airflow_auth(),verify=False)
@@ -47,9 +46,4 @@ def trigger_dag_smap(dt_rodada:datetime.date, modelos_names:list=[], rodada:int=
         dt_rodada=dt_rodada,
         modelos_names=modelos_names,
         rodada=rodada)
-    print(json_produtos)
     trigger_airflow_dag(dag_id='SSH_SMAP',json_produtos=json_produtos, momento_req=momento_req)
-
-if __name__ == '__main__':
-    trigger_airflow_dag('dag_testes', json_produtos={"teste":False, "test":True})
-    pass

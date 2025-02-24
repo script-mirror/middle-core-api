@@ -1,0 +1,4 @@
+from .ChuvaPrevisaoCriacao import ChuvaPrevisaoCriacao
+from .ChuvaPrevisaoResposta import ChuvaPrevisaoResposta
+from .ChuvaPrevisaoMapper import ChuvaPrevisaoMapper
+from .ChuvaPrevisaoCriacaoMembro import ChuvaPrevisaoCriacaoMembro

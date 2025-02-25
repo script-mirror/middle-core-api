@@ -3,7 +3,7 @@ from sys import path
 from fastapi import APIRouter
 from typing import List, Optional
 from . import service
-from app.core.utils.cache import cache
+from app.core.utils import cache
 from app.schemas import ProdutoInteresseSchema, CategoriaNegociacaoEnum
 import datetime
 

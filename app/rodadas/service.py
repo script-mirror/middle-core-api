@@ -11,7 +11,7 @@ from typing import Optional, List
 from fastapi import HTTPException
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
 from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
-from app.core.utils.cache import cache
+from app.core.utils import cache
 from . import service
 from app.core.utils.graphs import get_color
 from app.core.utils.graphs import get_access_token
@@ -239,9 +239,9 @@ class Chuva:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
         if df.empty:
             return df
-        if dt_inicio_previsao != None & dt_fim_previsao != None:
+        if dt_inicio_previsao is not None and dt_fim_previsao is not None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
-        elif dt_inicio_previsao != None:
+        elif dt_inicio_previsao is not None:
             df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
         if granularidade == 'subbacia':
@@ -466,7 +466,7 @@ class Chuva:
                 id_chuva = df_info_rodadas[mask_id_chuva]['id_chuva'].unique()[0]
                 print(f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada com id_chuva: {id_chuva}")
                 
-                if id_chuva !='None':
+                if id_chuva is not'None':
                     df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = id_chuva
                 else:
                     print(f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada porem sem id_chuva, será cadastrado com id_chuva: {new_chuva_id}")
@@ -598,9 +598,9 @@ class ChuvaMembro:
             df = pd.DataFrame(cache.get_cached(ChuvaMembro.get_chuva_por_nome_modelo_dt_hr, nome_modelo, dt_hr_rodada, atualizar=atualizar))
         if df.empty:
             return list()
-        if dt_inicio_previsao != None & dt_fim_previsao != None:
+        if dt_inicio_previsao is not None and dt_fim_previsao is not None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
-        elif dt_inicio_previsao != None:
+        elif dt_inicio_previsao is not None:
             df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id', 'membro'])
         if granularidade == 'subbacia':
@@ -750,9 +750,9 @@ class MembrosModelo:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
         if df.empty:
             return df
-        if dt_inicio_previsao != None & dt_fim_previsao != None:
+        if dt_inicio_previsao is not None and dt_fim_previsao is not None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime('%Y-%m-%d'))]
-        elif dt_inicio_previsao != None:
+        elif dt_inicio_previsao is not None:
             df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
         if granularidade == 'subbacia':

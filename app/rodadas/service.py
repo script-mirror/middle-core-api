@@ -12,7 +12,7 @@ from fastapi import HTTPException
 from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
 from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
 from app.core.utils import cache
-from . import service
+from ..ons import service as ons_service
 from app.core.utils.graphs import get_color
 from app.core.utils.graphs import get_access_token
 from app.airflow import service as airflow_service 
@@ -250,7 +250,7 @@ class Chuva:
         df_subbacia = pd.DataFrame(Subbacia.get_subbacia())
         merged = df.merge(df_subbacia[['id', 'nome_bacia', 'nome_submercado']], on='id')
         if granularidade == 'bacia':
-            df_bacia = pd.DataFrame(service.tb_bacias.get_bacias('tb_chuva'))
+            df_bacia = pd.DataFrame(ons_service.tb_bacias.get_bacias('tb_chuva'))
             merged['nome_bacia'] = merged['nome_bacia'].str.upper()
             merged = merged.replace(
                 'STA. MARIA DA VITÓRIA', 'SANTA MARIA VITORIA').replace(
@@ -264,7 +264,7 @@ class Chuva:
             return grouped.to_dict('records')
 
         if granularidade == 'submercado':
-            df_submercado = pd.DataFrame(service.tb_submercado.get_submercados())
+            df_submercado = pd.DataFrame(ons_service.tb_submercado.get_submercados())
             df_submercado['nome'] = df_submercado['nome'].str.capitalize()
             grouped = merged.groupby(['nome_submercado', 'dt_prevista', 'dia_semana', 'semana', 'hr_rodada', 'dt_rodada', 'modelo']).agg({'vl_chuva':'mean'}).reset_index()
             grouped = grouped.rename(columns={'nome_submercado':'nome'}).merge(df_submercado[['id', 'nome']], on='nome')
@@ -300,8 +300,8 @@ class Chuva:
         df_map_grouped_by_submercado = get_data_grouped(id_rain, 'submercado')
         
         df_subbacias = pd.DataFrame(Subbacia.get_subbacia())
-        df_bacias = pd.DataFrame(service.tb_bacias.get_bacias('tb_chuva'))
-        df_submercados = pd.DataFrame(service.tb_submercado.get_submercados())
+        df_bacias = pd.DataFrame(ons_service.tb_bacias.get_bacias('tb_chuva'))
+        df_submercados = pd.DataFrame(ons_service.tb_submercado.get_submercados())
         
         df_subbacias_merged = pd.merge(df_map_grouped_by_subbacia, df_subbacias, left_on='cd_subbacia', right_on='id')
         df_bacias_merged = pd.merge(df_map_grouped_by_bacia, df_bacias, left_on='id_bacia', right_on='id')

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 import datetime
 
-from app.bot_sintegre.service import ProductService
+from app.sintegre.service import ProductService
 
 router = APIRouter(prefix="/bot-sintegre", tags=["Bot Sintegre"])
 product_service = ProductService()

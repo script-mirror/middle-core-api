@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from app.core.utils.logger import logging
 from app.core.utils.date_util import MONTH_DICT, ElecData
 from app.core.database.wx_dbClass import db_mysql_master
-from app.schemas import WeolSemanalSchema, PatamaresDecompSchema
+from .schema import *
 
 logger = logging.getLogger(__name__)
 

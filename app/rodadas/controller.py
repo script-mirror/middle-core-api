@@ -6,8 +6,8 @@ from fastapi.responses import JSONResponse
 
 from . import service
 from app.core.utils import cache
-from app.schemas import GranularidadeEnum, PesquisaPrevisaoChuva, RodadaCriacao, RodadaSmap, TipoRodadaEnum, ChuvaObsReq
-from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoResposta, ChuvaPrevisaoCriacaoMembro
+from .schema import *
+
 
 import datetime
 from typing import Optional, List

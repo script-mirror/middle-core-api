@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 
 from . import service
 from app.core.utils import cache
-from app.schemas.DivisaoBaciasEnum import DivisaoBaciasEnum
+from .schema import *
 import datetime
 from typing import Optional
 

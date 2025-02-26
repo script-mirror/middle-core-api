@@ -9,8 +9,9 @@ import requests as r
 from requests.exceptions import HTTPError
 from typing import Optional, List
 from fastapi import HTTPException
-from app.schemas.chuvaprevisao import ChuvaPrevisaoCriacao, ChuvaPrevisaoCriacaoMembro
-from app.schemas import PesquisaPrevisaoChuva, RodadaSmap, ChuvaObsReq
+
+from .schema import *
+
 from app.core.utils import cache
 from ..ons import service as ons_service
 from app.core.utils.graphs import get_color
@@ -466,7 +467,7 @@ class Chuva:
                 id_chuva = df_info_rodadas[mask_id_chuva]['id_chuva'].unique()[0]
                 print(f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada com id_chuva: {id_chuva}")
                 
-                if id_chuva is not'None':
+                if id_chuva != 'None':
                     df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = id_chuva
                 else:
                     print(f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada porem sem id_chuva, será cadastrado com id_chuva: {new_chuva_id}")

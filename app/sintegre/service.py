@@ -1,6 +1,8 @@
 import datetime
-from app.bot_sintegre.bot_sintegre import trigger_bot, get_products
+from app.sintegre.bot_sintegre import trigger_bot, get_products
 
+from app.core.database.wx_dbClass import db_mysql_master
+__DB__ = db_mysql_master('sintegre')
 
 class ProductService:
     def __init__(self):

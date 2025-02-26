@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from typing import List, Optional
 from . import service
 from app.core.utils import cache
-from app.schemas import ProdutoInteresseSchema, CategoriaNegociacaoEnum
+from .schema import *
 import datetime
 
 

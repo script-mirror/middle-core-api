@@ -6,7 +6,7 @@ import numpy as np
 from typing import List, Optional
 import datetime
 
-from app.schemas import ProdutoInteresseSchema, CategoriaNegociacaoEnum
+from .schema import *
 
 from app.core.database.wx_dbClass import db_mysql_master
 

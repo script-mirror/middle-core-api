@@ -11,7 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
-from app.bot_sintegre.utils import *
+from app.sintegre.utils import *
 from app.airflow.service import trigger_airflow_dag
 locale.setlocale(locale.LC_ALL, 'pt_BR.utf-8')
 import logging

@@ -3,7 +3,7 @@ from sys import path
 from fastapi import APIRouter
 from typing import List, Optional
 from . import service
-from app.schemas import WeolSemanalSchema, PatamaresDecompSchema
+from .schema import *
 import datetime
 
 

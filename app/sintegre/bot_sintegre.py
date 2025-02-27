@@ -120,7 +120,7 @@ def send_to_webhook(airflow_products:List[str]) -> None:
         if is_new:
             res = trigger_airflow_dag("WEBHOOK", product)
         else:
-            logging.INFO("produto repetido")
+            logging.info("produto repetido")
         if res.status_code == 200:
             print("Produto enviado para o webhook")
         else:

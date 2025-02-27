@@ -16,8 +16,11 @@ from app.airflow.service import trigger_airflow_dag
 locale.setlocale(locale.LC_ALL, 'pt_BR.utf-8')
 import logging
 from app.core.config import settings
+import requests
+# from .service import ProductService
 
 
+# product_service = ProductService()
 
 logging.basicConfig(level=logging.INFO,
                     format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
@@ -101,7 +104,7 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
                 "nome": product["name"],
                 "base64": path_arquivo,
                 "filename": filename,
-                "enviar":False}
+                "enviar":True}
             })
             
         except Exception as e:
@@ -113,7 +116,13 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
 def send_to_webhook(airflow_products:List[str]) -> None:
     for product in airflow_products:
         if os.path.exists(product['product_details']['base64']):
-            res = trigger_airflow_dag("WEBHOOK", product)
+            
+            # is_new = product_service.verify_if_is_new(product['product_details'])
+            is_new = requests.post("http://localhost:8000/api/v2/bot-sintegre/verify", json={"nome":product['product_details']['nome'], "filename":product['product_details']['filename']}).json()
+            if is_new:
+                res = trigger_airflow_dag("WEBHOOK", product)
+            else:
+                logging.INFO(f"Produto {product['product_details']['filename']} já foi enviado para o webhook")
             if res:
                 logging.info(f"Produto {product['product_details']['nome']} enviado para o webhook")
             else:
@@ -146,6 +155,10 @@ def get_url_datetime_pattern(products:List[dict], product_date:datetime.date) ->
 
 def elec_date_to_str(date:datetime.date, format:str) -> str:
     elec_date_str = ""
+
+    while date.weekday() != 5:
+        date += datetime.timedelta(days=1)
+
     elec_date = ElecData(date)
     rev = elec_date.current_revision
         
@@ -208,3 +221,8 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
         logging.info("Enviando para o webhook")
         send_to_webhook(airflow_products['success'])
     return {'failed':airflow_products['failed']}
+
+if __name__ == "__main__":
+    produtos = get_products()
+    for produto in produtos:
+        print(f"""VALUES('{produto["name"]}'),""")

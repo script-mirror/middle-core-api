@@ -956,6 +956,15 @@ class db_mysql_master():
                 db.Column('mes', db.Integer),
                 extend_existing=True
             )
+        elif table_name.lower() == 'products':
+            table_schema = db.Table('products', self.meta,
+                db.Column('id', db.Integer, primary_key=True),
+                db.Column('name', db.String(80), nullable=True),
+                db.Column('last_received', db.String(80), nullable=True),
+                db.Column('updated_at', db.DateTime, nullable=True),
+                extend_existing=True
+            )
+            
 
 
 

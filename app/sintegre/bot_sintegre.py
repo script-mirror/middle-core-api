@@ -121,10 +121,7 @@ def send_to_webhook(airflow_products:List[str]) -> None:
             res = trigger_airflow_dag("WEBHOOK", product)
         else:
             logging.info("produto repetido")
-        if res.status_code == 200:
-            print("Produto enviado para o webhook")
-        else:
-            logging.info(f"Erro ao enviar para o webhook {product['product_details']['nome']}")
+
 
 
 def is_download_complete(download_dir:str) -> bool:

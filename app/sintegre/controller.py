@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
+from typing import List, Optional
 import datetime
 from .schema import *  
 
@@ -9,8 +9,8 @@ router = APIRouter(prefix="/bot-sintegre", tags=["Bot Sintegre"])
 product_service = ProductService()
 
 @router.post("/trigger")
-def trigger_products(productDate:datetime.date):
-    return product_service.trigger(productDate)
+def trigger_products(productDate:datetime.date, triggerWebhook:Optional[bool]=True):
+    return product_service.trigger(productDate, triggerWebhook)
 
 @router.post("/trigger/{product_id}")
 def trigger_by_id(product_id: int, productDate:datetime.date):

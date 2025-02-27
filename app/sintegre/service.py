@@ -11,8 +11,8 @@ class ProductService:
     def __init__(self):
         self.__DB__ = db_mysql_master('bot_sintegre')
         self.tb = self.__DB__.getSchema('products')
-    def trigger(self, product_date:datetime.date):
-        return trigger_bot(product_date)
+    def trigger(self, product_date:datetime.date, trigger_webhook:bool):
+        return trigger_bot(product_date, trigger_webhook=trigger_webhook)
 
     def trigger_by_id(self, product_date: datetime.date, product_id: int):
         return trigger_bot(product_date, product_id)

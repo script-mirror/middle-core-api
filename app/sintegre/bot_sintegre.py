@@ -115,21 +115,17 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
     
 def send_to_webhook(airflow_products:List[str]) -> None:
     for product in airflow_products:
-        if os.path.exists(product['product_details']['base64']):
-            
-            # is_new = product_service.verify_if_is_new(product['product_details'])
-            is_new = requests.post("http://localhost:8000/api/v2/bot-sintegre/verify", json={"nome":product['product_details']['nome'], "filename":product['product_details']['filename']}).json()
-            if is_new:
-                res = trigger_airflow_dag("WEBHOOK", product)
-            else:
-                logging.INFO(f"Produto {product['product_details']['filename']} já foi enviado para o webhook")
-            if res:
-                logging.info(f"Produto {product['product_details']['nome']} enviado para o webhook")
-            else:
-                logging.info(f"Erro ao enviar para o webhook {product['product_details']['nome']}")
+        is_new = requests.post("http://localhost:8000/api/v2/bot-sintegre/verify", json={"nome":product['product_details']['nome'], "filename":product['product_details']['filename']}).json()
+
+        if is_new:
+            res = trigger_airflow_dag("WEBHOOK", product)
         else:
-            logging.info(product)
-            logging.info('produto nao encontrado')
+            logging.INFO("produto repetido")
+        if res.status_code == 200:
+            print("Produto enviado para o webhook")
+        else:
+            logging.info(f"Erro ao enviar para o webhook {product['product_details']['nome']}")
+
 
 def is_download_complete(download_dir:str) -> bool:
     for filename in os.listdir(download_dir):
@@ -178,7 +174,7 @@ def elec_date_to_str(date:datetime.date, format:str) -> str:
 
     return elec_date_str
 
-def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook:bool=False, download_timeout:int = 300) -> None:
+def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook:bool=True, download_timeout:int = 300) -> None:
     __email = settings.sintegre_email
     __password = settings.sintegre_password
     
@@ -220,6 +216,7 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
     if trigger_webhook:
         logging.info("Enviando para o webhook")
         send_to_webhook(airflow_products['success'])
+
     return {'failed':airflow_products['failed']}
 
 if __name__ == "__main__":

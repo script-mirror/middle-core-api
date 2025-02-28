@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from datetime import datetime, date
+import datetime
 
 class PatamaresDecompSchema(BaseModel):
-    inicio:datetime
+    inicio:datetime.datetime
     patamar:str
     cod_patamar:int
     dia_semana:str
@@ -14,9 +14,9 @@ class PatamaresDecompSchema(BaseModel):
     mes:int
     
 class WeolSemanalSchema(BaseModel):
-    inicio_semana:date
-    final_semana:date
-    data_produto:date
+    inicio_semana:datetime.date
+    final_semana:datetime.date
+    data_produto:datetime.date
     submercado:str
     patamar:str
     valor:float

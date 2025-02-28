@@ -344,3 +344,130 @@ class NwSistEnergia:
         df = pd.DataFrame(result, columns=['geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
         return df.to_dict('records')
     
+
+class CvuUsinasTermicas:
+    tb:db.Table = __DB__.getSchema('tb_usinas_termicas')
+    
+    @staticmethod
+    def get_usinas_termicas():
+
+        query = db.select(CvuUsinasTermicas.tb)
+        rows = __DB__.db_execute(query, commit=prod)
+        return pd.DataFrame(rows).to_dict('records')
+
+
+class Cvu:
+    tb:db.Table = __DB__.getSchema('tb_cvu')
+    
+    @staticmethod
+    def create(body: List[CvuSchema]):
+        body_dict = [x.model_dump() for x in body]
+        df = pd.DataFrame(body_dict)
+
+        unique_params = df[['dt_atualizacao', 'mes_referencia',"tipo_cvu","fonte"]].drop_duplicates().values
+        
+        for dt_atualizacao,mes_referencia,tipo_cvu,fonte in unique_params:
+            Cvu.delete_by_params(
+                mes_referencia=mes_referencia,
+                tipo_cvu=tipo_cvu,
+                dt_atualizacao=dt_atualizacao,
+                fonte=fonte
+                )
+
+        query = db.insert(Cvu.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas adicionadas na tb_cvu")
+        return None
+
+    @staticmethod
+    def delete_by_params(**kwargs):
+        query = db.delete(Cvu.tb).where(db.and_(*[getattr(Cvu.tb.c, key) == value for key, value in kwargs.items()]))
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas deletadas da tb_cvu")
+        return None
+
+    def get_cvu_by_params_deck(ano_mes_referencia:datetime.date, dt_atualizacao:datetime.date, fonte:str):
+
+        conditions_cvu = []
+        conditions_merchant = []
+
+        if ano_mes_referencia is not None:
+            mes_referencia = ano_mes_referencia.strftime('%Y%m')
+            conditions_cvu.append(Cvu.tb.c.mes_referencia == mes_referencia)
+            conditions_merchant.append(CvuMerchant.tb.c.mes_referencia == mes_referencia)
+        
+        if dt_atualizacao is not None:
+            conditions_cvu.append(Cvu.tb.c.dt_atualizacao == dt_atualizacao)
+            conditions_merchant.append(CvuMerchant.tb.c.dt_atualizacao == dt_atualizacao)
+        
+        if fonte is not None:
+            conditions_cvu.append(Cvu.tb.c.fonte == fonte)
+            conditions_merchant.append(CvuMerchant.tb.c.fonte == fonte)
+            
+        query = db.select(Cvu.tb).where(db.and_(*conditions_cvu))
+        rows = __DB__.db_execute(query)
+        df_cvu = pd.DataFrame(rows)
+
+        query = db.select(CvuMerchant.tb).where(db.and_(*conditions_merchant))
+        rows = __DB__.db_execute(query)
+        df_cvu_merchant = pd.DataFrame(rows)
+
+        if not df_cvu_merchant.empty:
+            answer = CvuUsinasTermicas.get_usinas_termicas()
+            df_usinas = pd.DataFrame(answer)
+
+            decisao_custo = df_usinas[['cd_usina','flag_custo_fixo']].copy()
+            cds_cf = decisao_custo[decisao_custo['flag_custo_fixo'] == 1]['cd_usina'].unique()
+            cds_scf = decisao_custo[decisao_custo['flag_custo_fixo'] == 0]['cd_usina'].unique()
+
+            df_merchant_cf = df_cvu_merchant[df_cvu_merchant['cd_usina'].isin(cds_cf)].copy()
+            df_merchant_scf = df_cvu_merchant[df_cvu_merchant['cd_usina'].isin(cds_scf)].copy()
+
+            df_aux = df_merchant_cf.drop(columns=['vl_cvu_scf']).rename(columns={'vl_cvu_cf':'vl_cvu'})
+            df_cvu_merchant_completo = pd.concat([df_aux ,df_merchant_scf.drop(columns=['vl_cvu_cf']).rename(columns={'vl_cvu_scf':'vl_cvu'})])
+
+            ano_inicial=int(df_cvu_merchant['mes_referencia'].unique()[0][:4])
+            
+            df_conjuntural = df_cvu_merchant_completo.copy()
+            df_conjuntural['tipo_cvu'] = 'conjuntural'
+            df_conjuntural['ano_horizonte'] = ano_inicial
+            
+            df_estrutural = df_cvu_merchant_completo.copy()
+            df_estrutural = df_estrutural.loc[df_estrutural.index.repeat(5)].reset_index(drop=True)
+            df_estrutural['tipo_cvu'] = 'estrutural'
+            ordem_anos_repetidos = list(range(ano_inicial, ano_inicial+5)) * (len(df_estrutural) // 5)
+            df_estrutural['ano_horizonte'] = ordem_anos_repetidos
+
+            df_cvu = pd.concat([df_cvu, df_conjuntural, df_estrutural])
+
+        return df_cvu.to_dict('records')
+
+
+class CvuMerchant:
+    tb:db.Table = __DB__.getSchema('tb_cvu_merchant')
+    
+    @staticmethod
+    def create(body: List[CvuMerchantSchema]):
+        body_dict = [x.model_dump() for x in body]
+        df = pd.DataFrame(body_dict)
+
+        unique_params = df[['dt_atualizacao', 'mes_referencia',"fonte"]].drop_duplicates().values
+        
+        for dt_atualizacao,mes_referencia,fonte in unique_params:
+            CvuMerchant.delete_by_params(
+                mes_referencia=mes_referencia,
+                dt_atualizacao=dt_atualizacao,
+                fonte=fonte
+                )
+
+        query = db.insert(CvuMerchant.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas adicionadas na tb_cvu")
+        return None
+
+    @staticmethod
+    def delete_by_params(**kwargs):
+        query = db.delete(CvuMerchant.tb).where(db.and_(*[getattr(CvuMerchant.tb.c, key) == value for key, value in kwargs.items()]))
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas deletadas da tb_cvu")
+        return None

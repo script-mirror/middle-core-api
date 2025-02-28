@@ -86,3 +86,32 @@ def get_weighted_avg_table_weekly_by_product_date(
     quantidadeProdutos: int
 ):
     return service.WeolSemanal.get_weighted_avg_table_weekly_by_product_date(dataProduto, quantidadeProdutos)
+
+
+@router.get("/cvu/usinas",tags=["CVU"])
+def get_usinas_cvu():
+    return service.CvuUsinasTermicas.get_usinas_termicas()
+
+@router.get("/cvu",tags=["CVU"])
+def get_usinas_cvu(
+    ano_mes_referencia: Optional[datetime.date] = None,
+    dt_atualizacao: Optional[datetime.datetime] = None,
+    fonte: Optional[str] = None,
+):
+    return service.Cvu.get_cvu_by_params_deck(
+        ano_mes_referencia = ano_mes_referencia,
+        dt_atualizacao = dt_atualizacao,
+        fonte = fonte
+        )
+
+@router.post("/cvu",tags=["CVU"])
+def post_cvu(
+    body: List[CvuSchema]
+):
+    return service.Cvu.create(body)
+
+@router.post("/cvu/merchant",tags=["CVU"])
+def post_cvu_merchant(
+    body: List[CvuMerchantSchema]
+):
+    return service.CvuMerchant.create(body)

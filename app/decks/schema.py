@@ -22,3 +22,21 @@ class WeolSemanalSchema(BaseModel):
     valor:float
     rv_atual:int
     mes_eletrico:int
+
+class CvuMerchantSchema(BaseModel):
+    cd_usina: int
+    vl_cvu_cf: float
+    vl_cvu_scf: float
+    mes_referencia: str
+    dt_atualizacao: str
+    fonte: str
+
+class CvuSchema(BaseModel):
+    cd_usina: int
+    vl_cvu: float
+    tipo_cvu: str
+    mes_referencia: str
+    ano_horizonte: int
+    dt_atualizacao: str
+    fonte: str
+

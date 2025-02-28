@@ -966,8 +966,59 @@ class db_mysql_master():
             )
             
 
+        elif table_name.lower() == 'tb_usinas_termicas':
+            table_schema = db.Table('tb_usinas_termicas', self.meta,
+                db.Column("cd_usina",db.Integer, primary_key=True, nullable=False),
+                db.Column("str_usina",db.String(100), nullable=True),
+                db.Column("str_tipo",db.String(100), nullable=True),
+                db.Column("flag_custo_fixo",db.Integer, nullable=False),
+                extend_existing=True
+            )
+        elif table_name.lower() == 'tb_cvu':
+            table_schema = db.Table('tb_cvu', self.meta,
+                db.Column("cd_usina",db.Integer, db.ForeignKey('db_decks.tb_usinas_termicas.cd_usina'), primary_key=True, nullable=False),
+                db.Column("vl_cvu",db.Float, nullable=False),
+                db.Column("tipo_cvu",db.String(100), primary_key=True,nullable=False),
+                db.Column("mes_referencia",db.String(100),primary_key=True, nullable=False),
+                db.Column("ano_horizonte",db.Integer,primary_key=True, nullable=False),
+                db.Column("dt_atualizacao",db.Date, primary_key=True,nullable=False),
+                db.Column("fonte",db.String(100),primary_key=True, nullable=False),
+                extend_existing=True
+            )
 
+        elif table_name.lower() == 'tb_cvu_merchant':
+            table_schema = db.Table('tb_cvu_merchant', self.meta,
+                db.Column("cd_usina",db.Integer,db.ForeignKey('db_decks.tb_usinas_termicas.cd_usina'), primary_key=True, nullable=False),
+                db.Column("vl_cvu_cf",db.Float, nullable=False),
+                db.Column("vl_cvu_scf",db.Float, nullable=False),
+                db.Column("mes_referencia",db.String(100),primary_key=True, nullable=False),
+                db.Column("dt_atualizacao",db.Date,primary_key=True, nullable=False),
+                db.Column("fonte",db.String(100),primary_key=True, nullable=False),
+                extend_existing=True
+                
+            )
 
+        elif table_name.lower() == 'tb_re_limites':
+            table_schema = db.Table('tb_restricao_eletrica', self.meta,
+                db.Column("mes_referencia", db.String(6), primary_key=True, nullable=False),
+                db.Column("cd_re", db.Integer, primary_key=True, nullable=False),
+                db.Column("limite", db.String(100), nullable=True),
+                extend_existing=True
+                )
+        
+        elif table_name.lower() == 'tb_restricao_eletrica':
+            table_schema = db.Table('tb_restricao_eletrica', self.meta,
+                db.Column("mes_referencia", db.String(6), primary_key=True, nullable=False),
+                db.Column("cd_re", db.Integer, primary_key=True, nullable=False),
+                db.Column("limite", db.String(100), nullable=True),
+                db.Column("primeiro_mes_pesada", db.Float, nullable=True),
+                db.Column("primeiro_mes_media", db.Float, nullable=True),
+                db.Column("primeiro_mes_leve", db.Float, nullable=True),
+                db.Column("segundo_mes_pesada", db.Float, nullable=True),
+                db.Column("segundo_mes_media", db.Float, nullable=True),
+                db.Column("segundo_mes_leve", db.Float, nullable=True),
+                extend_existing=True
+            )
         return table_schema
 
             

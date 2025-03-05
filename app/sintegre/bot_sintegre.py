@@ -4,6 +4,7 @@ import json
 import time
 import base64
 import locale
+import hashlib
 import datetime
 from typing import List, Dict
 from selenium import webdriver
@@ -38,6 +39,11 @@ def get_products(product_id):
         return [x for x in products if x['id'] == product_id]
     return products
     
+def hex_hash(s):
+    h = hashlib.new('sha512')
+    h.update(s.encode())
+    hx = h.hexdigest()
+    return hx
 
 def initialize_driver() -> webdriver.Chrome:
     options = webdriver.ChromeOptions()
@@ -103,6 +109,7 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
                 "dataProduto": (product_date + (datetime.timedelta(days=product['dateDiff'][-1]))).strftime("%d/%m/%Y"),
                 "nome": product["name"],
                 "base64": path_arquivo,
+                "file_hash":None,
                 "filename": filename,
                 "enviar":True}
             })
@@ -115,7 +122,8 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
     
 def send_to_webhook(airflow_products:List[str]) -> None:
     for product in airflow_products:
-        is_new = requests.post("http://localhost:8000/api/v2/bot-sintegre/verify", json={"nome":product['product_details']['nome'], "filename":product['product_details']['filename']}).json()
+        file_hash = product['product_details']['file_hash']
+        is_new = requests.post("http://localhost:8000/api/v2/bot-sintegre/verify", json={"nome":product['product_details']['nome'], "fileHash":file_hash}).json()
 
         if is_new:
             res = trigger_airflow_dag("WEBHOOK", product)
@@ -194,8 +202,8 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
             except:
                 products_to_remove.append(product)
                 continue
-            file_base64 = base64.b64encode(data).decode('utf-8')
-            product['product_details']['base64'] = file_base64
+            file_hash = hex_hash(base64.b64encode(data).decode('utf-8'))
+            product['product_details']['file_hash'] = file_hash
             product['product_details']['filename'] = url[url.rfind("/")+1:]
 
     for product in products_to_remove:

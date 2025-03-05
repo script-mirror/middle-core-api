@@ -43,9 +43,9 @@ class ProductService:
         product_details = product_details.dict()
         products = self.get_products()
         product = [x for x in products if x['name'] == product_details['nome']][0]
-        if product['last_received'] == product_details['filename']:
+        if product['last_received'] == product_details['fileHash']:
             return False
-        self.update_product(product['id'], product_details['filename'])
+        self.update_product(product['id'], product_details['fileHash'])
         return True
     
     

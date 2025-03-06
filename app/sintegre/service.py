@@ -4,6 +4,7 @@ import pandas as pd
 from app.sintegre.bot_sintegre import trigger_bot, get_products
 from app.core.database.wx_dbClass import db_mysql_master
 from .schema import *
+from ..core.utils import text
 
 class ProductService:
     __DB__:db_mysql_master
@@ -42,7 +43,7 @@ class ProductService:
     def verify_if_is_new(self, product_details:ProductUpdate):
         product_details = product_details.dict()
         products = self.get_products()
-        product = [x for x in products if x['name'] == product_details['nome']][0]
+        product = [x for x in products if x['name'] == text.remover_acentos_caracteres_especiais(product_details['nome'])][0]
         if product['last_received'] == product_details['fileHash']:
             return False
         self.update_product(product['id'], product_details['fileHash'])

@@ -1,4 +1,4 @@
-# API Intermediária de Comercialização de Energia Raízen
+# API Middle de Comercialização de Energia Raízen
 
 ## Estrutura do Projeto
 

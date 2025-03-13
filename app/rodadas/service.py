@@ -291,14 +291,14 @@ class Chuva:
         return df.to_dict('records')
     
     @staticmethod
-    def export_rain(id_rain: int) -> dict:
+    def export_rain(id_type: int) -> dict:
         
-        def get_data_grouped(id_rain: int, granularidade: str):
-            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_rain, granularidade))
+        def get_data_grouped(id_type: int, granularidade: str):
+            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_type, granularidade))
         
-        df_map_grouped_by_subbacia = get_data_grouped(id_rain, 'subbacia')
-        df_map_grouped_by_bacia = get_data_grouped(id_rain, 'bacia')
-        df_map_grouped_by_submercado = get_data_grouped(id_rain, 'submercado')
+        df_map_grouped_by_subbacia = get_data_grouped(id_type, 'subbacia')
+        df_map_grouped_by_bacia = get_data_grouped(id_type, 'bacia')
+        df_map_grouped_by_submercado = get_data_grouped(id_type, 'submercado')
         
         df_subbacias = pd.DataFrame(Subbacia.get_subbacia())
         df_bacias = pd.DataFrame(ons_service.tb_bacias.get_bacias('tb_chuva'))

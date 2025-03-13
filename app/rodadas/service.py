@@ -320,6 +320,7 @@ class Chuva:
         data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], rodada_time)
         data_rodada_str = data_rodada_date.isoformat()
         data_rodada_str = f'{data_rodada_str}.000Z'
+        data_final = None
         modelo = model_base['modelo']
         grupo = "ONS" if 'ons' in model_base["modelo"].lower() else "RZ"
         viez = False if 'remvies' in model_base["modelo"].lower() else True
@@ -329,59 +330,56 @@ class Chuva:
         bacia_values = df_map_grouped_by_bacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
         submercado_values = df_map_grouped_by_submercado[['dt_prevista', 'vl_chuva', 'str_sigla']].to_dict('records')
         
-        agrupamentos = {
-            "subbacia": subbacia_values,
-            "bacia": bacia_values,
-            "submercado": submercado_values
-        }
-        
         data = []
-        data_final = None
-        agrupamento_dict = {}
+        agrupamentos = {
+            'subbacia': {'valoresMapa': [], 'agrupamento': 'subbacia'},
+            'bacia': {'valoresMapa': [], 'agrupamento': 'bacia'},
+            'submercado': {'valoresMapa': [], 'agrupamento': 'submercado'}
+        }
 
-        for tipo, values in agrupamentos.items():
+        for tipo, values in [
+            ('subbacia', subbacia_values.to_dict('records')),
+            ('bacia', bacia_values.to_dict('records')),
+            ('submercado', submercado_values.to_dict('records'))
+        ]:
+            
             for value in values:
-                valorAgrupamento = value['nome'] if tipo == 'subbacia' else value['nome'] if tipo == 'bacia' else value['str_sigla']
-                
+                valorAgrupamento = value['nome'] if tipo in ['subbacia', 'bacia'] else value['str_sigla']
                 data_referente_date = datetime.datetime.strptime(value['dt_prevista'], '%Y-%m-%d')
-                
-                chave_agrupamento = (valorAgrupamento, tipo)
-                
-                if chave_agrupamento not in agrupamento_dict:
-                    agrupamento_dict[chave_agrupamento] = {
-                        "valoresMapa": [],
-                        "measuringUnit": "MWh",
-                        "agrupamento": {
-                            "valorAgrupamento": valorAgrupamento,
-                            "tipo": tipo
-                        }
-                    }
-                    data.append(agrupamento_dict[chave_agrupamento])
-                
-                agrupamento_dict[chave_agrupamento]["valoresMapa"].append({
+            
+                agrupamentos[tipo]['valoresMapa'].append({
                     "valor": value['vl_chuva'],
-                    "dataReferente": value['dt_prevista']
+                    "dataReferente": value['dt_prevista'],
+                    "valorAgrupamento": valorAgrupamento
                 })
-                
+            
                 if data_final is None or data_referente_date > data_final:
                     data_final = data_referente_date
                     data_final_str = value['dt_prevista']
-                    
+
+        data = [agrup for agrup in agrupamentos.values() if agrup['valoresMapa']]
 
         body = {
             "dataRodada": data_rodada_str,
             "dataFinal": data_final_str,
-            "mapName": f"{grupo}_{modelo}_{'comvies' if viez else 'semvies'}_{rodada}",
-            "modelo": modelo,
+            "mapType": "chuva",
+            "idType": str(id_type),
+            "modelo": model_base['modelo'],
+            "priority": None,
             "grupo": grupo,
-            "rodada": rodada.__str__(),
+            "rodada": str(model_base['hr_rodada']),
             "viez": viez,
             "membro": "0",
-            "color": cor,
-            "data": data,
+            "measuringUnit": "mm",
+            "propagationBase": None,
+            "generationProcess": "SMAP",
+            "data": data
         }
         
+        
         accessToken = get_access_token();
+        api_url = os.getenv('API_URL', 'http://localhost:3000/api/map')
+        
         
         res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
         

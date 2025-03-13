@@ -10,6 +10,21 @@ from app.core.database.wx_dbClass import db_mysql_master
 
 prod = True
 
+class tb_bacias_segmentadas:
+
+    @staticmethod
+    def get_bacias_segmentadas():
+        __DB__ = db_mysql_master('db_ons')
+        bacias = __DB__.getSchema('tb_bacias_segmentadas')
+
+        query = sa.select(
+          bacias.c['cd_bacia'],
+          bacias.c['str_bacia'],
+        )
+        result = __DB__.db_execute(query, commit=prod).fetchall()
+        df = pd.DataFrame(result, columns=['cd_bacia','str_bacia'])
+        return df.to_dict('records')
+
 class tb_bacias:
     @staticmethod
     def get_bacias(divisao:str):

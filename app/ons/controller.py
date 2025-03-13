@@ -29,3 +29,7 @@ def get_submercados(
     if no_cache:
         return service.tb_submercado.get_submercados()
     return cache.get_cached(service.tb_submercado.get_submercados, atualizar=atualizar)
+
+@router.get('/bacias-segmentadas',tags=['ONS'])
+def get_bacias_segmentadas():
+     return service.tb_bacias_segmentadas.get_bacias_segmentadas()

@@ -224,13 +224,13 @@ class WeolSemanal:
     @staticmethod
     def get_weighted_avg_table_weekly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
-        
+
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
         df_eol_newave = df_eol_newave.sort_values(by=['ano', 'mes'])
 
-        df['ano'] = [row.year if type(row) != str else row for row in df['inicioSemana']]
-        df['mes'] = [row.month if type(row) != str else row for row in df['inicioSemana']]
+        df['ano'] = [ElecData(row).inicioSemana.year if type(row) != str else row for row in df['inicioSemana']]
+        df['mes'] = [ElecData(row).mesReferente if type(row) != str else row for row in df['inicioSemana']]
 
         df = pd.merge(df_eol_newave,df, on=['ano', 'mes'], how='left')
         df.drop(columns=['mes', 'ano'], inplace=True)

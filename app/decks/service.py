@@ -246,7 +246,7 @@ class WeolSemanal:
         df.columns = df.iloc[0]
         df = df[1:]
 
-        df.columns = [df.columns[0]] + [f'{MONTH_DICT[x.month]}-rv{ElecData(x).atualRevisao}' if type(x) != str else x for x in df.columns[1:]]
+        df.columns = [df.columns[0]] + [f'{MONTH_DICT[ElecData(x).mesReferente]}-rv{ElecData(x).atualRevisao}' if type(x) != str else x for x in df.columns[1:]]
         return WeolSemanal.get_html_weighted_avg(df)
 
 class Patamares:

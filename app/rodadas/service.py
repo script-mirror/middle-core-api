@@ -1,3 +1,4 @@
+import os
 from sys import path
 import pdb
 from venv import logger
@@ -315,20 +316,13 @@ class Chuva:
         df_model_base = df_map_grouped_by_subbacia[['modelo','dt_rodada', 'hr_rodada']].drop_duplicates()
         model_base = df_model_base.to_dict('records')[0]
     
-        rodada = model_base['hr_rodada']
-        rodada_time = datetime.time(rodada, 0, 0, 0)
-        data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], rodada_time)
+        data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], datetime.time(0))
         data_rodada_str = data_rodada_date.isoformat()
         data_rodada_str = f'{data_rodada_str}.000Z'
         data_final = None
         modelo = model_base['modelo']
         grupo = "ONS" if 'ons' in model_base["modelo"].lower() else "RZ"
         viez = False if 'remvies' in model_base["modelo"].lower() else True
-        cor = get_color(modelo.upper())
-        
-        subbacia_values = df_map_grouped_by_subbacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
-        bacia_values = df_map_grouped_by_bacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
-        submercado_values = df_map_grouped_by_submercado[['dt_prevista', 'vl_chuva', 'str_sigla']].to_dict('records')
         
         data = []
         agrupamentos = {
@@ -338,9 +332,9 @@ class Chuva:
         }
 
         for tipo, values in [
-            ('subbacia', subbacia_values.to_dict('records')),
-            ('bacia', bacia_values.to_dict('records')),
-            ('submercado', submercado_values.to_dict('records'))
+            ('subbacia', df_map_grouped_by_subbacia.to_dict('records')),
+            ('bacia', df_map_grouped_by_bacia.to_dict('records')),
+            ('submercado', df_map_grouped_by_submercado.to_dict('records'))
         ]:
             
             for value in values:
@@ -381,7 +375,7 @@ class Chuva:
         api_url = os.getenv('API_URL', 'http://localhost:3000/api/map')
         
         
-        res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
+        res = r.post(api_url, verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
         
         try:
             res.raise_for_status()  

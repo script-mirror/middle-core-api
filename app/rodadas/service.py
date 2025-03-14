@@ -1,4 +1,3 @@
-import os
 from sys import path
 import pdb
 from venv import logger
@@ -10,12 +9,12 @@ import requests as r
 from requests.exceptions import HTTPError
 from typing import Optional, List
 from fastapi import HTTPException
+from app.core.config import settings
 
 from .schema import *
 
 from app.core.utils import cache
 from ..ons import service as ons_service
-from app.core.utils.graphs import get_color
 from app.core.utils.graphs import get_access_token
 from app.airflow import service as airflow_service 
 # from app.utils.airflow.airflow_service import trigger_dag_SMAP
@@ -372,7 +371,7 @@ class Chuva:
         
         
         accessToken = get_access_token();
-        api_url = os.getenv('API_URL', 'http://localhost:3000/api/map')
+        api_url = settings.API_URL
         
         
         res = r.post(api_url, verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
@@ -385,9 +384,9 @@ class Chuva:
             logger.error(f"Other error: {err}")
         else:
             if res.status_code == 201:
-                logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido na API de visualizacao")
+                logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido no endereco ${api_url}")
             else:
-                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} na API de visualizacao")
+                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} no endereco ${api_url}")
         
         
     

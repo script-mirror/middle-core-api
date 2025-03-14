@@ -898,6 +898,7 @@ class db_mysql_master():
                 db.Column('str_modelo', db.String(255), nullable=True),
             ) 
 
+
         elif table_name.lower() == 'tb_chuva_prevista_estacao_chuvosa':
 
             table_schema = db.Table('tb_chuva_prevista_estacao_chuvosa', self.meta,

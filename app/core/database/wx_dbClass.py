@@ -888,11 +888,30 @@ class db_mysql_master():
                 db.Column('str_modelo', db.String(255), nullable=True),
             )
 
+
+        elif table_name.lower() == 'tb_cadastro_estacao_chuvosa_norte':
+
+            table_schema = db.Table('tb_cadastro_estacao_chuvosa_norte', self.meta,
+                db.Column('id', db.Integer, primary_key=True),
+                db.Column('dt_rodada', db.Date, nullable=True),
+                db.Column('hr_rodada', db.Integer, nullable=True),
+                db.Column('str_modelo', db.String(255), nullable=True),
+            ) 
+
         elif table_name.lower() == 'tb_chuva_prevista_estacao_chuvosa':
 
             table_schema = db.Table('tb_chuva_prevista_estacao_chuvosa', self.meta,
                 db.Column('id_cadastro', db.Integer, primary_key=True),
                 db.Column('dt_prevista', db.Date, nullable=True),
+                db.Column('vl_chuva', db.String(255), nullable=True),
+
+            )
+
+        elif table_name.lower() == 'tb_chuva_prevista_estacao_chuvosa_norte':
+
+            table_schema = db.Table('tb_chuva_prevista_estacao_chuvosa_norte', self.meta,
+                db.Column('id_cadastro', db.Integer),
+                db.Column('dt_prevista', db.DateTime, nullable=True),
                 db.Column('vl_chuva', db.String(255), nullable=True),
 
             )
@@ -904,7 +923,15 @@ class db_mysql_master():
                 db.Column('vl_chuva', db.Float, nullable=True),
 
             )
-            
+
+        elif table_name.lower() == 'tb_chuva_observada_estacao_chuvosa_norte':
+
+            table_schema = db.Table('tb_chuva_observada_estacao_chuvosa_norte', self.meta,
+                db.Column('dt_observada', db.Date, nullable=True),
+                db.Column('vl_chuva', db.Float, nullable=True),
+
+            )
+
         elif table_name.lower() == 'tb_cmo_semanal':
             
             table_schema = db.Table('tb_cmo_semanal', self.meta,

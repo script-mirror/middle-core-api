@@ -13,19 +13,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up SSH
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          chmod 700 ~/.ssh
-          ssh-keyscan -t rsa,ecdsa,ed25519 -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
 
-      - name: Deploy to server
-        run: |
-          ssh "${{ secrets.SERVER_USER }}"@"${{ secrets.SERVER_IP }}" '
-            cd "${{ secrets.PATH_API_MIDDLE }}" &&
+          ssh -o StrictHostKeyChecking=no -i private_key.pem "$SERVER_USER"@"$SERVER_IP" <<EOF
+
+            cd /WX2TB/Documentos/fontes/PMO/raizen-power-trading-api-middle &&
             ./deploy.sh
-          '
+          EOF

@@ -15,7 +15,8 @@ from app import (
     bbce_controller,
     decks_controller,
     speech_to_text_controller,
-    bot_sintegre_controller
+    bot_sintegre_controller,
+    meteorologia_controller
 )
 auth_scheme = HTTPBearer()
 
@@ -46,6 +47,8 @@ app.include_router(bbce_controller, prefix="/api/v2")
 app.include_router(decks_controller, prefix="/api/v2")
 app.include_router(speech_to_text_controller, prefix="/api/v2", dependencies=[Depends(auth_scheme), Depends(cognito.auth_required)])
 app.include_router(bot_sintegre_controller, prefix="/api/v2")
+app.include_router(meteorologia_controller, prefix="/api/v2")
+
 @app.get("/")
 def teste():
     return {"Hello": "World"}

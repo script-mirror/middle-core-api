@@ -21,10 +21,11 @@ jobs:
           
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
+          echo "$SERVER_USER"
+          chmod 400 private_key.pem
 
-          ssh -o StrictHostKeyChecking=no -i private_key.pem "$SERVER_USER"@"$SERVER_IP" <<EOF
+          ssh -i private_key.pem $SERVER_USER@$SERVER_IP "
 
             cd /WX2TB/Documentos/fontes/PMO/raizen-power-trading-api-middle &&
             ./deploy.sh
-          EOF
+          "

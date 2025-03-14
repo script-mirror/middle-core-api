@@ -20,6 +20,35 @@ jobs:
           SERVER_IP: ${{ secrets.SERVER_IP }}
           
         run: |
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "Error: SSH_PRIVATE_KEY is empty"
+            exit 1
+          fi
+          
+          if [ -z "${{ secrets.SERVER_IP }}" ]; then
+            echo "Error: SERVER_IP is empty"
+            exit 1
+          fi
+          
+          echo "Setting up SSH directory..."
+          mkdir -p ~/.ssh
+          
+          echo "Adding SSH private key..."
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          
+          echo "Setting permissions..."
+          chmod 600 ~/.ssh/id_rsa
+          chmod 700 ~/.ssh
+          
+          echo "Running ssh-keyscan..."
+          ssh-keyscan -t rsa,ecdsa,ed25519 -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+          
+          echo "Starting ssh-agent..."
+          eval "$(ssh-agent -s)"
+          
+          echo "Adding key to ssh-agent..."
+          ssh-add ~/.ssh/id_rsa
+          
           echo "$PRIVATE_KEY" > private_key.pem
           echo "$SERVER_USER"
           chmod 400 private_key.pem

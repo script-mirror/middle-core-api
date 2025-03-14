@@ -49,6 +49,10 @@ app.include_router(speech_to_text_controller, prefix="/api/v2", dependencies=[De
 app.include_router(bot_sintegre_controller, prefix="/api/v2")
 app.include_router(meteorologia_controller, prefix="/api/v2")
 
+@app.get("/")
+def teste():
+    return {"Hello": "World"}
+
 @app.on_event("shutdown")
 def shutdown():
     cache.close()

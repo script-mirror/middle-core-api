@@ -9,12 +9,12 @@ import requests as r
 from requests.exceptions import HTTPError
 from typing import Optional, List
 from fastapi import HTTPException
+from app.core.config import settings
 
 from .schema import *
 
 from app.core.utils import cache
 from ..ons import service as ons_service
-from app.core.utils.graphs import get_color
 from app.core.utils.graphs import get_access_token
 from app.airflow import service as airflow_service 
 # from app.utils.airflow.airflow_service import trigger_dag_SMAP
@@ -315,20 +315,13 @@ class Chuva:
         df_model_base = df_map_grouped_by_subbacia[['modelo','dt_rodada', 'hr_rodada']].drop_duplicates()
         model_base = df_model_base.to_dict('records')[0]
     
-        rodada = model_base['hr_rodada']
-        rodada_time = datetime.time(rodada, 0, 0, 0)
-        data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], rodada_time)
+        data_rodada_date = datetime.datetime.combine(model_base['dt_rodada'], datetime.time(0))
         data_rodada_str = data_rodada_date.isoformat()
         data_rodada_str = f'{data_rodada_str}.000Z'
         data_final = None
         modelo = model_base['modelo']
         grupo = "ONS" if 'ons' in model_base["modelo"].lower() else "RZ"
         viez = False if 'remvies' in model_base["modelo"].lower() else True
-        cor = get_color(modelo.upper())
-        
-        subbacia_values = df_map_grouped_by_subbacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
-        bacia_values = df_map_grouped_by_bacia[['dt_prevista', 'vl_chuva', 'nome']].to_dict('records')
-        submercado_values = df_map_grouped_by_submercado[['dt_prevista', 'vl_chuva', 'str_sigla']].to_dict('records')
         
         data = []
         agrupamentos = {
@@ -338,9 +331,9 @@ class Chuva:
         }
 
         for tipo, values in [
-            ('subbacia', subbacia_values.to_dict('records')),
-            ('bacia', bacia_values.to_dict('records')),
-            ('submercado', submercado_values.to_dict('records'))
+            ('subbacia', df_map_grouped_by_subbacia.to_dict('records')),
+            ('bacia', df_map_grouped_by_bacia.to_dict('records')),
+            ('submercado', df_map_grouped_by_submercado.to_dict('records'))
         ]:
             
             for value in values:
@@ -378,10 +371,10 @@ class Chuva:
         
         
         accessToken = get_access_token();
-        api_url = os.getenv('API_URL', 'http://localhost:3000/api/map')
+        api_url = settings.API_URL
         
         
-        res = r.post('https://tradingenergiarz.com/backend/api/map', verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
+        res = r.post(api_url, verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
         
         try:
             res.raise_for_status()  
@@ -391,9 +384,9 @@ class Chuva:
             logger.error(f"Other error: {err}")
         else:
             if res.status_code == 201:
-                logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido na API de visualizacao")
+                logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido no endereco ${api_url}")
             else:
-                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} na API de visualizacao")
+                logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} no endereco ${api_url}")
         
         
     

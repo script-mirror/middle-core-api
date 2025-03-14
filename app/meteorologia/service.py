@@ -13,6 +13,7 @@ class EstacaoChuvosaObservada:
 
         if regiao == 'norte':
             tb_ec = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa_norte')
+            
         elif regiao == 'sudeste':
             tb_ec = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa')
 

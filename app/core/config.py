@@ -17,8 +17,9 @@ class Settings(BaseSettings):
     cognito_config: str
     sintegre_email: str
     sintegre_password: str
-    aws_region:str
-    cognito_userpool_id:str
+    aws_region:str 
+    cognito_userpool_id:str 
+    API_URL:str = "http://localhost:3000/api/map"
     class Config:
         env_file = ".env"
         case_sensitive = True

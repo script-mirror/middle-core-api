@@ -46,6 +46,9 @@ app.include_router(bbce_controller, prefix="/api/v2")
 app.include_router(decks_controller, prefix="/api/v2")
 app.include_router(speech_to_text_controller, prefix="/api/v2", dependencies=[Depends(auth_scheme), Depends(cognito.auth_required)])
 app.include_router(bot_sintegre_controller, prefix="/api/v2")
+@app.get("/")
+def teste():
+    return {"Hello": "World"}
 
 @app.on_event("shutdown")
 def shutdown():

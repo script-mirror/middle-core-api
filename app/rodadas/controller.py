@@ -127,7 +127,7 @@ def get_chuva_por_nome_modelo_data_entre_granularidade(
 ):
     return service.ChuvaMembro.get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo,dt_hr_rodada,granularidade,dt_inicio_previsao,dt_fim_previsao,no_cache,atualizar)
     
-@router.get('/chuva', tags=['Rodadas'])
+@router.get('/export-rain', tags=['Rodadas'])
 def export_rain(id_chuva: int):
     return service.Chuva.export_rain(id_chuva)
 

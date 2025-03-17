@@ -371,7 +371,7 @@ class Chuva:
         
         
         accessToken = get_access_token();
-        api_url = settings.API_URL
+        api_url = F'{settings.API_URL}/map'
         
         
         res = r.post(api_url, verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})

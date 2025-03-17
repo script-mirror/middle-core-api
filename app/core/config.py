@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     sintegre_password: str
     aws_region:str 
     cognito_userpool_id:str 
-    API_URL:str = "http://localhost:3000/api/map"
+    API_URL:str = "http://localhost:3000/api"
     class Config:
         env_file = ".env"
         case_sensitive = True

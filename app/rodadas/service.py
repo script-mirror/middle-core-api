@@ -13,7 +13,7 @@ from app.core.config import settings
 
 from .schema import *
 
-from app.core.utils import cache
+from app.core.utils import cache, date_util
 from ..ons import service as ons_service
 from app.core.utils.graphs import get_access_token
 from app.airflow import service as airflow_service 
@@ -226,6 +226,84 @@ class Chuva:
         return df.to_dict('records')
             
     @staticmethod
+    def get_chuva_smap_ponderada_submercado(id_chuva):
+        
+        #climeenergy
+        db_ons = db_mysql_master('db_ons')
+        db_ons.connect()
+
+        tb_ve_bacias = db_ons.getSchema('tb_ve_bacias')
+        tb_bacias_segmentadas = db_ons.getSchema('tb_bacias_segmentadas')
+                
+        #rodadas
+        db_rodadas = db_mysql_master('db_rodadas')
+        db_rodadas.connect()
+
+        tb_chuva = db_rodadas.getSchema('tb_chuva')
+        tb_cadastro_rodadas = db_rodadas.getSchema('tb_cadastro_rodadas')
+        tb_subbacia = db_rodadas.getSchema('tb_subbacia')
+
+
+        query_bacia = db.select(tb_bacias_segmentadas.c.cd_bacia,tb_bacias_segmentadas.c.str_bacia)
+        answer_tb_bacias_segmentadas = db_ons.db_execute(query_bacia).fetchall()
+        df_bacia = pd.DataFrame(answer_tb_bacias_segmentadas, columns=['cd_bacia','str_bacia'])
+
+
+        query_chuva = db.select(tb_cadastro_rodadas.c.id,tb_cadastro_rodadas.c.str_modelo,tb_cadastro_rodadas.c.hr_rodada,tb_chuva.c.cd_subbacia,tb_chuva.c.dt_prevista,tb_chuva.c.vl_chuva,tb_cadastro_rodadas.c.dt_revisao, tb_cadastro_rodadas.c.dt_rodada)\
+                                                .join(tb_chuva, tb_chuva.c.id==tb_cadastro_rodadas.c.id_chuva)\
+                                                .where(tb_chuva.c.id == id_chuva)
+
+        answer_tb_chuva = db_rodadas.db_execute(query_chuva).fetchall()
+        df_chuva = pd.DataFrame(answer_tb_chuva, columns= ['id', 'str_modelo',  'hr_rodada',  'cd_subbacia', 'dt_prevista',  'vl_chuva',  'dt_revisao', 'dt_rodada'])
+
+
+        cds_subbacia = df_chuva['cd_subbacia'].unique()
+
+        query_subbac = db.select(tb_subbacia.c.cd_subbacia, tb_subbacia.c.cd_bacia_mlt, tb_subbacia.c.txt_submercado)\
+                                                .where(tb_subbacia.c.cd_subbacia.in_(cds_subbacia))
+        answer_tb_subbacia = db_rodadas.db_execute(query_subbac).fetchall()
+        df_subbacia = pd.DataFrame(answer_tb_subbacia, columns=['cd_subbacia','cd_bacia','txt_submercado'])
+
+
+        df_chuva_concat= pd.merge(df_chuva,df_subbacia, on=['cd_subbacia'], how='inner')
+        df_chuva_concat= pd.merge(df_chuva_concat,df_bacia, on=['cd_bacia'], how='inner')
+
+        df_chuva_concat['dt_prevista'] = pd.to_datetime(df_chuva_concat['dt_prevista'])
+
+        df_chuva_concat['dt_inicio_semana'] = df_chuva_concat['dt_prevista'].apply(lambda x: date_util.getLastSaturday(x)).dt.strftime('%Y-%m-%d')
+
+        dt_rodada = df_chuva['dt_rodada'].max()
+        dt = date_util.getLastSaturday(dt_rodada)
+        dt_inicio_semana = datetime.datetime.strftime(dt,"%Y-%m-%d")
+        
+
+        select_query = db.select(tb_ve_bacias.c.cd_bacia,tb_ve_bacias.c.vl_mes,tb_ve_bacias.c.dt_inicio_semana,tb_ve_bacias.c.cd_revisao,((tb_ve_bacias.c.vl_ena * 100) / db.func.nullif(tb_ve_bacias.c.vl_perc_mlt, 0)).label('mlt'))\
+                                        .where(tb_ve_bacias.c.dt_inicio_semana >= dt_inicio_semana)
+        answer_tb_ve_bacias = db_ons.db_execute(select_query).fetchall()
+        
+        df_mlt = pd.DataFrame(answer_tb_ve_bacias, columns=['cd_bacia','vl_mes','dt_inicio_semana','cd_revisao','mlt'])
+        df_mlt = df_mlt.sort_values(['vl_mes','cd_revisao'], ascending=False)
+        # Remover as linhas duplicadas na ColunaA, mantendo apenas a linha com o valor máximo em ColunaB
+        df_mlt['dt_inicio_semana'] = pd.to_datetime(df_mlt['dt_inicio_semana']).dt.strftime('%Y-%m-%d')
+        df_mlt = df_mlt.drop_duplicates(['dt_inicio_semana','cd_bacia'], keep='first')
+        
+        df_mlt = df_mlt.sort_values('dt_inicio_semana')
+
+        df_concatenado = pd.merge(df_chuva_concat, df_mlt, on=['dt_inicio_semana', 'cd_bacia'], how='inner')
+        df_concatenado['chuvaxmlt'] = df_concatenado['vl_chuva']*df_concatenado['mlt']
+
+        df_concatenado['txt_submercado'] = df_concatenado['txt_submercado'].apply(lambda x: 'SE' if x == 'Sudeste' else 'S' if x == 'Sul'  else 'N' if x == 'Norte'  else 'NE')
+        df = df_concatenado.groupby(["str_modelo","id",'hr_rodada',"txt_submercado",'dt_prevista'])[['chuvaxmlt','mlt']].sum()
+        df['chuva_pond'] = df['chuvaxmlt'] / df['mlt']
+
+        df.reset_index(inplace=True)
+        df.rename(columns={'str_modelo':'modelo', 'chuva_pond':'vl_chuva', 'txt_submercado':'str_sigla'}, inplace=True)
+        df['dt_rodada'] = dt_rodada    
+        
+        return df[["dt_rodada", "dt_prevista","hr_rodada","modelo","vl_chuva","str_sigla"]].to_dict("records")
+
+
+    @staticmethod
     def get_chuva_por_id_data_entre_granularidade(
         id_chuva:int,
         granularidade:str,
@@ -276,7 +354,6 @@ class Chuva:
     def get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo, dt_hr_rodada, granularidade, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar):
         rodadas = CadastroRodadas.get_rodadas_por_dt_hr_nome(dt_hr_rodada, nome_modelo)
         return Chuva.get_chuva_por_id_data_entre_granularidade(rodadas[0]["id_chuva"], granularidade, dt_inicio_previsao, dt_fim_previsao, no_cache, atualizar)
-        
     
     @staticmethod
     def get_previsao_chuva_modelos_combinados(
@@ -291,26 +368,24 @@ class Chuva:
         return df.to_dict('records')
     
     @staticmethod
-    def export_rain(id_type: int) -> dict:
+    def export_rain(id_chuva: int) -> dict:
         
-        def get_data_grouped(id_type: int, granularidade: str):
-            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_type, granularidade))
+        def get_data_grouped(id_chuva: int, granularidade: str):
+            return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_chuva, granularidade))
         
-        df_map_grouped_by_subbacia = get_data_grouped(id_type, 'subbacia')
-        df_map_grouped_by_bacia = get_data_grouped(id_type, 'bacia')
-        df_map_grouped_by_submercado = get_data_grouped(id_type, 'submercado')
+        df_map_grouped_by_subbacia = get_data_grouped(id_chuva, 'subbacia')
+        df_map_grouped_by_bacia = get_data_grouped(id_chuva, 'bacia')
+        df_map_grouped_by_submercado = get_data_grouped(id_chuva, 'submercado')
         
         df_subbacias = pd.DataFrame(Subbacia.get_subbacia())
         df_bacias = pd.DataFrame(ons_service.tb_bacias.get_bacias('tb_chuva'))
-        df_submercados = pd.DataFrame(ons_service.tb_submercado.get_submercados())
         
         df_subbacias_merged = pd.merge(df_map_grouped_by_subbacia, df_subbacias, left_on='cd_subbacia', right_on='id')
         df_bacias_merged = pd.merge(df_map_grouped_by_bacia, df_bacias, left_on='id_bacia', right_on='id')
-        df_submercados_merged = pd.merge(df_map_grouped_by_submercado, df_submercados, left_on='id_submercado', right_on='id')
         
         df_map_grouped_by_subbacia = df_subbacias_merged[['modelo','dt_rodada', 'hr_rodada', 'dt_prevista', 'nome', 'vl_chuva']]
         df_map_grouped_by_bacia = df_bacias_merged[['modelo','dt_rodada', 'dt_prevista', 'nome', 'vl_chuva']]
-        df_map_grouped_by_submercado = df_submercados_merged[['modelo','dt_rodada', 'dt_prevista', 'str_sigla', 'vl_chuva']]
+        df_map_grouped_by_submercado = pd.DataFrame(Chuva.get_chuva_smap_ponderada_submercado(id_chuva))
         
         df_model_base = df_map_grouped_by_subbacia[['modelo','dt_rodada', 'hr_rodada']].drop_duplicates()
         model_base = df_model_base.to_dict('records')[0]
@@ -356,7 +431,7 @@ class Chuva:
             "dataRodada": data_rodada_str,
             "dataFinal": data_final_str,
             "mapType": "chuva",
-            "idType": str(id_type),
+            "idType": str(id_chuva),
             "modelo": model_base['modelo'],
             "priority": None,
             "grupo": grupo,
@@ -388,8 +463,6 @@ class Chuva:
             else:
                 logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} no endereco ${api_url}")
         
-        
-    
     @staticmethod
     def post_chuva_modelo_combinados(chuva_prev:List[ChuvaPrevisaoCriacao], rodar_smap:bool, prev_estendida:bool) -> None:
         

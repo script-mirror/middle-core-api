@@ -50,7 +50,7 @@ app.include_router(bot_sintegre_controller, prefix="/api/v2")
 app.include_router(meteorologia_controller, prefix="/api/v2")
 
 @app.get("/")
-def teste():
+def health():
     return {"Hello": "World"}
 
 @app.on_event("shutdown")

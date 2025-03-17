@@ -131,7 +131,3 @@ def get_chuva_por_nome_modelo_data_entre_granularidade(
 def export_rain(id_chuva: int):
     return service.Chuva.export_rain(id_chuva)
 
-# @router.get("/protected-endpoint")
-# def protected_endpoint(session_data: dict = Depends(auth_dependency)):
-#     user_id = session_data["user_id"]
-#     return {"message": "User is authenticated", "user_id": user_id}

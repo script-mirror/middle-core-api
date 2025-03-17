@@ -223,8 +223,3 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
         send_to_webhook(airflow_products['success'])
 
     return {'failed':airflow_products['failed']}
-
-if __name__ == "__main__":
-    produtos = get_products()
-    for produto in produtos:
-        print(f"""VALUES('{produto["name"]}'),""")

@@ -1,9 +1,10 @@
 from sys import path
 import pdb
-import sqlalchemy as sa
+import sqlalchemy as db
 import pandas as pd
 import numpy as np
 import datetime
+from app.core.utils import date_util
 
 
 from app.core.database.wx_dbClass import db_mysql_master
@@ -17,7 +18,7 @@ class tb_bacias_segmentadas:
         __DB__ = db_mysql_master('db_ons')
         bacias = __DB__.getSchema('tb_bacias_segmentadas')
 
-        query = sa.select(
+        query = db.select(
           bacias.c['cd_bacia'],
           bacias.c['str_bacia'],
         )
@@ -31,7 +32,7 @@ class tb_bacias:
         __DB__ = db_mysql_master('db_ons')
         bacias = __DB__.getSchema('tb_bacias')
 
-        query = sa.select(
+        query = db.select(
           bacias.c['id_bacia'],
           bacias.c['str_bacia'],
         )
@@ -50,7 +51,7 @@ class tb_submercado:
         __DB__ = db_mysql_master('db_ons')
         submercado = __DB__.getSchema('tb_submercado')
 
-        query = sa.select(
+        query = db.select(
             submercado.c['cd_submercado'],
             submercado.c['str_submercado'],
             submercado.c['str_sigla']

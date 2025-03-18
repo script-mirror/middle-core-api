@@ -363,30 +363,28 @@ class Cvu:
     def create(body: List[CvuSchema]):
         body_dict = [x.model_dump() for x in body]
         df = pd.DataFrame(body_dict)
-
-        # Drop duplicates from dataframe based on critical columns
-        df.drop_duplicates(subset=['dt_inicio_rv', 'id_fonte'], inplace=True)
         
-        # Get unique combinations to delete from database
-        to_delete = df[['dt_inicio_rv', 'id_fonte']].drop_duplicates().values
+        # Drop duplicates based on primary key columns
+        primary_key_columns = ['cd_usina', 'tipo_cvu', 'mes_referencia', 'ano_horizonte', 'dt_atualizacao', 'fonte']
+        df.drop_duplicates(subset=primary_key_columns, keep='first', inplace=True)
         
-        # Delete existing records that match incoming data
-        for dt_inicio_rv, id_fonte in to_delete:
-            query = db.delete(Cvu.tb).where(
-                db.and_(
-                    Cvu.tb.c.dt_inicio_rv == dt_inicio_rv,
-                    Cvu.tb.c.id_fonte == id_fonte
-                )
-            )
-            rows = __DB__.db_execute(query, commit=prod).rowcount
-            logger.info(f"Deleted {rows} existing rows matching dt_inicio_rv={dt_inicio_rv}, id_fonte={id_fonte}")
-
+        # Delete existing records that match the incoming data
+        for _, row in df.iterrows():
+            delete_conditions = {
+                'cd_usina': row['cd_usina'],
+                'tipo_cvu': row['tipo_cvu'],
+                'mes_referencia': row['mes_referencia'],
+                'ano_horizonte': row['ano_horizonte'],
+                'dt_atualizacao': row['dt_atualizacao'],
+                'fonte': row['fonte']
+            }
+            Cvu.delete_by_params(**delete_conditions)
+        
         # Insert new records
-        logger.info(f"Inserting {len(df)} new records")
-        logger.info(df.to_string())
+        logger.info(f"Inserting {len(df)} records into tb_cvu")
         query = db.insert(Cvu.tb).values(df.to_dict('records'))
         rows = __DB__.db_execute(query, commit=prod).rowcount
-        logger.info(f"{rows} rows added to tb_cvu")
+        logger.info(f"{rows} linhas adicionadas na tb_cvu")
         return None
 
 

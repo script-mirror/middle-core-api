@@ -302,7 +302,117 @@ class Chuva:
         
         return df[["dt_rodada", "dt_prevista","hr_rodada","modelo","vl_chuva","str_sigla"]].to_dict("records")
 
+    @staticmethod
+    def get_chuva_observada_ponderada_submercado(data_inicio: datetime.date, data_fim: datetime.date):
+    
+        #climeenergy
+        db_ons = db_mysql_master('db_ons')
+        db_ons.connect()
 
+        tb_ve_bacias = db_ons.getSchema('tb_ve_bacias')
+        tb_bacias_segmentadas = db_ons.getSchema('tb_bacias_segmentadas')
+
+        #rodadas
+        db_rodadas = db_mysql_master('db_rodadas')
+        db_rodadas.connect()
+
+        tb_chuva_obs = db_rodadas.getSchema('tb_chuva_obs')
+        tb_subbacia = db_rodadas.getSchema('tb_subbacia')
+
+        # query para pegar os nomes das subbacias
+        query_subbacia = db.select(tb_subbacia.c.cd_subbacia, tb_subbacia.c.cd_bacia_mlt, tb_subbacia.c.txt_submercado)
+        answer_subbacia = db_rodadas.db_execute(query_subbacia).fetchall()
+        df_subbacia = pd.DataFrame(answer_subbacia, columns=['cd_subbacia','cd_bacia_mlt','txt_submercado'])
+
+        # query para pegar os nomes das bacias
+        query_bacia = db.select(tb_bacias_segmentadas.c.cd_bacia,tb_bacias_segmentadas.c.str_bacia)
+        answer_tb_bacias_segmentadas = db_ons.db_execute(query_bacia).fetchall()
+        df_bacia = pd.DataFrame(answer_tb_bacias_segmentadas, columns=['cd_bacia_mlt','str_bacia'])
+        
+        # concatenando dataframe valores de chuva e nomes subbacias
+        df_bacia_subbacia_concat= pd.merge(df_subbacia,df_bacia, on=['cd_bacia_mlt'], how='inner')  
+
+
+
+        # query para pegar valores de chuva observada
+        query_chuva_obs = db.select(tb_chuva_obs.c.cd_subbacia, tb_chuva_obs.c.dt_observado, tb_chuva_obs.c.vl_chuva).where(tb_chuva_obs.c.dt_observado.between(data_inicio, data_fim))
+        
+        answer_tb_chuva_obs = db_rodadas.db_execute(query_chuva_obs).fetchall()
+        df_chuva_obs = pd.DataFrame(answer_tb_chuva_obs, columns = ['cd_subbacia','dt_observado','vl_chuva'])
+
+        # concatenando dataframe valores de chuva e nomes subbacias
+        df_chuva_concat= pd.merge(df_chuva_obs,df_bacia_subbacia_concat, on=['cd_subbacia'], how='inner')
+
+
+            # pegando data de revisao que sempre é o sabado anterior ao dia escolhido
+        ultimoSabado = date_util.getLastSaturday(data_inicio)
+        
+        # query para transformar porcentagem mlt em valor MLT
+        select_query = db.select(tb_ve_bacias.c.cd_bacia,tb_ve_bacias.c.vl_mes,tb_ve_bacias.c.dt_inicio_semana,tb_ve_bacias.c.cd_revisao,((tb_ve_bacias.c.vl_ena * 100) / db.func.nullif(tb_ve_bacias.c.vl_perc_mlt, 0)).label('mlt'))\
+                                                                                        .where(tb_ve_bacias.c.dt_inicio_semana >= ultimoSabado)
+        answer_tb_ve_bacias = db_ons.db_execute(select_query).fetchall()
+        # criando dataframe mlt ordenando pela data inicial da semana
+        df_mlt = pd.DataFrame(answer_tb_ve_bacias, columns=['cd_bacia_mlt','vl_mes','dt_inicio_semana','cd_revisao','mlt'])
+        df_mlt = df_mlt.sort_values(['vl_mes','cd_revisao'], ascending=False)
+        # Remover as linhas duplicadas na ColunaA, mantendo apenas a linha com o valor máximo em ColunaB
+        df_mlt['dt_inicio_semana'] = pd.to_datetime(df_mlt['dt_inicio_semana']).dt.strftime('%Y-%m-%d')
+        df_mlt = df_mlt.drop_duplicates(['dt_inicio_semana','cd_bacia_mlt'], keep='first')
+        
+        # concatenando valores de mlt, mltxchuva e valores de chuva em um unico dataframe
+        df_chuva_concat['dt_observado'] = pd.to_datetime(df_chuva_concat['dt_observado'])
+        df_chuva_concat['dt_inicio_semana'] = df_chuva_concat['dt_observado'].apply(lambda x: date_util.getLastSaturday(x)).dt.strftime('%Y-%m-%d')
+        df_concatenado = pd.merge(df_chuva_concat, df_mlt, on=['dt_inicio_semana', 'cd_bacia_mlt'], how='inner')
+        df_concatenado['chuvaxmlt'] = df_concatenado['vl_chuva']*df_concatenado['mlt']
+        df_concatenado['txt_submercado'] = df_concatenado['txt_submercado'].apply(lambda x: 'SE' if x == 'Sudeste' else 'S' if x == 'Sul'  else 'N' if x == 'Norte'  else 'NE')
+
+        df_concatenado['dt_observado'] = pd.to_datetime(df_concatenado['dt_observado']).dt.strftime('%Y-%m-%d')
+        df = df_concatenado.groupby(["txt_submercado",'dt_observado'])[['chuvaxmlt','mlt']].sum()
+        df['chuva_pond'] = df['chuvaxmlt'] / df['mlt']
+        df.reset_index(inplace=True)
+        df = df[["dt_observado","txt_submercado","chuva_pond"]]
+        df.rename(columns={'txt_submercado':'valorAgrupamento', 'chuva_pond':'valor', 'dt_observado':'dataReferente'}, inplace=True)
+        df['dataReferente'] = pd.to_datetime(df['dataReferente']).dt.strftime('%Y-%m-%dT00:00:00.000Z')
+        df['valorAgrupamento'] = df['valorAgrupamento'].str.replace(' ', '')
+        payload = {
+            "dataRodada": f"{data_fim}T00:00:00.000Z",
+            "dataFinal": f"{data_fim}T00:00:00.000Z",
+            "mapType": "chuva",
+            "idType": None,
+            "modelo": "Chuva GPM",
+            "priority": None,
+            "grupo": "ONS",
+            "rodada": "0",
+            "viez": True,
+            "membro": "0",
+            "measuringUnit": "mm3",
+            "propagationBase": None,
+            "generationProcess": None,
+            "data": [
+                {
+                    "valoresMapa": df.to_dict("records"),
+                    "agrupamento": "subbacia"
+                }
+            ]
+        }
+        accessToken = get_access_token()
+        api_url = f'{settings.API_URL}/map'
+        
+        res = r.post(api_url, verify=False, json=payload, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
+        
+        logger.info(res.text)
+        try:
+            res.raise_for_status()  
+        except HTTPError as http_err:
+            logger.error(f"HTTP error: {http_err}")
+        except Exception as err:
+            logger.error(f"Other error: {err}")
+        else:
+            if res.status_code == 201:
+                logger.info(f"Chuva ponderada inserida")
+            else:
+                logger.warning(f"Erro ao tentar inserir chuva ponderada")
+        return None
+    
     @staticmethod
     def get_chuva_por_id_data_entre_granularidade(
         id_chuva:int,
@@ -413,8 +523,8 @@ class Chuva:
             
             for value in values:
                 valorAgrupamento = value['nome'] if tipo in ['subbacia', 'bacia'] else value['str_sigla']
-                data_referente_date = datetime.datetime.strptime(value['dt_prevista'], '%Y-%m-%d')
-            
+                data_referente_date = datetime.datetime.strptime( f"{value['dt_prevista']}", '%Y-%m-%d %H:%M:%S')
+                           
                 agrupamentos[tipo]['valoresMapa'].append({
                     "valor": value['vl_chuva'],
                     "dataReferente": value['dt_prevista'],
@@ -438,15 +548,15 @@ class Chuva:
             "rodada": str(model_base['hr_rodada']),
             "viez": viez,
             "membro": "0",
-            "measuringUnit": "mm",
+            "measuringUnit": "mm3",
             "propagationBase": None,
-            "generationProcess": "SMAP",
+            "generationProcess": None,
             "data": data
         }
         
         
-        accessToken = get_access_token();
-        api_url = F'{settings.API_URL}/map'
+        accessToken = get_access_token()
+        api_url = f'{settings.API_URL}/map'
         
         
         res = r.post(api_url, verify=False, json=body, headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {accessToken}'})
@@ -732,25 +842,7 @@ class Smap:
         )
         
         return None
-        # response:dict = get_dag_smap_run_status(rodada.str_modelo, momento_req)
-        
-        # falhou = response['state'] == 'failed'
-        
-        # Smap.enviar_email_status_smap(falhou, response['end_datetime'], response["url"])
-        # if falhou:
-        #     raise HTTPException(400, f'{response}')
-        # return response
-    
-    # @staticmethod
-    # def enviar_email_status_smap(sucesso: bool, momento:datetime.datetime, dag_url:str):
-    #     email = WxEmail()
-        
-    #     status, cor_status = ("Concluido", "#88B04B") if sucesso else ("Falha", "#b04b4b")
-        
-    #     style = f"""<style> body {{ font-family: Arial, Helvetica, sans-serif; text-align: center; padding: 40px 0; margin: 0; background: #EBF0F5; }} h1 {{ color: {cor_status}; font-weight: 900; font-size: 40px; margin-bottom: 10px; }} p {{ color: #404F5E; font-size: 20px; margin: 0; }} .card {{ background: white; padding: 30px; border-radius: 4px; box-shadow: 0 2px 3px #C8D0D8; display: inline-block; margin: 0 auto; }}</style>"""
-    #     html = f"""<html><head></head>{style}<body> <div class="card"> <h1>{status}</h1> <p>Fim da execução do Airflow {momento.strftime("%d/%m/%Y %H:%M:%S")}<br /><a href="{dag_url}">DAG Airflow</a></p> </div></body></html>"""
-        
-    #     email.sendEmail(texto=html, assunto="SMAP - Gera Chuva", send_to=["arthur.moraes@raizen.com"])
+
 
     @staticmethod
     def delete_por_id(id:int):

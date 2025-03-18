@@ -131,3 +131,9 @@ def get_chuva_por_nome_modelo_data_entre_granularidade(
 def export_rain(id_chuva: int):
     return service.Chuva.export_rain(id_chuva)
 
+@router.get("/export-rain-obs", tags=['Rodadas'])
+def chuva_observada_ponderada_submercado(
+    data:datetime.date,
+    qtd_dias:int
+):
+    return service.Chuva.get_chuva_observada_ponderada_submercado(data-datetime.timedelta(days=qtd_dias), data)

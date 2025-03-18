@@ -557,7 +557,6 @@ class Chuva:
             "generationProcess": None,
             "data": data
         }
-        print(body)
         
         accessToken = get_access_token()
         api_url = f'{settings.API_URL}/map'

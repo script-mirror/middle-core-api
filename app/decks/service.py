@@ -373,10 +373,20 @@ class Cvu:
                 dt_atualizacao=dt_atualizacao,
                 fonte=fonte
                 )
-
-        query = db.insert(Cvu.tb).values(body_dict)
+        df = pd.DataFrame(body_dict)
+        df.drop_duplicates(inplace=True)
+        logger.info(df.to_string())
+        query = db.insert(Cvu.tb).values(df.to_dict('records'))
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_cvu")
+        return None
+
+
+    @staticmethod
+    def delete_():
+        query = db.delete(Cvu.tb).where(Cvu.tb.c.mes_referencia == '202503')
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
     @staticmethod

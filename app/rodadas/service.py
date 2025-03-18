@@ -378,19 +378,19 @@ class Chuva:
             "dataFinal": f"{data_fim}T00:00:00.000Z",
             "mapType": "chuva",
             "idType": None,
-            "modelo": "Chuva GPM",
+            "modelo": "CHUVA-GPM",
             "priority": None,
             "grupo": "ONS",
             "rodada": "0",
             "viez": True,
             "membro": "0",
-            "measuringUnit": "mm3",
+            "measuringUnit": "mm",
             "propagationBase": None,
             "generationProcess": None,
             "data": [
                 {
                     "valoresMapa": df.to_dict("records"),
-                    "agrupamento": "subbacia"
+                    "agrupamento": "submercado"
                 }
             ]
         }
@@ -552,7 +552,7 @@ class Chuva:
             "rodada": str(model_base['hr_rodada']),
             "viez": viez,
             "membro": "0",
-            "measuringUnit": "mm3",
+            "measuringUnit": "mm",
             "propagationBase": None,
             "generationProcess": None,
             "data": data

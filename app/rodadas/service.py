@@ -531,7 +531,7 @@ class Chuva:
                            
                 agrupamentos[tipo]['valoresMapa'].append({
                     "valor": value['vl_chuva'],
-                    "dataReferente": value['dt_prevista'],
+                    "dataReferente": f'{data_referente_date.date()}T00:00:00.000Z',
                     "valorAgrupamento": valorAgrupamento
                 })
             
@@ -557,7 +557,7 @@ class Chuva:
             "generationProcess": None,
             "data": data
         }
-        
+        print(body)
         
         accessToken = get_access_token()
         api_url = f'{settings.API_URL}/map'

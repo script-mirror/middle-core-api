@@ -364,21 +364,29 @@ class Cvu:
         body_dict = [x.model_dump() for x in body]
         df = pd.DataFrame(body_dict)
 
-        unique_params = df[['dt_atualizacao', 'mes_referencia',"tipo_cvu","fonte"]].drop_duplicates().values
+        # Drop duplicates from dataframe based on critical columns
+        df.drop_duplicates(subset=['dt_inicio_rv', 'id_fonte'], inplace=True)
         
-        for dt_atualizacao,mes_referencia,tipo_cvu,fonte in unique_params:
-            Cvu.delete_by_params(
-                mes_referencia=mes_referencia,
-                tipo_cvu=tipo_cvu,
-                dt_atualizacao=dt_atualizacao,
-                fonte=fonte
+        # Get unique combinations to delete from database
+        to_delete = df[['dt_inicio_rv', 'id_fonte']].drop_duplicates().values
+        
+        # Delete existing records that match incoming data
+        for dt_inicio_rv, id_fonte in to_delete:
+            query = db.delete(Cvu.tb).where(
+                db.and_(
+                    Cvu.tb.c.dt_inicio_rv == dt_inicio_rv,
+                    Cvu.tb.c.id_fonte == id_fonte
                 )
-        df = pd.DataFrame(body_dict)
-        df.drop_duplicates(inplace=True)
+            )
+            rows = __DB__.db_execute(query, commit=prod).rowcount
+            logger.info(f"Deleted {rows} existing rows matching dt_inicio_rv={dt_inicio_rv}, id_fonte={id_fonte}")
+
+        # Insert new records
+        logger.info(f"Inserting {len(df)} new records")
         logger.info(df.to_string())
         query = db.insert(Cvu.tb).values(df.to_dict('records'))
         rows = __DB__.db_execute(query, commit=prod).rowcount
-        logger.info(f"{rows} linhas adicionadas na tb_cvu")
+        logger.info(f"{rows} rows added to tb_cvu")
         return None
 
 

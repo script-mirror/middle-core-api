@@ -636,7 +636,7 @@ class Chuva:
             (df_info_rodadas['hr_rodada'] == int(hr_rodada))
 
             if df_info_rodadas[mask_id_chuva].empty:
-                insert_cadastro_values += [None, new_chuva_id, None, None,None,dt_rodada,int(hr_rodada),str_modelo,None,None,None,None,None],
+                insert_cadastro_values += [None, new_chuva_id, None, None,None,dt_rodada,int(hr_rodada),f'{str_modelo}'.upper(),None,None,None,None,None],
                 df_prev_chuva.loc[df_prev_chuva['cenario']== cenario,'id_chuva'] = new_chuva_id
 
             else:

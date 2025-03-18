@@ -537,7 +537,7 @@ class Chuva:
             
                 if data_final is None or data_referente_date > data_final:
                     data_final = data_referente_date
-                    data_final_str = value['dt_prevista']
+                    data_final_str = f'{data_final.date()}T00:00:00.000Z'
 
         data = [agrup for agrup in agrupamentos.values() if agrup['valoresMapa']]
 

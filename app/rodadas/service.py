@@ -522,8 +522,12 @@ class Chuva:
         ]:
             
             for value in values:
+                    
                 valorAgrupamento = value['nome'] if tipo in ['subbacia', 'bacia'] else value['str_sigla']
-                data_referente_date = datetime.datetime.strptime( f"{value['dt_prevista']}", '%Y-%m-%d %H:%M:%S')
+                try:
+                    data_referente_date = datetime.datetime.strptime(value['dt_prevista'], '%Y-%m-%d')
+                except Exception:
+                    data_referente_date = datetime.datetime.strptime( f"{value['dt_prevista']}", '%Y-%m-%d %H:%M:%S')
                            
                 agrupamentos[tipo]['valoresMapa'].append({
                     "valor": value['vl_chuva'],

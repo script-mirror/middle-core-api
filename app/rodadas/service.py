@@ -295,7 +295,7 @@ class Chuva:
         df_concatenado['txt_submercado'] = df_concatenado['txt_submercado'].apply(lambda x: 'SE' if x == 'Sudeste' else 'S' if x == 'Sul'  else 'N' if x == 'Norte'  else 'NE')
         df = df_concatenado.groupby(["str_modelo","id",'hr_rodada',"txt_submercado",'dt_prevista'])[['chuvaxmlt','mlt']].sum()
         df['chuva_pond'] = df['chuvaxmlt'] / df['mlt']
-
+        df.sort_values(['cd_bacia'])
         df.reset_index(inplace=True)
         df.rename(columns={'str_modelo':'modelo', 'chuva_pond':'vl_chuva', 'txt_submercado':'str_sigla'}, inplace=True)
         df['dt_rodada'] = dt_rodada    
@@ -846,7 +846,23 @@ class Smap:
         
         return None
 
-
+    @staticmethod
+    def get_vazao_smap_by_id(id_smap:int):
+        query = db.select(
+            Smap.tb.c['id'],
+            Smap.tb.c['cd_posto'],
+            Smap.tb.c['dt_prevista'],
+            Smap.tb.c['vl_vazao_vna'],
+            Smap.tb.c['vl_vazao_prevs']
+            
+        ).where(
+            Smap.tb.c['id'] == id_smap
+        )
+        result = __DB__.db_execute(query, commit=prod)
+        df = pd.DataFrame(result, columns=['id', 'cd_posto','dt_prevista','vl_vazao_vna','vl_vazao_prevs'])
+        return df.to_dict('records')
+    
+    
     @staticmethod
     def delete_por_id(id:int):
         query = Smap.tb.delete(

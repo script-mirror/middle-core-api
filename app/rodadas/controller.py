@@ -115,6 +115,12 @@ def post_smap(
 ):  
     return service.Smap.post_rodada_smap(rodada)
 
+@router.get('/smap', tags=['Rodadas'])
+def get_vazao_smap_by_id(
+    id_smap:int
+):
+    return service.Smap.get_vazao_smap_by_id(id_smap)
+
 @router.get('/chuva/previsao/membros', tags=['Rodadas'])
 def get_chuva_por_nome_modelo_data_entre_granularidade(
     nome_modelo:Optional[str] = None,

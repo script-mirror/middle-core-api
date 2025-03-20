@@ -295,7 +295,6 @@ class Chuva:
         df_concatenado['txt_submercado'] = df_concatenado['txt_submercado'].apply(lambda x: 'SE' if x == 'Sudeste' else 'S' if x == 'Sul'  else 'N' if x == 'Norte'  else 'NE')
         df = df_concatenado.groupby(["str_modelo","id",'hr_rodada',"txt_submercado",'dt_prevista'])[['chuvaxmlt','mlt']].sum()
         df['chuva_pond'] = df['chuvaxmlt'] / df['mlt']
-        df.sort_values(['cd_bacia'])
         df.reset_index(inplace=True)
         df.rename(columns={'str_modelo':'modelo', 'chuva_pond':'vl_chuva', 'txt_submercado':'str_sigla'}, inplace=True)
         df['dt_rodada'] = dt_rodada    

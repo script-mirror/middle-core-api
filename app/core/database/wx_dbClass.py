@@ -28,7 +28,7 @@ class db_mysql_master():
     def connect(self):
         return self.Session()
 
-    def db_execute(self,query, commit=False):
+    def db_execute(self,query, commit=True):
         with self.connect() as session:
             result = session.execute(query)
             if commit:

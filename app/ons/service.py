@@ -84,10 +84,10 @@ class Acomph:
         
         query = db.select(
             inner_query.c.cd_posto,
-            inner_query.c.dt_referente,
+            db.func.date(inner_query.c.dt_referente),
             inner_query.c.vl_vaz_inc_conso,
             inner_query.c.vl_vaz_nat_conso,
-            inner_query.c.dt_acomph
+            db.func.date(inner_query.c.dt_acomph)
         ).where(
             inner_query.c.row_number == 1
         )

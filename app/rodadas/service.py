@@ -433,7 +433,7 @@ class Chuva:
             df = df[df['dt_prevista'] >= dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
         if granularidade == 'subbacia':
-            df.rename(columns={'id':'cd_subbacia'}, inplace=True)
+            df = df.rename(columns={'id':'cd_subbacia'})
             return df.to_dict('records')
         df_subbacia = pd.DataFrame(Subbacia.get_subbacia())
         merged = df.merge(df_subbacia[['id', 'nome_bacia', 'nome_submercado']], on='id')
@@ -474,8 +474,8 @@ class Chuva:
         df = pd.DataFrame()
         for obj in query_obj:
             q = obj.dict()
-            df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q["id"], q["dt_inicio"], q["dt_fim"], granularidade, no_cache, atualizar))])
-        return df.to_dict('records')
+            df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q["id"], granularidade,q["dt_inicio"], q["dt_fim"], no_cache, atualizar))])
+        return df.rename(columns={'cd_subbacia':'id'}).to_dict('records')
     
     @staticmethod
     def export_rain(id_chuva: int) -> dict:

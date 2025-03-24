@@ -472,8 +472,9 @@ class Chuva:
         atualizar:Optional[bool] = False):
         
         df = pd.DataFrame()
-        for q in query_obj:
-            df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q.id, q.dt_inicio, q.dt_fim, granularidade, no_cache, atualizar))])
+        for obj in query_obj:
+            q = obj.dict()
+            df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q["id"], q["dt_inicio"], q["dt_fim"], granularidade, no_cache, atualizar))])
         return df.to_dict('records')
     
     @staticmethod

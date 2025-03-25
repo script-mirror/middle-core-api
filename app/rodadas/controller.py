@@ -25,7 +25,7 @@ def get_rodadas(
         return service.CadastroRodadas.get_rodadas_por_dt(dt)
     return cache.get_cached(service.CadastroRodadas.get_rodadas_por_dt, dt, atualizar=atualizar)
 
-@router.get('/por-id/{id_rodada}',tags=['Rodadas'])
+@router.get('/por-id/{idRodada}',tags=['Rodadas'])
 def get_rodadas_by_id(
     idRodada:int
     ):

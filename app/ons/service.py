@@ -14,17 +14,29 @@ __DB__ = db_mysql_master('db_ons')
 
 
     
-class tb_bacias_segmentadas:
+class BaciasSegmentadas:
     tb:db.Table = __DB__.getSchema('tb_bacias_segmentadas')
 
     @staticmethod
     def get_bacias_segmentadas():
         query = db.select(
-          tb_bacias_segmentadas.tb.c['cd_bacia'],
-          tb_bacias_segmentadas.tb.c['str_bacia'],
+          BaciasSegmentadas.tb.c['cd_bacia'],
+          BaciasSegmentadas.tb.c['str_bacia'],
         )
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=['cd_bacia','str_bacia'])
+        return df.to_dict('records')
+    
+    @staticmethod
+    def get_bacias_segmentadas_by_cd_bacia(cd_bacia):
+        query = db.select(
+          BaciasSegmentadas.tb.c['cd_bacia'],
+          BaciasSegmentadas.tb.c['cd_submercado'],
+        ).where(
+            BaciasSegmentadas.tb.c['cd_bacia'] == cd_bacia
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=['cd_bacia','cd_submercado'])
         return df.to_dict('records')
 
 class tb_bacias:

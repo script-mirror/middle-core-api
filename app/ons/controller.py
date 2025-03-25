@@ -32,7 +32,7 @@ def get_submercados(
 
 @router.get('/bacias-segmentadas',tags=['ONS'])
 def get_bacias_segmentadas():
-     return service.tb_bacias_segmentadas.get_bacias_segmentadas()
+     return service.BaciasSegmentadas.get_bacias_segmentadas()
 
 @router.get('/acomph', tags=['ONS'])
 def get_acomph_by_dt_referente(

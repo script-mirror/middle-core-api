@@ -57,6 +57,36 @@ class CadastroRodadas:
         df['id_prospec'] = df['id_prospec'].astype(pd.Int64Dtype())
         return df.to_dict('records')
     
+    
+    @staticmethod
+    def get_rodadas_by_id(id_rodada:int):
+        query = db.select(
+        CadastroRodadas.tb.c['id'],
+        CadastroRodadas.tb.c['id_chuva'],
+        CadastroRodadas.tb.c['id_smap'],
+        CadastroRodadas.tb.c['id_previvaz'],
+        CadastroRodadas.tb.c['id_prospec'],
+        CadastroRodadas.tb.c['dt_rodada'],
+        CadastroRodadas.tb.c['hr_rodada'],
+        CadastroRodadas.tb.c['str_modelo'],
+        CadastroRodadas.tb.c['fl_preliminar'],
+        CadastroRodadas.tb.c['fl_pdp'],
+        CadastroRodadas.tb.c['fl_psat'],
+        CadastroRodadas.tb.c['fl_estudo'],
+        CadastroRodadas.tb.c['dt_revisao']
+        ).where(
+            CadastroRodadas.tb.c['id'] == id_rodada
+        )
+        result = __DB__.db_execute(query, commit=prod).fetchall()
+        df = pd.DataFrame(result, columns=['id','id_chuva','id_smap','id_previvaz','id_prospec','dt_rodada','hr_rodada','str_modelo','fl_preliminar','fl_pdp','fl_psat','fl_estudo','dt_revisao'])
+        df['dt_rodada'] = df['dt_rodada'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        df['id_smap'] = df['id_smap'].astype(pd.Int64Dtype())
+        df['id_previvaz'] = df['id_previvaz'].astype(pd.Int64Dtype())
+        df['id_prospec'] = df['id_prospec'].astype(pd.Int64Dtype())
+        if df.empty:
+            raise HTTPException(404, {"erro":f"Nenhuma rodada encontrada com id {id_rodada}"})
+        return df.to_dict('records')[0]
     @staticmethod
     def get_historico_rodadas_por_nome(nome_rodada:str) -> List[dict]:
         query = db.select(

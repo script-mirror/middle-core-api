@@ -15,7 +15,7 @@ from typing import Optional, List
 router = APIRouter(prefix='/rodadas')
 
 
-@router.get('',tags=['Rodadas'])
+@router.get('/',tags=['Rodadas'])
 def get_rodadas(
     dt:Optional[datetime.date] = None,
     no_cache:Optional[bool] = True,
@@ -25,6 +25,11 @@ def get_rodadas(
         return service.CadastroRodadas.get_rodadas_por_dt(dt)
     return cache.get_cached(service.CadastroRodadas.get_rodadas_por_dt, dt, atualizar=atualizar)
 
+@router.get('/por-id/{id_rodada}',tags=['Rodadas'])
+def get_rodadas_by_id(
+    idRodada:int
+    ):
+    return service.CadastroRodadas.get_rodadas_by_id(idRodada)
 
 @router.get('/historico',tags=['Rodadas'])
 def get_historico_rodadas_por_nome(

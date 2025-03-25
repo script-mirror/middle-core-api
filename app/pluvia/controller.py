@@ -14,5 +14,5 @@ router = APIRouter(prefix='/pluvia')
 
 
 @router.get('/bacias',tags=['Pluvia'])
-def get_seilaoqueiso(data_rodada:datetime.date, flag_pzerada:Optional[bool] = False):
+def query_ultimo_id_pluvia_df(data_rodada:datetime.date, flag_pzerada:Optional[bool] = False):
     return service.PluviaEna.query_ultimo_id_pluvia_df(data_rodada, flag_pzerada)

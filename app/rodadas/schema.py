@@ -6,6 +6,7 @@ class RodadaSmap(BaseModel):
     dt_rodada: datetime.date
     hr_rodada: int
     str_modelo: str
+    id_dataviz_chuva: str
     
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date

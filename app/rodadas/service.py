@@ -627,9 +627,12 @@ class Chuva:
         df = pd.DataFrame(prevs)
         df['cenario'] = f'{modelo[0]}_{modelo[1]}_{modelo[2]}'
         
-        id_chuva = Chuva.inserir_chuva_modelos(df, rodar_smap, prev_estendida)
+        [id_chuva,dt_rodada,hr_rodada,str_modelo] = Chuva.inserir_chuva_modelos(df, prev_estendida)
         
-        Chuva.export_rain(id_chuva)
+        id_dataviz_chuva = Chuva.export_rain(id_chuva)
+        
+        if rodar_smap:
+                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo,'id_dataviz_chuva':id_dataviz_chuva}), prev_estendida)
         
         return None
     
@@ -641,7 +644,7 @@ class Chuva:
         print(f"{n_value} Linhas inseridas na Chuva") 
         
     @staticmethod
-    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, rodar_smap:bool, prev_estendida:bool): 
+    def inserir_chuva_modelos(df_prev_chuva_out:pd.DataFrame, prev_estendida:bool): 
         df_info_subbacias = Subbacia.info_subbacias()
         df_chuva_final = pd.merge(df_info_subbacias[['cd_subbacia' ,'vl_lon'  ,'vl_lat']], df_prev_chuva_out)
         df_prev_chuva = df_chuva_final.drop(['vl_lat','vl_lon'],axis=1)
@@ -684,9 +687,7 @@ class Chuva:
             if insert_cadastro_values: CadastroRodadas.inserir_cadastro_rodadas(insert_cadastro_values)
             Chuva.inserir_prev_chuva(df_prev_chuva.round(2))
             
-            if rodar_smap:
-                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo}), prev_estendida)
-            return new_chuva_id
+            return [new_chuva_id,dt_rodada,hr_rodada,str_modelo]
 
     @staticmethod
     def delete_por_id(id:int):
@@ -865,10 +866,11 @@ class Smap:
                 "modelos":[[
                     rodada.str_modelo,
                     rodada.hr_rodada,
-                    rodada.dt_rodada.strftime("%Y-%m-%d")
+                    rodada.dt_rodada.strftime("%Y-%m-%d"),
                     ]
                 ],
-                "prev_estendida":prev_estendida
+                "prev_estendida":prev_estendida,
+                "id_dataviz_chuva": rodada.id_dataviz_chuva
             },
             momento_req=momento_req
 

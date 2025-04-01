@@ -23,3 +23,10 @@ def get_chuva_cpc_estacao_chuvosa_previsao(regiao:RegioesChuvaEstacaoChuvosa, mo
     return service.EstacaoChuvosaObservada.get_chuva_prevista_estacao_chuvosa(dt_rodada=dt_rodada, hr_rodada=hr_rodada, regiao=regiao.name, modelo=modelo) # service.get_chuva_observ.get_bacias(divisao.name)
 
 ##############################################################################################################################################################
+
+@router.get('/climatologia-bacias', tags=['Meteorologia'])
+def get_climatologia_bacias():
+
+    return service.ClimatologiaChuva.get_climatologia()
+
+##############################################################################################################################################################

@@ -935,6 +935,15 @@ class db_mysql_master():
 
             )
 
+        elif table_name.lower() == 'tb_climatologia_bacias_merge':
+
+            table_schema = db.Table('tb_climatologia_bacias_merge', self.meta,
+                db.Column('str_bacia', db.Text, nullable=True),
+                db.Column('time', db.Date, nullable=True),
+                db.Column('climatologia', db.Float, nullable=True),
+
+            )
+
         elif table_name.lower() == 'tb_cmo_semanal':
             
             table_schema = db.Table('tb_cmo_semanal', self.meta,

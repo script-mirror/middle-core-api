@@ -79,3 +79,22 @@ class EstacaoChuvosaObservada:
         df_prev['dt_rodada'] = dt_rodada
 
         return df_prev.to_dict('records')
+    
+class ClimatologiaChuva:
+
+    @staticmethod
+    def get_climatologia():
+
+        __DB__ = db_mysql_master('db_meteorologia')
+        tb_climatologia = __DB__.getSchema('tb_climatologia_bacias_merge')
+        
+        select = sa.select(
+            tb_climatologia.c.str_bacia,
+            tb_climatologia.c.time,
+            tb_climatologia.c.climatologia,
+        )
+        
+        vl_chuva = __DB__.db_execute(select).fetchall()
+        df_climatologia = pd.DataFrame(vl_chuva, columns=["bacia", "time", "climatologia"])
+
+        return df_climatologia.to_dict('records')

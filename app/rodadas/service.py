@@ -507,8 +507,9 @@ class Chuva:
             df = pd.concat([df, pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(q["id"], granularidade,q["dt_inicio"], q["dt_fim"], no_cache, atualizar))])
         return df.rename(columns={'cd_subbacia':'id'}).to_dict('records')
     
+    
     @staticmethod
-    def export_rain(id_chuva: int) -> dict:
+    def export_rain(id_chuva: int):
         
         def get_data_grouped(id_chuva: int, granularidade: str):
             return pd.DataFrame(Chuva.get_chuva_por_id_data_entre_granularidade(id_chuva, granularidade))
@@ -603,6 +604,7 @@ class Chuva:
         else:
             if res.status_code == 201:
                 logger.info(f"Modelo {modelo} do dia {data_rodada_str} inserido no endereco ${api_url}")
+                return res.json()['_id']
             else:
                 logger.warning(f"Erro ao tentar inserir o modelo {modelo} do dia {data_rodada_str} no endereco ${api_url}")
         

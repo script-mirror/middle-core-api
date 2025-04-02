@@ -634,7 +634,7 @@ class Chuva:
         id_dataviz_chuva = Chuva.export_rain(id_chuva)
         
         if rodar_smap:
-                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo,'id_dataviz_chuva':id_dataviz_chuva}), prev_estendida)
+                Smap.post_rodada_smap(RodadaSmap.model_validate({'dt_rodada':datetime.datetime.strptime(dt_rodada, '%Y-%m-%d'),'hr_rodada':hr_rodada,'str_modelo':str_modelo,'id_dataviz_chuva':id_dataviz_chuva, 'prev_estendida':prev_estendida}))
         
         return None
     
@@ -859,7 +859,7 @@ class Subbacia:
 class Smap:
     tb:db.Table = __DB__.getSchema('tb_smap')
     @staticmethod
-    def post_rodada_smap(rodada:RodadaSmap, prev_estendida:bool):
+    def post_rodada_smap(rodada:RodadaSmap):
         momento_req:datetime.datetime = datetime.datetime.now()
         # trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
         airflow_service.trigger_airflow_dag(
@@ -871,7 +871,7 @@ class Smap:
                     rodada.dt_rodada.strftime("%Y-%m-%d"),
                     ]
                 ],
-                "prev_estendida":prev_estendida,
+                "prev_estendida":rodada.prev_estendida,
                 "id_dataviz_chuva": rodada.id_dataviz_chuva
             },
             momento_req=momento_req

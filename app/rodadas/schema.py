@@ -7,6 +7,7 @@ class RodadaSmap(BaseModel):
     hr_rodada: int
     str_modelo: str
     id_dataviz_chuva: str
+    prev_estendida: bool = Field(default=False)
     
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date

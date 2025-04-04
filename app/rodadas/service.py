@@ -571,13 +571,19 @@ class Chuva:
                     data_final_str = f'{data_final.date()}T00:00:00.000Z'
 
         data = [agrup for agrup in agrupamentos.values() if agrup['valoresMapa']]
-
+        nome_modelo = model_base['modelo'].replace(
+                                        '-ONS', ''
+                                        ).replace(
+                                        '-RZ', ''
+                                        ).replace(
+                                        '-REMVIES', ''
+                                        )
         body = {
             "dataRodada": data_rodada_str,
             "dataFinal": data_final_str,
             "mapType": "chuva",
             "idType": str(id_chuva),
-            "modelo": model_base['modelo'],
+            "modelo": nome_modelo,
             "priority": None,
             "grupo": grupo,
             "rodada": str(model_base['hr_rodada']),

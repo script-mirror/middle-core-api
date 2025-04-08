@@ -577,7 +577,7 @@ class Chuva:
                                         '-RZ', ''
                                         ).replace(
                                         '-REMVIES', ''
-                                        )
+                                        ).replace(' ', '')
         body = {
             "dataRodada": data_rodada_str,
             "dataFinal": data_final_str,

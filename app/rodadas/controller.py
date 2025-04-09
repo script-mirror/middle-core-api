@@ -143,8 +143,14 @@ def export_rain(id_chuva: int):
     return service.Chuva.export_rain(id_chuva)
 
 @router.get("/export-rain-obs", tags=['Rodadas'])
-def chuva_observada_ponderada_submercado(
+def export_chuva_observada_ponderada_submercado(
     data:datetime.date,
     qtd_dias:int
 ):
     return service.Chuva.get_chuva_observada_ponderada_submercado(data-datetime.timedelta(days=qtd_dias), data)
+
+@router.get("/chuva/smap/ponderada", tags=['Rodadas'])
+def get_chuva_smap_ponderada_submercado(
+    id_chuva:int
+):
+    return service.Chuva.get_chuva_smap_ponderada_submercado(id_chuva)

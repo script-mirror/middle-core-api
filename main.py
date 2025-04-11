@@ -51,7 +51,7 @@ def get_auth_header(
         service.send_message(f'Endpoint {request.url.path} sem token de autenticacao', None, "Debug")
     
 
-app.include_router(rodadas_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
+app.include_router(rodadas_controller, prefix="/api/v2")
 app.include_router(ons_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
 app.include_router(bbce_controller, prefix="/api/v2")
 app.include_router(decks_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])

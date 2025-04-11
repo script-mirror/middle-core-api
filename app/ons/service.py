@@ -109,6 +109,43 @@ class Acomph:
                                           'vl_vaz_nat_conso', 'dt_acomph'])
         return df.to_dict('records')
     
+class EnaAcomph:
+    tb:db.Table = __DB__.getSchema('ena_acomph')
+    
+    @staticmethod
+    def delete_ena_acomph_by_dates(datas:List[datetime.date]):
+        query = db.delete(EnaAcomph.tb).where(
+            EnaAcomph.tb.c.data.in_(datas)
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes":result.rowcount}
+
+    @staticmethod
+    def post_ena_acomph(ena_acomph:List[dict]):
+        df = pd.DataFrame(ena_acomph)
+        df['data'] = pd.to_datetime(df['data'], format='%Y-%m-%d')
+        df['data'] = df['data'].dt.date
+        EnaAcomph.delete_ena_acomph_by_dates(df['data'].unique().tolist())
+        query = db.insert(EnaAcomph.tb).values(ena_acomph)
+        result = __DB__.db_execute(query)
+        return {"inserts":result.rowcount}
+    
+    @staticmethod
+    def get_ena_acomph_by_granularidade_date_between(
+        granularidade:str, data_inicial:datetime.date, data_final:datetime.date
+    ):
+        query = db.select(
+            EnaAcomph.tb.c.data,
+            EnaAcomph.tb.c.localizacao,
+            EnaAcomph.tb.c.ena
+        ).where(
+            EnaAcomph.tb.c.granularidade == granularidade,
+            EnaAcomph.tb.c.data.between(data_inicial, data_final)
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=['data', granularidade, 'ena'])
+        return df.to_dict('records')
+    
 if __name__ == "__main__":
     
     teste = ['tb_bacias',

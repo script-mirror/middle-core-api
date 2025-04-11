@@ -1058,6 +1058,18 @@ class db_mysql_master():
                 db.Column("segundo_mes_leve", db.Float, nullable=True),
                 extend_existing=True
             )
+            
+        elif table_name.lower() == 'ena_acomph':
+            table_schema = db.Table('ena_acomph', self.meta,
+                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                db.Column('data', db.Date, nullable=False),
+                db.Column('granularidade', db.String(20), nullable=False),
+                db.Column('localizacao', db.String(50), nullable=True),
+                db.Column('ena', db.Float, nullable=True),
+                db.Index('idx_granularidade', 'granularidade'),
+                db.Index('idx_data_granularidade', 'data', 'granularidade'),
+                extend_existing=True
+            )
         return table_schema
 
             

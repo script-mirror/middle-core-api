@@ -147,9 +147,19 @@ def export_chuva_observada_ponderada_submercado(
     data:datetime.date,
     qtd_dias:int
 ):
-    return service.Chuva.get_chuva_observada_ponderada_submercado(data-datetime.timedelta(days=qtd_dias), data)
+    return service.Chuva.export_chuva_observada_ponderada_submercado(data-datetime.timedelta(days=qtd_dias), data)
 
-@router.get("/chuva/smap/ponderada", tags=['Rodadas'])
+@router.get("/chuva/cptec", tags=['Rodadas'])
+def get_chuva_smap_ponderada_submercado(
+    data_inicial:datetime.date,
+    data_final:datetime.date,
+    granularidade: GranularidadeEnum = GranularidadeEnum.submercado,
+):
+    if granularidade != "submercado":
+        return JSONResponse(status_code=404, content={"not_found":f"Granularidade {granularidade} nao encontrada"})
+    return service.Chuva.get_chuva_observada_ponderada_submercado(data_inicial, data_final)
+
+@router.get("/chuva/smap/submercado", tags=['Rodadas'])
 def get_chuva_smap_ponderada_submercado(
     id_chuva:int
 ):

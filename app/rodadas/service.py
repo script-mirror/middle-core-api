@@ -340,8 +340,6 @@ class Chuva:
 
     @staticmethod
     def get_chuva_observada_ponderada_submercado(data_inicio: datetime.date, data_fim: datetime.date):
-    
-        #climeenergy
         db_ons = db_mysql_master('db_ons')
         db_ons.connect()
 
@@ -405,8 +403,14 @@ class Chuva:
         df = df_concatenado.groupby(["txt_submercado",'dt_observado'])[['chuvaxmlt','mlt']].sum()
         df['chuva_pond'] = df['chuvaxmlt'] / df['mlt']
         df.reset_index(inplace=True)
-        df = df[["dt_observado","txt_submercado","chuva_pond"]]
-        df.rename(columns={'txt_submercado':'valorAgrupamento', 'chuva_pond':'valor', 'dt_observado':'dataReferente'}, inplace=True)
+        df = df[["dt_observado","txt_submercado","chuva_pond"]].rename(columns={'txt_submercado':'submercado', 'chuva_pond':'mm_chuva', 'dt_observado':'data'})
+        return df.to_dict("records")
+
+    @staticmethod
+    def export_chuva_observada_ponderada_submercado(data_inicio: datetime.date, data_fim: datetime.date):
+        df = df[["dt_observado","txt_submercado","chuva_pond"]].rename(columns={'txt_submercado':'submercado', 'chuva_pond':'mm_chuva', 'dt_observado':'data'})
+        df = pd.DataFrame(Chuva.get_chuva_observada_ponderada_submercado(data_inicio, data_fim))
+        df.rename(columns={'submercado':'valorAgrupamento', 'mm_chuva':'valor', 'data':'dataReferente'}, inplace=True)
         df['dataReferente'] = pd.to_datetime(df['dataReferente']).dt.strftime('%Y-%m-%dT00:00:00.000Z')
         df['valorAgrupamento'] = df['valorAgrupamento'].str.replace(' ', '')
         payload = {

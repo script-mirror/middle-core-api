@@ -149,7 +149,7 @@ def export_chuva_observada_ponderada_submercado(
 ):
     return service.Chuva.export_chuva_observada_ponderada_submercado(data-datetime.timedelta(days=qtd_dias), data)
 
-@router.get("/chuva/cptec", tags=['Rodadas'])
+@router.get("/chuva/merge", tags=['Rodadas'])
 def get_chuva_smap_ponderada_submercado(
     data_inicial:datetime.date,
     data_final:datetime.date,

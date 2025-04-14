@@ -90,6 +90,13 @@ def get_chuva_observada_por_data(
     ):
     return service.ChuvaObs.get_chuva_observada_por_data(dt_observada)
 
+@router.get('/chuva/observada-range-datas', tags=['Rodadas'])
+def get_chuva_observada_por_data(
+    dt_inicio:datetime.date,
+    dt_fim:datetime.date
+    ):
+    return service.ChuvaObs.get_chuva_observada_range_datas(dt_ini=dt_inicio, dt_fim=dt_fim)
+
 @router.post('/chuva/observada', tags=['Rodadas'])
 def post_chuva_observada(
     chuva_obs:List[ChuvaObsReq]

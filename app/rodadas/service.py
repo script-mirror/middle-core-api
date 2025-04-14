@@ -1038,16 +1038,8 @@ class ChuvaObs:
                 ChuvaObs.tb.c['dt_observado'] >= dt_ini,
                 ChuvaObs.tb.c['dt_observado'] <= dt_fim
         )
-        # ).order_by(
-        #     ChuvaObs.tb.c['cd_subbacia'],
-
-        #     ChuvaObs.tb.c['dt_observado'],
-        #     ChuvaObs.tb.c['vl_chuva']
-        # ).where(
-        #     ChuvaObs.tb.c['dt_observado'] == dt_observado
-        # )
-
-        result = __DB__.db_execute(query_select, prod)
+ 
+        result = __DB__.db_execute(query_select, True)
         df = pd.DataFrame(result, columns=['cd_subbacia', 'dt_observado', 'vl_chuva'])
         df['dt_observado'] = pd.to_datetime(df['dt_observado'].values)
         df = df.sort_values(by='dt_observado')

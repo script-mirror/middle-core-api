@@ -22,9 +22,10 @@ class BaciasSegmentadas:
         query = db.select(
           BaciasSegmentadas.tb.c['cd_bacia'],
           BaciasSegmentadas.tb.c['str_bacia'],
+          BaciasSegmentadas.tb.c['cd_submercado']
         )
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['cd_bacia','str_bacia'])
+        df = pd.DataFrame(result, columns=['cd_bacia','str_bacia', 'cd_submercado'])
         return df.to_dict('records')
     
     @staticmethod

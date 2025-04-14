@@ -28,7 +28,7 @@ class db_mysql_master():
     def connect(self):
         return self.Session()
 
-    def db_execute(self,query, commit=False):
+    def db_execute(self,query, commit=True):
         with self.connect() as session:
             result = session.execute(query)
             if commit:
@@ -79,7 +79,9 @@ class db_mysql_master():
                 db.Column('id', db.Integer),
                 db.Column('cd_posto', db.Integer),
                 db.Column('dt_prevista', db.Date),
-                db.Column('vl_vazao', db.Float),
+                db.Column('vl_vazao_vna', db.Float),
+                db.Column('vl_vazao_prevs', db.Float),                
+                extend_existing=True
             )
             
         elif table_name.lower() == 'tb_prevs':
@@ -1054,6 +1056,18 @@ class db_mysql_master():
                 db.Column("segundo_mes_pesada", db.Float, nullable=True),
                 db.Column("segundo_mes_media", db.Float, nullable=True),
                 db.Column("segundo_mes_leve", db.Float, nullable=True),
+                extend_existing=True
+            )
+            
+        elif table_name.lower() == 'ena_acomph':
+            table_schema = db.Table('ena_acomph', self.meta,
+                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                db.Column('data', db.Date, nullable=False),
+                db.Column('granularidade', db.String(20), nullable=False),
+                db.Column('localizacao', db.String(50), nullable=True),
+                db.Column('ena', db.Float, nullable=True),
+                db.Index('idx_granularidade', 'granularidade'),
+                db.Index('idx_data_granularidade', 'data', 'granularidade'),
                 extend_existing=True
             )
         return table_schema

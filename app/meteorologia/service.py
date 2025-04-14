@@ -1,21 +1,28 @@
 import sqlalchemy as sa
 import pandas as pd
+from typing import List, Dict, Any
 
 from app.core.database.wx_dbClass import db_mysql_master
 
-prod = True
+__DB__ = db_mysql_master('db_meteorologia')
 
 class EstacaoChuvosaObservada:
+    # Define tables at class level - they'll be assigned in the methods since they depend on parameters
+    tb_ec_norte = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa_norte')
+    tb_ec_sudeste = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa')
+    tb_cadastro_ec_norte = __DB__.getSchema('tb_cadastro_estacao_chuvosa_norte')
+    tb_cadastro_ec_sudeste = __DB__.getSchema('tb_cadastro_estacao_chuvosa')
+    tb_chuva_prevista_ec_norte = __DB__.getSchema('tb_chuva_prevista_estacao_chuvosa_norte')
+    tb_chuva_prevista_ec_sudeste = __DB__.getSchema('tb_chuva_prevista_estacao_chuvosa')
 
     @staticmethod
     def get_chuva_observada(dt_ini_obs, dt_fim_obs, regiao):
-        __DB__ = db_mysql_master('db_meteorologia')
 
         if regiao == 'norte':
-            tb_ec = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa_norte')
+            tb_ec = EstacaoChuvosaObservada.tb_ec_norte
             
         elif regiao == 'sudeste':
-            tb_ec = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa')
+            tb_ec = EstacaoChuvosaObservada.tb_ec_sudeste
 
         dt_ini_obs = pd.to_datetime(dt_ini_obs, format="%Y-%m-%d")
         dt_fim_obs = pd.to_datetime(dt_fim_obs, format="%Y-%m-%d")
@@ -28,22 +35,20 @@ class EstacaoChuvosaObservada:
                 tb_ec.c.dt_observada <= dt_fim_obs.strftime("%Y-%m-%d"),
             )
                 
-        cpc_values = __DB__.db_execute(select_cpc, commit=prod).fetchall()
+        cpc_values = __DB__.db_execute(select_cpc).fetchall()
         df_cpc = pd.DataFrame(cpc_values, columns=["dt_observada", "vl_chuva"])
 
         return df_cpc.to_dict('records')
     
     @staticmethod
     def get_chuva_prevista_estacao_chuvosa(modelo: str, hr_rodada: int, dt_rodada: str, regiao: str):
-
-        __DB__ = db_mysql_master('db_meteorologia')
-
+        
         if regiao == 'norte':
-            tb_cadastro_estacao_chuvosa = __DB__.getSchema('tb_cadastro_estacao_chuvosa_norte')
-            tb_chuva_prevista_estacao_chuvosa =  __DB__.getSchema('tb_chuva_prevista_estacao_chuvosa_norte')
+            tb_cadastro_estacao_chuvosa = EstacaoChuvosaObservada.tb_cadastro_ec_norte
+            tb_chuva_prevista_estacao_chuvosa = EstacaoChuvosaObservada.tb_chuva_prevista_ec_norte
         elif regiao == 'sudeste':
-            tb_cadastro_estacao_chuvosa = __DB__.getSchema('tb_cadastro_estacao_chuvosa')
-            tb_chuva_prevista_estacao_chuvosa =  __DB__.getSchema('tb_chuva_prevista_estacao_chuvosa')
+            tb_cadastro_estacao_chuvosa = EstacaoChuvosaObservada.tb_cadastro_ec_sudeste
+            tb_chuva_prevista_estacao_chuvosa = EstacaoChuvosaObservada.tb_chuva_prevista_ec_sudeste
 
         select = sa.select(
             tb_cadastro_estacao_chuvosa.c.str_modelo,

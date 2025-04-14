@@ -15,7 +15,7 @@ from typing import Optional, List
 router = APIRouter(prefix='/rodadas')
 
 
-@router.get('',tags=['Rodadas'])
+@router.get('/',tags=['Rodadas'])
 def get_rodadas(
     dt:Optional[datetime.date] = None,
     no_cache:Optional[bool] = True,
@@ -25,6 +25,11 @@ def get_rodadas(
         return service.CadastroRodadas.get_rodadas_por_dt(dt)
     return cache.get_cached(service.CadastroRodadas.get_rodadas_por_dt, dt, atualizar=atualizar)
 
+@router.get('/por-id/{idRodada}',tags=['Rodadas'])
+def get_rodadas_by_id(
+    idRodada:int
+    ):
+    return service.CadastroRodadas.get_rodadas_by_id(idRodada)
 
 @router.get('/historico',tags=['Rodadas'])
 def get_historico_rodadas_por_nome(
@@ -122,6 +127,12 @@ def post_smap(
 ):  
     return service.Smap.post_rodada_smap(rodada)
 
+@router.get('/smap', tags=['Rodadas'])
+def get_vazao_smap_by_id(
+    id_smap:int
+):
+    return service.Smap.get_vazao_smap_by_id(id_smap)
+
 @router.get('/chuva/previsao/membros', tags=['Rodadas'])
 def get_chuva_por_nome_modelo_data_entre_granularidade(
     nome_modelo:Optional[str] = None,
@@ -134,11 +145,29 @@ def get_chuva_por_nome_modelo_data_entre_granularidade(
 ):
     return service.ChuvaMembro.get_chuva_por_nome_modelo_data_entre_granularidade(nome_modelo,dt_hr_rodada,granularidade,dt_inicio_previsao,dt_fim_previsao,no_cache,atualizar)
     
-@router.get('/chuva', tags=['Rodadas'])
+@router.get('/export-rain', tags=['Rodadas'])
 def export_rain(id_chuva: int):
     return service.Chuva.export_rain(id_chuva)
 
-# @router.get("/protected-endpoint")
-# def protected_endpoint(session_data: dict = Depends(auth_dependency)):
-#     user_id = session_data["user_id"]
-#     return {"message": "User is authenticated", "user_id": user_id}
+@router.get("/export-rain-obs", tags=['Rodadas'])
+def export_chuva_observada_ponderada_submercado(
+    data:datetime.date,
+    qtd_dias:int
+):
+    return service.Chuva.export_chuva_observada_ponderada_submercado(data-datetime.timedelta(days=qtd_dias), data)
+
+@router.get("/chuva/merge", tags=['Rodadas'])
+def get_chuva_smap_ponderada_submercado(
+    data_inicial:datetime.date,
+    data_final:datetime.date,
+    granularidade: GranularidadeEnum = GranularidadeEnum.submercado,
+):
+    if granularidade != "submercado":
+        return JSONResponse(status_code=404, content={"not_found":f"Granularidade {granularidade} nao encontrada"})
+    return service.Chuva.get_chuva_observada_ponderada_submercado(data_inicial, data_final)
+
+@router.get("/chuva/smap/submercado", tags=['Rodadas'])
+def get_chuva_smap_ponderada_submercado(
+    id_chuva:int
+):
+    return service.Chuva.get_chuva_smap_ponderada_submercado(id_chuva)

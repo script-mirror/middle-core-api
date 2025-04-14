@@ -245,7 +245,7 @@ class WeolSemanal:
         
         df.columns = df.iloc[0]
         df = df[1:]
-
+        df.drop(columns=[np.nan], inplace=True, errors='ignore')
         df.columns = [df.columns[0]] + [f'{MONTH_DICT[ElecData(x).mesReferente]}-rv{ElecData(x).atualRevisao}' if type(x) != str else x for x in df.columns[1:]]
         return WeolSemanal.get_html_weighted_avg(df)
 
@@ -363,20 +363,36 @@ class Cvu:
     def create(body: List[CvuSchema]):
         body_dict = [x.model_dump() for x in body]
         df = pd.DataFrame(body_dict)
-
-        unique_params = df[['dt_atualizacao', 'mes_referencia',"tipo_cvu","fonte"]].drop_duplicates().values
         
-        for dt_atualizacao,mes_referencia,tipo_cvu,fonte in unique_params:
-            Cvu.delete_by_params(
-                mes_referencia=mes_referencia,
-                tipo_cvu=tipo_cvu,
-                dt_atualizacao=dt_atualizacao,
-                fonte=fonte
-                )
-
-        query = db.insert(Cvu.tb).values(body_dict)
+        # Drop duplicates based on primary key columns
+        primary_key_columns = ['cd_usina', 'tipo_cvu', 'mes_referencia', 'ano_horizonte', 'dt_atualizacao', 'fonte']
+        df.drop_duplicates(subset=primary_key_columns, keep='first', inplace=True)
+        
+        # Delete existing records that match the incoming data
+        for _, row in df.iterrows():
+            delete_conditions = {
+                'cd_usina': row['cd_usina'],
+                'tipo_cvu': row['tipo_cvu'],
+                'mes_referencia': row['mes_referencia'],
+                'ano_horizonte': row['ano_horizonte'],
+                'dt_atualizacao': row['dt_atualizacao'],
+                'fonte': row['fonte']
+            }
+            Cvu.delete_by_params(**delete_conditions)
+        
+        # Insert new records
+        logger.info(f"Inserting {len(df)} records into tb_cvu")
+        query = db.insert(Cvu.tb).values(df.to_dict('records'))
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_cvu")
+        return None
+
+
+    @staticmethod
+    def delete_():
+        query = db.delete(Cvu.tb).where(Cvu.tb.c.mes_referencia == '202503')
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
     @staticmethod

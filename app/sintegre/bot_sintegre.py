@@ -13,23 +13,15 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from app.sintegre.utils import *
+from app.core.utils.logger import logging
 from app.airflow.service import trigger_airflow_dag
 locale.setlocale(locale.LC_ALL, 'pt_BR.utf-8')
-import logging
 from app.core.config import settings
 import requests
 # from .service import ProductService
-
+logger = logging.getLogger(__name__)
 
 # product_service = ProductService()
-
-logging.basicConfig(level=logging.INFO,
-                    format='%(levelname)s:\t%(asctime)s\t %(name)s.py:%(lineno)d\t %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    handlers=[
-                        logging.StreamHandler()
-                    ])
-
 
 
 def get_products(product_id):
@@ -84,7 +76,7 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
         path_arquivo = f'/tmp/{url[url.rfind("/")+1:]}'
         try:
             os.remove(path_arquivo)
-            logging.info(f"{path_arquivo} removido")
+            logger.info(f"{path_arquivo} removido")
         except:
             pass
         paths_download.append(path_arquivo)
@@ -92,14 +84,14 @@ def download_products(driver:webdriver.Chrome, products: List[dict], product_dat
         driver.set_page_load_timeout(20)
         try:
             driver.get(url)
-            logging.info(url)
+            logger.info(url)
             if '.txt' in url:
                 time.sleep(1)
                 txt:str = driver.page_source[driver.page_source.index('pre-wrap;">')+11:driver.page_source.index('</pre></body></html>')]
                 with open(path_arquivo, "w", encoding="utf-8") as file:
                     file.write(txt)
             filename = path_arquivo[path_arquivo.rfind("/")+1:]
-            logging.info(f"Download iniciado para {filename}")
+            logger.info(f"Download iniciado para {filename}")
             time.sleep(2)
 
             webhook_payload.append({
@@ -128,7 +120,7 @@ def send_to_webhook(airflow_products:List[str]) -> None:
         if is_new:
             res = trigger_airflow_dag("WEBHOOK", product)
         else:
-            logging.info("produto repetido")
+            logger.info("produto repetido")
 
 
 
@@ -184,12 +176,12 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
     __password = settings.sintegre_password
     
     driver = initialize_driver()
-    logging.info("Realizando login")
+    logger.info("Realizando login")
     login(driver, __email, __password)
 
     produtos = get_url_datetime_pattern(get_products(product_id), product_date=product_date)
 
-    logging.info("Iniciando downloads")
+    logger.info("Iniciando downloads")
 
     airflow_products:List[dict] = download_products(driver, produtos, product_date=product_date)
     products_to_remove = []
@@ -211,7 +203,7 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
         
     start_time = time.time()
     while not is_download_complete("/tmp"):
-        logging.info(f"Download em andamento... {time.time() - start_time:.2f}s")
+        logger.info(f"Download em andamento... {time.time() - start_time:.2f}s")
    
         if time.time() - start_time > download_timeout:
             raise Exception("O download não foi concluído dentro do tempo limite.")
@@ -219,12 +211,7 @@ def trigger_bot(product_date:datetime.date, product_id:int=None, trigger_webhook
     driver.quit()
 
     if trigger_webhook:
-        logging.info("Enviando para o webhook")
+        logger.info("Enviando para o webhook")
         send_to_webhook(airflow_products['success'])
 
     return {'failed':airflow_products['failed']}
-
-if __name__ == "__main__":
-    produtos = get_products()
-    for produto in produtos:
-        print(f"""VALUES('{produto["name"]}'),""")

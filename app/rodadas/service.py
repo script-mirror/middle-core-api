@@ -375,13 +375,14 @@ class Chuva:
                 'id_cadastro_rodada',
                 'modelo',
                 'hr_rodada',
-                'cd_subbacia',
+                'id',
                 'dt_prevista',
                 'vl_chuva',
                 'dt_revisao',
                 'dt_rodada']]
         df_chuva.rename(
             columns={
+                'id':'cd_subbacia',
                 'id_cadastro_rodada': 'id',
                 'modelo': 'str_modelo'},
             inplace=True)
@@ -664,13 +665,13 @@ class Chuva:
 
         if no_cache:
             df = pd.DataFrame(Chuva.get_chuva_por_id(id_chuva))[
-                ["modelo", "dt_rodada", "hr_rodada", "cd_subbacia",
+                ["modelo", "dt_rodada", "hr_rodada", "id",
                  "dt_prevista", "vl_chuva", "dia_semana", "semana"]
             ]
         else:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id,
                                                id_chuva, atualizar=atualizar))[
-                ["modelo", "dt_rodada", "hr_rodada", "cd_subbacia",
+                ["modelo", "dt_rodada", "hr_rodada", "id",
                  "dt_prevista", "vl_chuva", "dia_semana", "semana"]
             ]
 
@@ -1410,7 +1411,7 @@ class MembrosModelo:
                     "modelo",
                     "dt_rodada",
                     "hr_rodada",
-                    "cd_subbacia",
+                    "id",
                     "dt_prevista",
                     "vl_chuva",
                     "dia_semana",
@@ -1425,7 +1426,7 @@ class MembrosModelo:
                     "modelo",
                     "dt_rodada",
                     "hr_rodada",
-                    "cd_subbacia",
+                    "id",
                     "dt_prevista",
                     "vl_chuva",
                     "dia_semana",

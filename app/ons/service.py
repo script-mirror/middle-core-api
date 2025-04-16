@@ -109,7 +109,8 @@ class Acomph:
         df = pd.DataFrame(result, columns=['cd_posto', 'dt_referente', 'vl_vaz_inc_conso', 
                                           'vl_vaz_nat_conso', 'dt_acomph'])
         return df.to_dict('records')
-    
+
+
 class EnaAcomph:
     tb:db.Table = __DB__.getSchema('ena_acomph')
     
@@ -146,33 +147,38 @@ class EnaAcomph:
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=['data', granularidade, 'ena'])
         return df.to_dict('records')
-    
-    
+
+
 class VeBacias:
     tb:db.Table = __DB__.getSchema('tb_ve_bacias')
     
     @staticmethod
-    def get_ve_bacias(dt_inicio_semana:datetime.date):
+    def get_ve_bacias(dt_inicio_semana: datetime.date):
         query = db.select(
             VeBacias.tb.c['cd_bacia'],
             VeBacias.tb.c['vl_mes'],
             VeBacias.tb.c['dt_inicio_semana'],
             VeBacias.tb.c['cd_revisao'],
             (
-                (VeBacias.tb.c['vl_ena'] * 100) / db.func.nullif(VeBacias.tb.c['vl_perc_mlt'], 0)
+                (VeBacias.tb.c['vl_ena'] * 100)
+                / db.func.nullif(VeBacias.tb.c['vl_perc_mlt'], 0)
             ).label('mlt')
         ).where(VeBacias.tb.c['dt_inicio_semana'] >= dt_inicio_semana)
 
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['cd_bacia', 'vl_mes', 'dt_inicio_semana', 'cd_revisao', 'mlt'])
+        df = pd.DataFrame(result, columns=[
+            'cd_bacia', 'vl_mes', 'dt_inicio_semana', 'cd_revisao', 'mlt'
+            ])
         return df.to_dict('records')
-    
+
+
 if __name__ == "__main__":
-    
-    teste = ['tb_bacias',
-    'tb_bacias',
-    'tb_chuva',
-    'tb_submercado',
-    'tb_submercado']
+    teste = [
+        'tb_bacias',
+        'tb_bacias',
+        'tb_chuva',
+        'tb_submercado',
+        'tb_submercado',
+    ]
     print(set(teste))
     pass

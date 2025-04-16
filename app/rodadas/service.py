@@ -319,7 +319,7 @@ class Chuva:
             CadastroRodadas.tb.c['str_modelo'],
             CadastroRodadas.tb.c['dt_rodada'],
             CadastroRodadas.tb.c['hr_rodada'],
-            CadastroRodadas.tb.c['dt_revCadastroRodadasisao'],
+            CadastroRodadas.tb.c['dt_revisao'],
             Chuva.tb.c['cd_subbacia'],
             Chuva.tb.c['dt_prevista'],
             Chuva.tb.c['vl_chuva']).where(

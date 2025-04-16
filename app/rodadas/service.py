@@ -225,22 +225,26 @@ class Chuva:
     tb:db.Table = __DB__.getSchema('tb_chuva')
 
     @staticmethod
-    def get_chuva_por_id_subbacia(id_chuva:int):
+    def get_chuva_por_id(id_chuva:int):
         query = db.select(
-            CadastroRodadas.tb.c['str_modelo'],
-            CadastroRodadas.tb.c['dt_rodada'],
-            CadastroRodadas.tb.c['hr_rodada'],
-            Chuva.tb.c['cd_subbacia'],
-            Chuva.tb.c['dt_prevista'],
-            Chuva.tb.c['vl_chuva']
-            ).where(db.and_(
-                Chuva.tb.c['id'] == id_chuva
+            CadastroRodadas.c['id'],
+            CadastroRodadas.c['str_modelo'],
+            CadastroRodadas.c['dt_rodada'],
+            CadastroRodadas.c['hr_rodada'],
+            CadastroRodadas.c['dt_revCadastroRodadasisao'],
+            Chuva.c['cd_subbacia'],
+            Chuva.c['dt_prevista'],
+            Chuva.c['vl_chuva']
+            ).where(
+                db.and_(
+                    Chuva.tb.c['id'] == id_chuva
                 )
             ).join(
                 CadastroRodadas.tb, CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id']
-        )
+            )
+            
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['modelo', 'dt_rodada', 'hr_rodada', 'id', 'dt_prevista', 'vl_chuva'])
+        df = pd.DataFrame(result, columns=['id_cadastro_rodada', 'modelo', 'dt_rodada', 'hr_rodada', 'dt_revisao', 'id', 'dt_prevista', 'vl_chuva'])
         df['dia_semana'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%A')
         df['dt_prevista'] = df['dt_prevista'].astype('datetime64[ns]').dt.strftime('%Y-%m-%d')
         df = df.drop_duplicates()
@@ -253,47 +257,24 @@ class Chuva:
             pass
         df = pd.concat(dfs)
         return df.to_dict('records')
-            
+    
+
+    
     @staticmethod
     def get_chuva_smap_ponderada_submercado(id_chuva):
         
-        #climeenergy
-        db_ons = db_mysql_master('db_ons')
-        db_ons.connect()
+        df_bacia = pd.DataFrame(ons_service.BaciasSegmentadas.get_bacias_segmentadas())[['cd_bacia','str_bacia']]
 
-        tb_ve_bacias = db_ons.getSchema('tb_ve_bacias')
-        tb_bacias_segmentadas = db_ons.getSchema('tb_bacias_segmentadas')
-                
-        #rodadas
-        db_rodadas = db_mysql_master('db_rodadas')
-        db_rodadas.connect()
-
-        tb_chuva = db_rodadas.getSchema('tb_chuva')
-        tb_cadastro_rodadas = db_rodadas.getSchema('tb_cadastro_rodadas')
-        tb_subbacia = db_rodadas.getSchema('tb_subbacia')
-
-
-        query_bacia = db.select(tb_bacias_segmentadas.c.cd_bacia,tb_bacias_segmentadas.c.str_bacia)
-        answer_tb_bacias_segmentadas = db_ons.db_execute(query_bacia).fetchall()
-        df_bacia = pd.DataFrame(answer_tb_bacias_segmentadas, columns=['cd_bacia','str_bacia'])
-
-
-        query_chuva = db.select(tb_cadastro_rodadas.c.id,tb_cadastro_rodadas.c.str_modelo,tb_cadastro_rodadas.c.hr_rodada,tb_chuva.c.cd_subbacia,tb_chuva.c.dt_prevista,tb_chuva.c.vl_chuva,tb_cadastro_rodadas.c.dt_revisao, tb_cadastro_rodadas.c.dt_rodada)\
-                                                .join(tb_chuva, tb_chuva.c.id==tb_cadastro_rodadas.c.id_chuva)\
-                                                .where(tb_chuva.c.id == id_chuva)
-
-        answer_tb_chuva = db_rodadas.db_execute(query_chuva).fetchall()
-        df_chuva = pd.DataFrame(answer_tb_chuva, columns= ['id', 'str_modelo',  'hr_rodada',  'cd_subbacia', 'dt_prevista',  'vl_chuva',  'dt_revisao', 'dt_rodada'])
-
+        df_chuva = pd.DataFrame(Chuva.get_chuva_por_id(id_chuva))[['id_cadastro_rodada','modelo','hr_rodada','cd_subbacia','dt_prevista','vl_chuva','dt_revisao','dt_rodada']]
+        df_chuva.rename(columns={'id_cadastro_rodada':'id', 'modelo':'str_modelo'}, inplace=True)
 
         cds_subbacia = df_chuva['cd_subbacia'].unique()
+        
 
-        query_subbac = db.select(tb_subbacia.c.cd_subbacia, tb_subbacia.c.cd_bacia_mlt, tb_subbacia.c.txt_submercado)\
-                                                .where(tb_subbacia.c.cd_subbacia.in_(cds_subbacia))
-        answer_tb_subbacia = db_rodadas.db_execute(query_subbac).fetchall()
-        df_subbacia = pd.DataFrame(answer_tb_subbacia, columns=['cd_subbacia','cd_bacia','txt_submercado'])
-
-
+        df_subbacia = pd.DataFrame(Subbacia.get_subbacia())[['id', 'cd_bacia_mlt', 'nome_submercado']]
+        df_subbacia = df_subbacia.rename(columns={'id':'cd_subbacia', 'nome_submercado':'txt_submercado'})
+        df_subbacia = df_subbacia[df_subbacia['cd_subbacia'].isin(cds_subbacia)]
+        
         df_chuva_concat= pd.merge(df_chuva,df_subbacia, on=['cd_subbacia'], how='inner')
         df_chuva_concat= pd.merge(df_chuva_concat,df_bacia, on=['cd_bacia'], how='inner')
 
@@ -303,24 +284,10 @@ class Chuva:
 
         dt_rodada = df_chuva['dt_rodada'].max()
         dt = date_util.getLastSaturday(dt_rodada)
-        dt_inicio_semana = datetime.datetime.strftime(dt,"%Y-%m-%d")
         
-
-        select_query = db.select(
-            tb_ve_bacias.c.cd_bacia,
-            tb_ve_bacias.c.vl_mes,
-            tb_ve_bacias.c.dt_inicio_semana,
-            tb_ve_bacias.c.cd_revisao,
-            (
-                (tb_ve_bacias.c.vl_ena * 100) / db.func.nullif(tb_ve_bacias.c.vl_perc_mlt, 0)
-            ).label('mlt')
-        ).where(tb_ve_bacias.c.dt_inicio_semana >= dt_inicio_semana)
-        
-        answer_tb_ve_bacias = db_ons.db_execute(select_query).fetchall()
-        
-        df_mlt = pd.DataFrame(answer_tb_ve_bacias, columns=['cd_bacia','vl_mes','dt_inicio_semana','cd_revisao','mlt'])
+        df_mlt = pd.DataFrame(ons_service.VeBacias.get_ve_bacias(dt.date()))[['cd_bacia','vl_mes','dt_inicio_semana','cd_revisao','mlt']]
         df_mlt = df_mlt.sort_values(['vl_mes','cd_revisao'], ascending=False)
-        # Remover as linhas duplicadas na ColunaA, mantendo apenas a linha com o valor máximo em ColunaB
+
         df_mlt['dt_inicio_semana'] = pd.to_datetime(df_mlt['dt_inicio_semana']).dt.strftime('%Y-%m-%d')
         df_mlt = df_mlt.drop_duplicates(['dt_inicio_semana','cd_bacia'], keep='first')
         
@@ -408,7 +375,6 @@ class Chuva:
 
     @staticmethod
     def export_chuva_observada_ponderada_submercado(data_inicio: datetime.date, data_fim: datetime.date):
-        df = df[["dt_observado","txt_submercado","chuva_pond"]].rename(columns={'txt_submercado':'submercado', 'chuva_pond':'mm_chuva', 'dt_observado':'data'})
         df = pd.DataFrame(Chuva.get_chuva_observada_ponderada_submercado(data_inicio, data_fim))
         df.rename(columns={'submercado':'valorAgrupamento', 'mm_chuva':'valor', 'data':'dataReferente'}, inplace=True)
         df['dataReferente'] = pd.to_datetime(df['dataReferente']).dt.strftime('%Y-%m-%dT00:00:00.000Z')
@@ -463,9 +429,9 @@ class Chuva:
         atualizar:Optional[bool] = False):
         
         if no_cache:
-            df = pd.DataFrame(Chuva.get_chuva_por_id_subbacia(id_chuva))
+            df = pd.DataFrame(Chuva.get_chuva_por_id(id_chuva))[["modelo","dt_rodada","hr_rodada","cd_subbacia","dt_prevista","vl_chuva","dia_semana","semana"]]
         else:
-            df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
+            df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id, id_chuva, atualizar=atualizar))[["modelo","dt_rodada","hr_rodada","cd_subbacia","dt_prevista","vl_chuva","dia_semana","semana"]]
         if df.empty:
             return df
         if dt_inicio_previsao is not None and dt_fim_previsao is not None:
@@ -972,9 +938,9 @@ class MembrosModelo:
         atualizar:Optional[bool] = False):
         
         if no_cache:
-            df = pd.DataFrame(Chuva.get_chuva_por_id_subbacia(id_chuva))
+            df = pd.DataFrame(Chuva.get_chuva_por_id(id_chuva))[["modelo","dt_rodada","hr_rodada","cd_subbacia","dt_prevista","vl_chuva","dia_semana","semana"]]
         else:
-            df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id_subbacia, id_chuva, atualizar=atualizar))
+            df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id, id_chuva, atualizar=atualizar))[["modelo","dt_rodada","hr_rodada","cd_subbacia","dt_prevista","vl_chuva","dia_semana","semana"]]
         if df.empty:
             return df
         if dt_inicio_previsao is not None and dt_fim_previsao is not None:

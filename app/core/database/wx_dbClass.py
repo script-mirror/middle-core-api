@@ -284,7 +284,8 @@ class db_mysql_master():
                 db.Column('cd_bacia', db.Integer),
                 db.Column('dt_inicio_semana', db.DateTime),
                 db.Column('vl_ena', db.Float),
-                db.Column('vl_perc_mlt', db.Float)
+                db.Column('vl_perc_mlt', db.Float),
+                extend_existing=True
             )
         
         elif table_name.lower() == 'tb_ve':

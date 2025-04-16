@@ -82,17 +82,17 @@ class Acomph:
     @staticmethod
     def get_acomph_by_dt_referente(data:datetime.date):
         inner_query = db.select(
-            Acomph.tb.c.cd_posto,
-            Acomph.tb.c.dt_referente,
-            Acomph.tb.c.vl_vaz_inc_conso,
-            Acomph.tb.c.vl_vaz_nat_conso,
-            Acomph.tb.c.dt_acomph,
+            Acomph.tb.c['cd_posto'],
+            Acomph.tb.c['dt_referente'],
+            Acomph.tb.c['vl_vaz_inc_conso'],
+            Acomph.tb.c['vl_vaz_nat_conso'],
+            Acomph.tb.c['dt_acomph'],
             db.func.row_number().over(
-                partition_by=[Acomph.tb.c.cd_posto, Acomph.tb.c.dt_referente],
-                order_by=Acomph.tb.c.dt_acomph.desc()
+                partition_by=[Acomph.tb.c['cd_posto'], Acomph.tb.c['dt_referente']],
+                order_by=Acomph.tb.c['dt_acomph'].desc()
             ).label('row_number')
         ).where(
-            Acomph.tb.c.dt_referente >= data
+            Acomph.tb.c['dt_referente'] >= data
         ).alias('_')
         
         query = db.select(
@@ -116,7 +116,7 @@ class EnaAcomph:
     @staticmethod
     def delete_ena_acomph_by_dates(datas:List[datetime.date]):
         query = db.delete(EnaAcomph.tb).where(
-            EnaAcomph.tb.c.data.in_(datas)
+            EnaAcomph.tb.c['data'].in_(datas)
         )
         result = __DB__.db_execute(query)
         return {"deletes":result.rowcount}
@@ -136,15 +136,35 @@ class EnaAcomph:
         granularidade:str, data_inicial:datetime.date, data_final:datetime.date
     ):
         query = db.select(
-            EnaAcomph.tb.c.data,
-            EnaAcomph.tb.c.localizacao,
-            EnaAcomph.tb.c.ena
+            EnaAcomph.tb.c['data'],
+            EnaAcomph.tb.c['localizacao'],
+            EnaAcomph.tb.c['ena']
         ).where(
-            EnaAcomph.tb.c.granularidade == granularidade,
-            EnaAcomph.tb.c.data.between(data_inicial, data_final)
+            EnaAcomph.tb.c['granularidade'] == granularidade,
+            EnaAcomph.tb.c['data'].between(data_inicial, data_final)
         )
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=['data', granularidade, 'ena'])
+        return df.to_dict('records')
+    
+    
+class VeBacias:
+    tb:db.Table = __DB__.getSchema('tb_ve_bacias')
+    
+    @staticmethod
+    def get_ve_bacias(dt_inicio_semana:datetime.date):
+        query = db.select(
+            VeBacias.tb.c['cd_bacia'],
+            VeBacias.tb.c['vl_mes'],
+            VeBacias.tb.c['dt_inicio_semana'],
+            VeBacias.tb.c['cd_revisao'],
+            (
+                (VeBacias.tb.c['vl_ena'] * 100) / db.func.nullif(VeBacias.tb.c['vl_perc_mlt'], 0)
+            ).label('mlt')
+        ).where(VeBacias.tb.c['dt_inicio_semana'] >= dt_inicio_semana)
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=['cd_bacia', 'vl_mes', 'dt_inicio_semana', 'cd_revisao', 'mlt'])
         return df.to_dict('records')
     
 if __name__ == "__main__":

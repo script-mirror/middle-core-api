@@ -382,7 +382,7 @@ class Chuva:
                 'dt_rodada']]
         df_chuva.rename(
             columns={
-                'id':'cd_subbacia',
+                'id': 'cd_subbacia',
                 'id_cadastro_rodada': 'id',
                 'modelo': 'str_modelo'},
             inplace=True)
@@ -394,7 +394,8 @@ class Chuva:
         df_subbacia = df_subbacia.rename(
             columns={
                 'id': 'cd_subbacia',
-                'nome_submercado': 'txt_submercado'})
+                'nome_submercado': 'txt_submercado',
+                'cd_bacia_mlt': 'cd_bacia'})
         df_subbacia = df_subbacia[df_subbacia['cd_subbacia'].isin(
             cds_subbacia)]
 
@@ -403,11 +404,9 @@ class Chuva:
             df_subbacia,
             on=['cd_subbacia'],
             how='inner')
-        df_chuva_concat = pd.merge(
-            df_chuva_concat,
-            df_bacia,
-            on=['cd_bacia'],
-            how='inner')
+        import pdb
+        pdb.set_trace()
+        df_chuva_concat = pd.merge(df_chuva_concat, df_bacia, on=['cd_bacia'], how='inner')
 
         df_chuva_concat['dt_prevista'] = pd.to_datetime(
             df_chuva_concat['dt_prevista'])

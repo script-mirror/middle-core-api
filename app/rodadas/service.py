@@ -418,7 +418,7 @@ class Chuva:
         dt_rodada = df_chuva['dt_rodada'].max()
         dt = date_util.getLastSaturday(dt_rodada)
 
-        df_mlt = pd.DataFrame(ons_service.VeBacias.get_ve_bacias(dt.date()))[
+        df_mlt = pd.DataFrame(ons_service.VeBacias.get_ve_bacias(dt))[
             ['cd_bacia', 'vl_mes', 'dt_inicio_semana', 'cd_revisao', 'mlt']]
         df_mlt = df_mlt.sort_values(['vl_mes', 'cd_revisao'], ascending=False)
 

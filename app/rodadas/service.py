@@ -404,8 +404,6 @@ class Chuva:
             df_subbacia,
             on=['cd_subbacia'],
             how='inner')
-        import pdb
-        pdb.set_trace()
         df_chuva_concat = pd.merge(df_chuva_concat, df_bacia, on=['cd_bacia'], how='inner')
 
         df_chuva_concat['dt_prevista'] = pd.to_datetime(

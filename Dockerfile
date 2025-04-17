@@ -28,6 +28,6 @@ RUN apt-get update && apt-get install -y \
     libgconf-2-4 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . /appsour
+COPY . /app
 
 CMD ["fastapi", "run", "main.py", "--port", "8000"]

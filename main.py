@@ -68,7 +68,7 @@ app.include_router(pluvia_controller, prefix="/api/v2")
 app.include_router(utils_controller, prefix="/api/v2")
 
 
-@app.get("/")
+@app.get("/api/v2/health")
 def health():
     return {"Hello": "World"}
 

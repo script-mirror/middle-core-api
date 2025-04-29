@@ -487,3 +487,34 @@ class CvuMerchant:
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
+    
+class CargaSemanalDecomp:
+    tb: db.Table = __DB__.getSchema('carga_semanal_dc')
+    
+    @staticmethod
+    def create(body: List[CargaSemanalDecompSchema]):
+        body_dict = [x.model_dump() for x in body]
+        delete_dates = list(set([x['data_produto'] for x in body_dict]))
+        for date in delete_dates:
+            CargaSemanalDecomp.delete_by_product_date(date)
+        query = db.insert(CargaSemanalDecomp.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas adicionadas na carga_semanal_dc")
+        return None
+    @staticmethod
+    def delete_by_product_date(date:datetime.date):
+        query = db.delete(CargaSemanalDecomp.tb).where(CargaSemanalDecomp.tb.c.data_produto == date)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas deletadas da tb_dc_weol_semanal")
+        return None
+    
+    @staticmethod
+    def get_by_product_date(data_produto:datetime.date):
+        query = db.select(
+            CargaSemanalDecomp.tb
+            ).where(db.and_(
+                CargaSemanalDecomp.tb.c.data_produto == data_produto
+            ))
+        result = __DB__.db_execute(query).fetchall()
+        result = pd.DataFrame(result, columns=['id','data_produto','semana_operativa','patamar','duracao','submercado','carga','base_cgh','base_eol','base_ufv','base_ute','carga_mmgd','exp_cgh','exp_eol','exp_ufv','exp_ute','estagio'])
+        return result.to_dict('records')

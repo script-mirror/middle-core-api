@@ -1071,6 +1071,27 @@ class db_mysql_master():
                 db.Index('idx_data_granularidade', 'data', 'granularidade'),
                 extend_existing=True
             )
+        elif table_name.lower() == 'carga_semanal_dc':
+            table_schema = db.Table('carga_semanal_dc', self.meta,
+                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                db.Column('data_produto', db.Date, nullable=True),
+                db.Column('semana_operativa', db.Date, nullable=True),
+                db.Column('patamar', db.String(10), nullable=True),
+                db.Column('duracao', db.Float, nullable=True),
+                db.Column('submercado', db.String(5), nullable=True),
+                db.Column('carga', db.Numeric(10,2), nullable=True),
+                db.Column('base_cgh', db.Numeric(10,4), nullable=True),
+                db.Column('base_eol', db.Numeric(10,4), nullable=True),
+                db.Column('base_ufv', db.Numeric(12,7), nullable=True),
+                db.Column('base_ute', db.Numeric(10,4), nullable=True),
+                db.Column('carga_mmgd', db.Float, nullable=True),
+                db.Column('exp_cgh', db.Numeric(10,4), nullable=True),
+                db.Column('exp_eol', db.Numeric(10,4), nullable=True),
+                db.Column('exp_ufv', db.Numeric(12,6), nullable=True),
+                db.Column('exp_ute', db.Numeric(10,4), nullable=True),
+                db.Column('estagio', db.SmallInteger, nullable=True),
+                extend_existing=True
+            )
         return table_schema
 
             

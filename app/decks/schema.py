@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 import datetime
 
+
 class PatamaresDecompSchema(BaseModel):
     inicio:datetime.datetime
     patamar:str
@@ -23,6 +24,7 @@ class WeolSemanalSchema(BaseModel):
     rv_atual:int
     mes_eletrico:int
 
+
 class CvuMerchantSchema(BaseModel):
     cd_usina: int
     vl_cvu_cf: float
@@ -30,6 +32,7 @@ class CvuMerchantSchema(BaseModel):
     mes_referencia: str
     dt_atualizacao: str
     fonte: str
+
 
 class CvuSchema(BaseModel):
     cd_usina: int
@@ -40,3 +43,21 @@ class CvuSchema(BaseModel):
     dt_atualizacao: str
     fonte: str
 
+
+class CargaSemanalDecompSchema(BaseModel):
+    data_produto: datetime.date
+    semana_operativa: datetime.date
+    patamar: str
+    duracao: float
+    submercado: str
+    carga: float
+    base_cgh: float
+    base_eol: float
+    base_ufv: float
+    base_ute: float
+    carga_mmgd: float
+    exp_cgh: float
+    exp_eol: float
+    exp_ufv: float
+    exp_ute: float
+    estagio: int

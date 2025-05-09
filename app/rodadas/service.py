@@ -1061,6 +1061,7 @@ class ChuvaMembro:
     @staticmethod
     def post_chuva_membro(
             chuva_prev: List[ChuvaPrevisaoCriacaoMembro],
+            inserir_ensemble: bool,
             rodar_smap: bool) -> None:
         records = [obj.model_dump() for obj in chuva_prev]
         df = pd.DataFrame(records)
@@ -1081,14 +1082,15 @@ class ChuvaMembro:
 
         body = df.to_dict("records")
         ChuvaMembro.inserir(body)
-        ChuvaMembro.media_membros(
-            chuva_prev[0].dt_hr_rodada.replace(
-                minute=0,
-                second=0,
-                microsecond=0),
-            chuva_prev[0].modelo,
-            inserir=True,
-            rodar_smap=rodar_smap)
+        if inserir_ensemble:
+            ChuvaMembro.media_membros(
+                chuva_prev[0].dt_hr_rodada.replace(
+                    minute=0,
+                    second=0,
+                    microsecond=0),
+                chuva_prev[0].modelo,
+                inserir=inserir_ensemble,
+                rodar_smap=rodar_smap)
         return None
 
     @staticmethod

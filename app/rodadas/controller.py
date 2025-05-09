@@ -119,9 +119,10 @@ def post_chuva_modelo_combinados(
 @router.post('/chuva/previsao/membros', tags=['Rodadas'])
 def post_chuva_membros(
     chuva_prev: List[ChuvaPrevisaoCriacaoMembro],
-    rodar_smap: bool = False
+    inserir_ensemble: bool = False,
+    rodar_smap: bool = False,
 ):
-    return service.ChuvaMembro.post_chuva_membro(chuva_prev, rodar_smap)
+    return service.ChuvaMembro.post_chuva_membro(chuva_prev, inserir_ensemble, rodar_smap)
 
 
 @router.delete('/chuva/previsao', tags=['Rodadas'])

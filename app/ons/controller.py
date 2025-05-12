@@ -50,7 +50,7 @@ def get_acomph_by_dt_referente(
 def get_acomphby_dt_acomph(
     data_acomph: datetime.date
 ):
-    service.Acomph.get_acomph_by_dt_acomph(data_acomph)
+    return service.Acomph.get_acomph_by_dt_acomph(data_acomph)
 
 @router.delete('/ena-acomph/datas')
 def delete_ena_acomph(datas: List[datetime.date]):

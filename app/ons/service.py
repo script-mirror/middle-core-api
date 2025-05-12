@@ -113,7 +113,7 @@ class Acomph:
     @staticmethod
     def get_acomph_by_dt_acomph(data:datetime.date):
         query = db.select(
-            Acomph.tb.c['dt_referente'],
+            db.func.date(Acomph.tb.c['dt_referente']),
             Acomph.tb.c['cd_posto'],
             Acomph.tb.c['vl_vaz_def_conso'],
             Acomph.tb.c['vl_vaz_inc_conso'],
@@ -125,7 +125,6 @@ class Acomph:
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=['dt_referente', 'cd_posto', 'vl_vaz_def_conso', 
                                           'vl_vaz_inc_conso', 'vl_vaz_nat_conso', 'dt_acomph'])
-        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
 
 

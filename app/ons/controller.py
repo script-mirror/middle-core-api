@@ -54,7 +54,7 @@ def post_acomph(
         [item.model_dump() for item in body]
     )
 
-@router.get('/acomph/data-acomph-entre')
+@router.get('/acomph/data-acomph')
 def get_acomphby_dt_acomph(
     data_acomph: datetime.date
 ):

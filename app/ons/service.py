@@ -6,7 +6,7 @@ import numpy as np
 import datetime
 from typing import List
 from app.core.utils import date_util
-
+from fastapi import HTTPException
 from app.core.database.wx_dbClass import db_mysql_master
 
 __DB__ = db_mysql_master('db_ons')
@@ -123,6 +123,10 @@ class Acomph:
             db.func.date(Acomph.tb.c['dt_acomph']) == data
         )
         result = __DB__.db_execute(query).fetchall()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Acomph da data {data} não encontrado")
+            
         df = pd.DataFrame(result, columns=['dt_referente', 'cd_posto', 'vl_vaz_def_conso', 
                                           'vl_vaz_inc_conso', 'vl_vaz_nat_conso', 'dt_acomph'])
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})

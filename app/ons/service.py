@@ -135,9 +135,9 @@ class AcomphHistorico:
         df = pd.DataFrame(body)
         df.drop_duplicates(subset=['dt_referente', 'cd_posto'], inplace=True)
         df.sort_values(['dt_referente', 'cd_posto'], inplace=True)
-        query = db.insert(AcomphHistorico.tb).values(body)
+        query = db.insert(AcomphHistorico.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
-        AcomphConsolidado.post_acomph_consolidado(body)
+        AcomphConsolidado.post_acomph_consolidado(df.to_dict('records'))
         return {"inserts":result.rowcount}
     
 class AcomphConsolidado:

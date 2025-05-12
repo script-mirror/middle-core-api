@@ -125,6 +125,7 @@ class Acomph:
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=['dt_referente', 'cd_posto', 'vl_vaz_def_conso', 
                                           'vl_vaz_inc_conso', 'vl_vaz_nat_conso', 'dt_acomph'])
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
 
 class AcomphHistorico:

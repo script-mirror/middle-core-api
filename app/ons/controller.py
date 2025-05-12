@@ -46,7 +46,7 @@ def get_acomph_by_dt_referente(
 ):
     return service.Acomph.get_acomph_by_dt_referente(data)
 
-@router.get('/acomph')
+@router.get('/acomph/data-acomph-entre')
 def get_acomphby_dt_acomph(
     data_acomph: datetime.date
 ):

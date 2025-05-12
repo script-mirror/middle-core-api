@@ -127,8 +127,35 @@ class Acomph:
                                           'vl_vaz_inc_conso', 'vl_vaz_nat_conso', 'dt_acomph'])
         return df.to_dict('records')
 
+class AcomphHistorico:
+    tb:db.Table = __DB__.getSchema('acomph_historico')
 
-
+    @staticmethod
+    def post_acomph_historico(body:List[dict]):
+        query = db.insert(AcomphHistorico.tb).values(body)
+        result = __DB__.db_execute(query)
+        AcomphConsolidado.post_acomph_consolidado(body)
+        return {"inserts":result.rowcount}
+    
+class AcomphConsolidado:
+    tb:db.Table = __DB__.getSchema('acomph_consolidado')
+    
+    @staticmethod
+    def post_acomph_consolidado(body:List[dict]):
+        df = pd.DataFrame(body)
+        df.drop(columns=['dt_acomph'], inplace=True)
+        AcomphConsolidado.delete_acomph_consolidado_by_dt_referente_between(df['dt_referente'].min(), df['dt_referente'].max())
+        query = db.insert(AcomphConsolidado.tb).values(df.to_dict('records'))
+        result = __DB__.db_execute(query)
+        return {"inserts":result.rowcount}
+    
+    @staticmethod
+    def delete_acomph_consolidado_by_dt_referente_between(dt_referente_inicial:datetime.date, dt_referente_final:datetime.date):
+        query = db.delete(AcomphConsolidado.tb).where(
+            AcomphConsolidado.tb.c['dt_referente'].between(dt_referente_inicial, dt_referente_final)
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes":result.rowcount}
 class EnaAcomph:
     tb:db.Table = __DB__.getSchema('ena_acomph')
     

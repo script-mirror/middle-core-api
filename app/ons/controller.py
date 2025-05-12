@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter
 
 from . import service
-from .schema import DivisaoBaciasEnum, EnaAcomphSchema, GranularidadeEnum
+from .schema import DivisaoBaciasEnum, EnaAcomphSchema, GranularidadeEnum, AcomphHistoricoSchema
 from app.core.utils import cache
 
 router = APIRouter(prefix='/ons', tags=['ONS'])
@@ -46,6 +46,14 @@ def get_acomph_by_dt_referente(
 ):
     return service.Acomph.get_acomph_by_dt_referente(data)
 
+@router.post('/acomph')
+def post_acomph(
+    body: List[AcomphHistoricoSchema]
+):
+    return service.AcomphHistorico.post_acomph_historico(
+        [item.model_dump() for item in body]
+    )
+
 @router.get('/acomph/data-acomph-entre')
 def get_acomphby_dt_acomph(
     data_acomph: datetime.date
@@ -58,9 +66,9 @@ def delete_ena_acomph(datas: List[datetime.date]):
 
 
 @router.post('/ena-acomph')
-def post_ena_acomph(ena_acomph: List[EnaAcomphSchema]):
+def post_ena_acomph(body: List[EnaAcomphSchema]):
     return service.EnaAcomph.post_ena_acomph(
-        [item.dict() for item in ena_acomph]
+        [item.model_dump() for item in body]
     )
 
 

@@ -16,3 +16,11 @@ class EnaAcomphSchema(BaseModel):
     granularidade: str
     localizacao: str
     ena: float
+    
+class AcomphHistoricoSchema(BaseModel):
+    dt_referente:datetime.date
+    cd_posto: int
+    vl_vaz_def_conso: float
+    vl_vaz_inc_conso: float
+    vl_vaz_nat_conso: float
+    dt_acomph: datetime.date

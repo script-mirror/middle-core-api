@@ -120,7 +120,7 @@ class Acomph:
             Acomph.tb.c['vl_vaz_nat_conso'],
             db.func.date(Acomph.tb.c['dt_acomph'])
         ).where(
-            Acomph.tb.c['dt_acomph'] == data
+            db.func.date(Acomph.tb.c['dt_acomph']) == data
         )
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=['dt_referente', 'cd_posto', 'vl_vaz_def_conso', 

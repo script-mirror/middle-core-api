@@ -3,6 +3,7 @@ import sqlalchemy as db
 from sqlalchemy.engine import Connection
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
+from app.message.service import send_message
 
 class db_mysql_master():
 
@@ -28,12 +29,20 @@ class db_mysql_master():
     def connect(self):
         return self.Session()
 
-    def db_execute(self,query, commit=True):
-        with self.connect() as session:
+    def db_execute(self, query, commit=True):
+        session = self.connect()
+        try:
             result = session.execute(query)
             if commit:
                 session.commit()
             return result
+        except Exception as e:
+            if commit:
+                session.rollback()
+            send_message(f"Error executing query: {str(e)}\nQuery: {query}", file=None, dest="debug")            
+            raise Exception(f"Error executing query: {str(e)}") from e
+        finally:
+            session.close()
     
     def create_table(self, table_name):
         self.getSchema(table_name)

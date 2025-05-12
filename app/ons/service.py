@@ -132,6 +132,9 @@ class AcomphHistorico:
 
     @staticmethod
     def post_acomph_historico(body:List[dict]):
+        df = pd.DataFrame(body)
+        df.drop_duplicates(subset=['dt_referente', 'cd_posto'], inplace=True)
+        df.sort_values(['dt_referente', 'cd_posto'], inplace=True)
         query = db.insert(AcomphHistorico.tb).values(body)
         result = __DB__.db_execute(query)
         AcomphConsolidado.post_acomph_consolidado(body)

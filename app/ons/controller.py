@@ -60,6 +60,11 @@ def get_acomphby_dt_acomph(
 ):
     return service.Acomph.get_acomph_by_dt_acomph(data_acomph)
 
+@router.get('/acomph/products-available')
+def get_acomph_products_available(
+    year: int,
+):
+    return service.Acomph.get_available_dt_acomph_by_year(year)
 @router.delete('/ena-acomph/datas')
 def delete_ena_acomph(datas: List[datetime.date]):
     return service.EnaAcomph.delete_ena_acomph_by_dates(datas)

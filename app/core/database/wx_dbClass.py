@@ -39,8 +39,8 @@ class db_mysql_master():
         except Exception as e:
             if commit:
                 session.rollback()
-            send_message(f"Error executing query: {str(e)}\nQuery: {query}", file=None, dest="debug")            
-            raise Exception(f"Error executing query: {str(e)}") from e
+            send_message(f"Error executing query: {str(e.orig)}\nQuery: {str(query)}", file=None, dest="debug")            
+            raise Exception(f"Error executing query: {str(e.orig)}") from e
         finally:
             session.close()
     

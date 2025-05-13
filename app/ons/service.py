@@ -132,6 +132,23 @@ class Acomph:
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
 
+
+    @staticmethod
+    def get_available_dt_acomph_by_year(year:int):
+        query = db.select(
+            db.func.distinct(db.func.date(Acomph.tb.c['dt_acomph']))
+        ).where(
+            db.func.extract('year', Acomph.tb.c['dt_acomph']) == year
+        )
+        
+        result = __DB__.db_execute(query).fetchall()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Não foram encontradas datas de Acomph para o ano {year}")
+            
+        df = pd.DataFrame(result, columns=['dt_acomph'])
+        return [str(x) for x in df['dt_acomph'].tolist()]
+        
 class AcomphHistorico:
     tb:db.Table = __DB__.getSchema('acomph_historico')
 
@@ -140,12 +157,19 @@ class AcomphHistorico:
         df = pd.DataFrame(body)
         df.drop_duplicates(subset=['dt_referente', 'cd_posto'], inplace=True)
         df.sort_values(['dt_referente', 'cd_posto'], inplace=True)
-        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        df = df.replace({np.nan: -1, np.inf: -1, -np.inf: -1})
+        AcomphHistorico.delete_acomph_historico_by_dt_acomph(df['dt_acomph'].unique().tolist()[0])
         query = db.insert(AcomphHistorico.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
         AcomphConsolidado.post_acomph_consolidado(df.to_dict('records'))
         return {"inserts":result.rowcount}
     
+    def delete_acomph_historico_by_dt_acomph(dt_acomph:datetime.date):
+        query = db.delete(AcomphHistorico.tb).where(
+            AcomphHistorico.tb.c['dt_acomph'] == dt_acomph
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes":result.rowcount}
 class AcomphConsolidado:
     tb:db.Table = __DB__.getSchema('acomph_consolidado')
     

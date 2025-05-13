@@ -96,13 +96,13 @@ class Acomph:
         ).alias('_')
         
         query = db.select(
-            inner_query.c.cd_posto,
-            db.func.date(inner_query.c.dt_referente),
-            inner_query.c.vl_vaz_inc_conso,
-            inner_query.c.vl_vaz_nat_conso,
-            db.func.date(inner_query.c.dt_acomph)
+            inner_query.c['cd_posto'],
+            db.func.date(inner_query.c['dt_referente']),
+            inner_query.c['vl_vaz_inc_conso'],
+            inner_query.c['vl_vaz_nat_conso'],
+            db.func.date(inner_query.c['dt_acomph'])
         ).where(
-            inner_query.c.row_number == 1
+            inner_query.c['row_number'] == 1
         )
         
         result = __DB__.db_execute(query).fetchall()
@@ -250,6 +250,66 @@ class VeBacias:
         return df.to_dict('records')
 
 
+class TipoGeracao:
+    tb:db.Table = __DB__.getSchema('tb_tipo_geracao')
+
+class GeracaoHoraria:
+    tb:db.Table = __DB__.getSchema('tb_geracao_horaria')
+    
+    @staticmethod
+    def get_geracao_horaria(dt_update: datetime.date):
+        query = db.select(
+            GeracaoHoraria.tb.c['str_submercado'],
+            GeracaoHoraria.tb.c['dt_referente'],
+            GeracaoHoraria.tb.c['vl_carga'],
+            TipoGeracao.tb.c['str_geracao'],
+        ).join(
+        TipoGeracao.tb, GeracaoHoraria.tb.c['cd_geracao'] == TipoGeracao.tb.c['cd_geracao']
+        ).where(
+            GeracaoHoraria.tb.c['dt_update'] == f"{dt_update} 00:00:00"
+        ).order_by(
+            TipoGeracao.tb.c['str_geracao'],
+            GeracaoHoraria.tb.c['dt_referente']
+            )
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'submercado','dt_referente','vl_carga','tipo_geracao'
+            ])
+        df['dt_referente'] = pd.to_datetime(df['dt_referente'])
+        df['hora'] = df['dt_referente'].dt.floor('h')
+        df_agrupado = df.groupby(['submercado', 'tipo_geracao', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
+
+        return df_agrupado.to_dict('records')
+
+
+class CargaHoraria:
+    tb:db.Table = __DB__.getSchema('tb_carga_horaria')
+    
+    @staticmethod
+    def get_carga_horaria(dt_update: datetime.date):
+        query = db.select(
+            CargaHoraria.tb.c['str_submercado'],
+            CargaHoraria.tb.c['dt_referente'],
+            CargaHoraria.tb.c['vl_carga'],
+        ).where(
+            CargaHoraria.tb.c['dt_update'] == f"{dt_update} 00:00:00"
+        ).order_by(
+            CargaHoraria.tb.c['dt_referente']
+            )
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'submercado','dt_referente','vl_carga'
+            ])
+        df['dt_referente'] = pd.to_datetime(df['dt_referente'])
+        df['hora'] = df['dt_referente'].dt.floor('h')
+        df_agrupado = df.groupby(['submercado', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
+
+        return df_agrupado.to_dict('records')
+    
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

@@ -86,3 +86,16 @@ def get_ena_acomph_entre(
     return service.EnaAcomph.get_ena_acomph_by_granularidade_date_between(
         granularidade.name, data_inicial, data_final
     )
+
+@router.get('/geracao-horaria')
+def get_geracao_horaria(
+    data:datetime.date
+):
+    return service.GeracaoHoraria.get_geracao_horaria(data)
+
+
+@router.get('/carga-horaria')
+def get_carga_horaria(
+    data:datetime.date
+):
+    return service.CargaHoraria.get_carga_horaria(data)

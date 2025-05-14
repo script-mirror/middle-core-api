@@ -1557,6 +1557,37 @@ class ChuvaObsPsat:
         return df.to_dict('records')
 
 
+class VazoesObs:
+    tb: db.Table = __DB__.getSchema('tb_vazao_obs')
+
+    @staticmethod
+    def get_vazao_observada_por_data_entre(
+        data_inicio: datetime.date,
+        data_fim: datetime.date
+    ):
+        query = db.select(
+            VazoesObs.tb.c["txt_subbacia"],
+            VazoesObs.tb.c["cd_estacao"],
+            VazoesObs.tb.c["txt_tipo_vaz"],
+            VazoesObs.tb.c["dt_referente"],
+            VazoesObs.tb.c["vl_vaz"]
+        ).where(
+            db.and_(
+                VazoesObs.tb.c['dt_referente'] >= data_inicio,
+                VazoesObs.tb.c['dt_referente'] <= data_fim
+            )
+        )
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(
+            result,
+            columns=[
+            "txt_subbacia",
+            "cd_estacao",
+            "txt_tipo_vaz",
+            "dt_referente",
+            "vl_vaz"])
+        return df.to_dict('records')
+
 if __name__ == '__main__':
     ChuvaMembro.media_membros(
         datetime.datetime(

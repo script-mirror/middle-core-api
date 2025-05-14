@@ -243,3 +243,11 @@ def get_chuva_smap_ponderada_submercado(
     id_chuva: int
 ):
     return service.Chuva.get_chuva_smap_ponderada_submercado(id_chuva)
+
+
+@router.get("/vazao-observada-pdp", tags=['Rodadas'])
+def get_vazao_observada_pdp(
+    data_inicio: datetime.date,
+    data_fim: datetime.date
+):
+    return service.VazoesObs.get_vazao_observada_por_data_entre(data_inicio, data_fim)

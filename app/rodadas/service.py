@@ -1558,7 +1558,7 @@ class ChuvaObsPsat:
 
 
 class VazoesObs:
-    tb: db.Table = __DB__.getSchema('tb_vazao_obs')
+    tb: db.Table = __DB__.getSchema('tb_vazoes_obs')
 
     @staticmethod
     def get_vazao_observada_por_data_entre(

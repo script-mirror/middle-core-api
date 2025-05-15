@@ -1124,7 +1124,14 @@ class db_mysql_master():
                 db.Column('vl_vaz_nat_conso', db.Float(12,6), nullable=True),
                 extend_existing=True
             )
-            
+        elif table_name.lower() == 'tb_vazoes_obs':
+            table_schema = db.Table('tb_vazoes_obs', self.meta,
+                    db.Column('txt_subbacia', db.String(100)),
+                    db.Column('cd_estacao', db.Integer),
+                    db.Column('txt_tipo_vaz', db.String(100)),
+                    db.Column('dt_referente', db.DateTime),
+                    db.Column('vl_vaz', db.Float)
+                )
         return table_schema
 
             

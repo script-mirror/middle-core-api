@@ -1356,17 +1356,11 @@ class MembrosModelo:
 
     @staticmethod
     def inserir(body: List[dict]) -> List[dict]:
-        dt_hr_rodada = []
-        nome = []
-        modelo = []
-        for membro in body:
-            dt_hr_rodada.append(membro["dt_hr_rodada"])
-            nome.append(membro["nome"])
-            modelo.append(membro["modelo"])
-
-        search_params = (MembrosModelo.tb.c["dt_hr_rodada"].in_(dt_hr_rodada),
-                         MembrosModelo.tb.c["nome"].in_(nome),
-                         MembrosModelo.tb.c["modelo"].in_(modelo))
+        df_delete = pd.DataFrame(body)
+        
+        search_params = (MembrosModelo.tb.c["dt_hr_rodada"].in_(df_delete["dt_hr_rodada"].unique().tolist()),
+                         MembrosModelo.tb.c["nome"].in_(df_delete["nome"].unique().tolist()),
+                         MembrosModelo.tb.c["modelo"].in_(df_delete["modelo"].unique().tolist()))
         q_delete = MembrosModelo.tb.delete().where(db.and_(
             *search_params
         ))

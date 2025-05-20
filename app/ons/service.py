@@ -132,7 +132,6 @@ class Acomph:
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
 
-
     @staticmethod
     def get_available_dt_acomph_by_year(year:int):
         query = db.select(
@@ -148,61 +147,32 @@ class Acomph:
             
         df = pd.DataFrame(result, columns=['dt_acomph'])
         return [str(x) for x in df['dt_acomph'].tolist()]
-        
-class AcomphHistorico:
-    tb:db.Table = __DB__.getSchema('acomph_historico')
 
     @staticmethod
-    def post_acomph_historico(body:List[dict]):
+    def post_acomph(body:List[dict]):
         df = pd.DataFrame(body)
         df.drop_duplicates(subset=['dt_referente', 'cd_posto'], inplace=True)
         df.sort_values(['dt_referente', 'cd_posto'], inplace=True)
         df = df.replace({np.nan: -1, np.inf: -1, -np.inf: -1})
-        AcomphHistorico.delete_acomph_historico_by_dt_acomph(df['dt_acomph'].unique().tolist()[0])
-        query = db.insert(AcomphHistorico.tb).values(df.to_dict('records'))
+        Acomph.delete_acomph_by_dt_acomph(df['dt_acomph'].unique().tolist()[0])
+        query = db.insert(Acomph.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
         AcomphConsolidado.post_acomph_consolidado(df.to_dict('records'))
         return {"inserts":result.rowcount}
     
     @staticmethod
-    def delete_acomph_historico_by_dt_acomph(dt_acomph:datetime.date):
-        query = db.delete(AcomphHistorico.tb).where(
-            AcomphHistorico.tb.c['dt_acomph'] == dt_acomph
+    def delete_acomph_by_dt_acomph(dt_acomph:datetime.date):
+        query = db.delete(Acomph.tb).where(
+            Acomph.tb.c['dt_acomph'] == dt_acomph
         )
         result = __DB__.db_execute(query)
         return {"deletes":result.rowcount}
-        
-    @staticmethod
-    def update_data_acomph(dt_acomph:datetime.date):
-        # Find the date range for the given dt_acomph
-        query = db.select(
-            db.func.max(Acomph.tb.c['dt_referente']),
-            db.func.min(Acomph.tb.c['dt_referente'])
-        ).where(
-            Acomph.tb.c['dt_acomph'] == dt_acomph
-        )
-        result = __DB__.db_execute(query).fetchone()
-            
-        date_range = {
-            "max_date": result[0],
-            "min_date": result[1]
-        }
-        
-        # Update ALL records within the date range to have the specified dt_acomph
-        query_update = db.update(AcomphConsolidado.tb).where(
-            AcomphConsolidado.tb.c['dt_referente'].between(date_range['min_date'], date_range['max_date'])
-        ).values(dt_acomph=dt_acomph)
-        
-        result = __DB__.db_execute(query_update)
-        
-        return {"updates": result.rowcount}
 class AcomphConsolidado:
     tb:db.Table = __DB__.getSchema('acomph_consolidado')
     
     @staticmethod
     def post_acomph_consolidado(body:List[dict]):
         df = pd.DataFrame(body)
-        df.drop(columns=['dt_acomph'], inplace=True)
         AcomphConsolidado.delete_acomph_consolidado_by_dt_referente_between(df['dt_referente'].min(), df['dt_referente'].max())
         query = db.insert(AcomphConsolidado.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)

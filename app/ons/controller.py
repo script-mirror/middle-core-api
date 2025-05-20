@@ -4,7 +4,7 @@ from typing import List, Optional
 from fastapi import APIRouter
 
 from . import service
-from .schema import DivisaoBaciasEnum, EnaAcomphSchema, GranularidadeEnum, AcomphHistoricoSchema
+from .schema import DivisaoBaciasEnum, EnaAcomphSchema, GranularidadeEnum, AcomphSchema
 from app.core.utils import cache
 
 router = APIRouter(prefix='/ons', tags=['ONS'])
@@ -48,9 +48,9 @@ def get_acomph_by_dt_referente(
 
 @router.post('/acomph')
 def post_acomph(
-    body: List[AcomphHistoricoSchema]
+    body: List[AcomphSchema]
 ):
-    return service.AcomphHistorico.post_acomph_historico(
+    return service.Acomph.post_acomph(
         [item.model_dump() for item in body]
     )
 

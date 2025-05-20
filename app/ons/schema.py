@@ -17,7 +17,7 @@ class EnaAcomphSchema(BaseModel):
     localizacao: str
     ena: float
     
-class AcomphHistoricoSchema(BaseModel):
+class AcomphSchema(BaseModel):
     dt_referente:datetime.date
     cd_posto: int
     vl_vaz_def_conso: float | None

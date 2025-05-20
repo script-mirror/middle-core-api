@@ -1102,18 +1102,6 @@ class db_mysql_master():
                 extend_existing=True
             )
             
-        elif table_name.lower() == 'acomph_historico':
-            table_schema = db.Table('acomph_historico', self.meta,
-                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
-                db.Column('dt_referente', db.Date, nullable=True),
-                db.Column('cd_posto', db.SmallInteger, nullable=True),
-                db.Column('vl_vaz_def_conso', db.Float(12,6), nullable=True),
-                db.Column('vl_vaz_inc_conso', db.Float(12,6), nullable=True),
-                db.Column('vl_vaz_nat_conso', db.Float(12,6), nullable=True),
-                db.Column('dt_acomph', db.Date, nullable=True),
-                extend_existing=True
-            )
-            
         elif table_name.lower() == 'acomph_consolidado':
             table_schema = db.Table('acomph_consolidado', self.meta,
                 db.Column('id', db.Integer, primary_key=True, autoincrement=True),
@@ -1122,6 +1110,7 @@ class db_mysql_master():
                 db.Column('vl_vaz_def_conso', db.Float(12,6), nullable=True),
                 db.Column('vl_vaz_inc_conso', db.Float(12,6), nullable=True),
                 db.Column('vl_vaz_nat_conso', db.Float(12,6), nullable=True),
+                db.Column('dt_acomph', db.Date, nullable=True),
                 extend_existing=True
             )
         elif table_name.lower() == 'tb_vazoes_obs':

@@ -278,6 +278,33 @@ class GeracaoHoraria:
         df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
 
         return df_agrupado.to_dict('records')
+    
+    @staticmethod
+    def get_geracao_horaria_data_entre(inicio: datetime.date, fim:datetime.date):
+        query = db.select(
+            GeracaoHoraria.tb.c['str_submercado'],
+            GeracaoHoraria.tb.c['dt_referente'],
+            GeracaoHoraria.tb.c['vl_carga'],
+            TipoGeracao.tb.c['str_geracao'],
+        ).join(
+        TipoGeracao.tb, GeracaoHoraria.tb.c['cd_geracao'] == TipoGeracao.tb.c['cd_geracao']
+        ).where(
+            GeracaoHoraria.tb.c['dt_update'].between(f"{inicio} 00:00:00", f"{fim} 00:00:00") 
+        ).order_by(
+            TipoGeracao.tb.c['str_geracao'],
+            GeracaoHoraria.tb.c['dt_referente']
+            )
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'submercado','dt_referente','vl_carga','tipo_geracao'
+            ])
+        df['dt_referente'] = pd.to_datetime(df['dt_referente'])
+        df['hora'] = df['dt_referente'].dt.floor('h')
+        df_agrupado = df.groupby(['submercado', 'tipo_geracao', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
+
+        return df_agrupado.to_dict('records')
 
 
 class CargaHoraria:
@@ -291,6 +318,29 @@ class CargaHoraria:
             CargaHoraria.tb.c['vl_carga'],
         ).where(
             CargaHoraria.tb.c['dt_update'] == f"{dt_update} 00:00:00"
+        ).order_by(
+            CargaHoraria.tb.c['dt_referente']
+            )
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'submercado','dt_referente','vl_carga'
+            ])
+        df['dt_referente'] = pd.to_datetime(df['dt_referente'])
+        df['hora'] = df['dt_referente'].dt.floor('h')
+        df_agrupado = df.groupby(['submercado', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
+
+        return df_agrupado.to_dict('records')
+    
+    @staticmethod
+    def get_carga_horaria_data_entre(inicio: datetime.date, fim:datetime.date):
+        query = db.select(
+            CargaHoraria.tb.c['str_submercado'],
+            CargaHoraria.tb.c['dt_referente'],
+            CargaHoraria.tb.c['vl_carga'],
+        ).where(
+            CargaHoraria.tb.c['dt_update'].between(f"{inicio} 00:00:00", f"{fim} 00:00:00") 
         ).order_by(
             CargaHoraria.tb.c['dt_referente']
             )

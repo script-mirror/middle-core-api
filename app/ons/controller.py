@@ -99,3 +99,19 @@ def get_carga_horaria(
     data:datetime.date
 ):
     return service.CargaHoraria.get_carga_horaria(data)
+
+
+@router.get('/geracao-horaria/data-entre')
+def get_geracao_horaria(
+    inicio:datetime.date,
+    fim:datetime.date
+):
+    return service.GeracaoHoraria.get_geracao_horaria_data_entre(inicio, fim)
+
+
+@router.get('/carga-horaria/data-entre')
+def get_carga_horaria(
+    inicio:datetime.date,
+    fim:datetime.date
+):
+    return service.CargaHoraria.get_carga_horaria_data_entre(inicio, fim)

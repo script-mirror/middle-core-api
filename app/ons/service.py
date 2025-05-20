@@ -138,7 +138,7 @@ class Acomph:
         query = db.select(
             db.func.distinct(db.func.date(Acomph.tb.c['dt_acomph']))
         ).where(
-            db.func.extract('year', Acomph.tb.c['dt_acomph']) == year
+            Acomph.tb.c['dt_acomph'].between(f'{year}-01-01', f'{year}-12-31')
         )
         
         result = __DB__.db_execute(query).fetchall()
@@ -164,12 +164,38 @@ class AcomphHistorico:
         AcomphConsolidado.post_acomph_consolidado(df.to_dict('records'))
         return {"inserts":result.rowcount}
     
+    @staticmethod
     def delete_acomph_historico_by_dt_acomph(dt_acomph:datetime.date):
         query = db.delete(AcomphHistorico.tb).where(
             AcomphHistorico.tb.c['dt_acomph'] == dt_acomph
         )
         result = __DB__.db_execute(query)
         return {"deletes":result.rowcount}
+        
+    @staticmethod
+    def update_data_acomph(dt_acomph:datetime.date):
+        # Find the date range for the given dt_acomph
+        query = db.select(
+            db.func.max(Acomph.tb.c['dt_referente']),
+            db.func.min(Acomph.tb.c['dt_referente'])
+        ).where(
+            Acomph.tb.c['dt_acomph'] == dt_acomph
+        )
+        result = __DB__.db_execute(query).fetchone()
+            
+        date_range = {
+            "max_date": result[0],
+            "min_date": result[1]
+        }
+        
+        # Update ALL records within the date range to have the specified dt_acomph
+        query_update = db.update(AcomphConsolidado.tb).where(
+            AcomphConsolidado.tb.c['dt_referente'].between(date_range['min_date'], date_range['max_date'])
+        ).values(dt_acomph=dt_acomph)
+        
+        result = __DB__.db_execute(query_update)
+        
+        return {"updates": result.rowcount}
 class AcomphConsolidado:
     tb:db.Table = __DB__.getSchema('acomph_consolidado')
     
@@ -189,6 +215,7 @@ class AcomphConsolidado:
         )
         result = __DB__.db_execute(query)
         return {"deletes":result.rowcount}
+
 class EnaAcomph:
     tb:db.Table = __DB__.getSchema('ena_acomph')
     
@@ -228,7 +255,6 @@ class EnaAcomph:
 
 
 class VeBacias:
-    tb:db.Table = __DB__.getSchema('tb_ve_bacias')
     
     @staticmethod
     def get_ve_bacias(dt_inicio_semana: datetime.date):

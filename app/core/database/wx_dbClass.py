@@ -29,7 +29,7 @@ class db_mysql_master():
     def connect(self):
         return self.Session()
 
-    def db_execute(self, query, commit=True):
+    def db_execute(self, query, commit:bool=True, debug:str=None):
         session = self.connect()
         try:
             result = session.execute(query)
@@ -39,7 +39,7 @@ class db_mysql_master():
         except Exception as e:
             if commit:
                 session.rollback()
-            send_message(f"Error executing query: {str(e.orig)}\nQuery: {str(query)}", file=None, dest="debug")            
+            send_message(f"Error executing query: {str(e.orig)}\nQuery: {str(query)}\n{debug}", file=None, dest="debug")            
             raise Exception(f"Error executing query: {str(e.orig)}") from e
         finally:
             session.close()

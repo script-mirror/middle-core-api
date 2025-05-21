@@ -1364,7 +1364,7 @@ class MembrosModelo:
         q_delete = MembrosModelo.tb.delete().where(db.and_(
             *search_params
         ))
-        linhas_delete = __DB__.db_execute(q_delete, debug=f"{df_delete["dt_hr_rodada"].unique().tolist()}\n{df_delete["nome"].unique().tolist()}\n{df_delete["modelo"].unique().tolist()}").rowcount
+        linhas_delete = __DB__.db_execute(q_delete, debug=f"{df_delete['dt_hr_rodada'].unique().tolist()}\n{df_delete['nome'].unique().tolist()}\n{df_delete['modelo'].unique().tolist()}").rowcount
         print(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
         q_insert = MembrosModelo.tb.insert().values(body)
         linhas_insert = __DB__.db_execute(q_insert).rowcount

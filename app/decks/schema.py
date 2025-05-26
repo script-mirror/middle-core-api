@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 import datetime
+from typing import Optional
 
 
 class PatamaresDecompSchema(BaseModel):
@@ -61,3 +62,13 @@ class CargaSemanalDecompSchema(BaseModel):
     exp_ufv: float
     exp_ute: float
     estagio: int
+
+
+class CargaPmoSchema(BaseModel):
+    carga: float
+    mes: int
+    revisao: str
+    subsistema: str
+    semana: Optional[int] = None
+    dt_inicio: str
+    tipo: str

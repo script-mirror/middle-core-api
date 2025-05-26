@@ -1121,6 +1121,20 @@ class db_mysql_master():
                     db.Column('dt_referente', db.DateTime),
                     db.Column('vl_vaz', db.Float)
                 )
+        elif table_name.lower() == 'carga_consolidada_pmo':
+            table_schema = db.Table('carga_consolidada_pmo', self.meta,
+                    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                    db.Column('carga', db.Numeric(10, 2), nullable=False),
+                    db.Column('mes', db.Integer, nullable=False),
+                    db.Column('revisao', db.String(10), nullable=False),
+                    db.Column('subsistema', db.String(4), nullable=False),
+                    db.Column('semana', db.Integer),
+                    db.Column('dt_inicio', db.Date, nullable=False),
+                    db.Column('tipo', db.String(7), nullable=False),
+                    db.Column('created_at', db.DateTime, default=db.func.current_timestamp()),
+                    db.Column('updated_at', db.DateTime, default=db.func.current_timestamp(), 
+                             onupdate=db.func.current_timestamp())
+                )
         return table_schema
 
             

@@ -139,3 +139,46 @@ def get_carga_decomp_by_date(
     dataProduto: datetime.date
 ):
     return service.CargaSemanalDecomp.get_by_product_date(dataProduto)
+
+
+@router.post("/carga-pmo", tags=["PMO"])
+def post_carga_pmo(
+    body: List[CargaPmoSchema]
+):
+    return service.CargaPmo.create(body)
+
+
+@router.get("/carga-pmo", tags=["PMO"])
+def get_carga_pmo(
+    dt_inicio: datetime.date,
+    revisao: Optional[str] = None
+):
+    return service.CargaPmo.get_by_dt_inicio(dt_inicio, revisao)
+
+
+@router.get("/carga-pmo/historico-previsao", tags=["PMO"])
+def get_carga_pmo_historico_previsao(
+    dt_referencia: datetime.date = None,
+    revisao: str = None
+):
+    """
+    Retorna os dados de carga PMO separados em histórico (realizados) e previsões.
+    
+    Args:
+        dt_referencia: Data de referência para comparação (se não fornecida, usa a data atual)
+        revisao: Número da revisão a ser considerada
+        
+    Returns:
+        Um dicionário com dados históricos e previsões separados
+    """
+    # Se não for fornecida data de referência, usa a data atual
+    if dt_referencia is None:
+        dt_referencia = datetime.date.today()
+    
+    # Se não for fornecida revisão, usa a mais recente
+    if revisao is None:
+        # Implementação para obter a revisão mais recente
+        # (temporariamente usando "4" como exemplo)
+        revisao = "4"
+    
+    return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)

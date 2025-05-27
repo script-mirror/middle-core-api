@@ -222,7 +222,7 @@ class EnaAcomph:
 
 
 class VeBacias:
-    
+    tb:db.Table = __DB__.getSchema('tb_ve_bacias')
     @staticmethod
     def get_ve_bacias(dt_inicio_semana: datetime.date):
         query = db.select(

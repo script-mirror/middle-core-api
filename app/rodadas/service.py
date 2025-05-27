@@ -1097,20 +1097,19 @@ class ChuvaMembro:
     def inserir(body: List[dict]):
         id_membro_modelo = []
         cd_subbacia = []
-        dt_prevista = []
-        for membro in body:
-            id_membro_modelo.append(membro["id_membro_modelo"])
-            cd_subbacia.append(membro["cd_subbacia"])
-            dt_prevista.append(membro["dt_prevista"])
-
+        df_delete = pd.DataFrame(body)
+        id_membro_modelo = df_delete["id_membro_modelo"].unique().tolist()
+        cd_subbacia = df_delete["cd_subbacia"].unique().tolist()
+        
         search_params = (
             ChuvaMembro.tb.c["id_membro_modelo"].in_(id_membro_modelo),
             ChuvaMembro.tb.c["cd_subbacia"].in_(cd_subbacia),
-            ChuvaMembro.tb.c["dt_prevista"].in_(dt_prevista))
-
+            ChuvaMembro.tb.c["dt_prevista"].between(df_delete['dt_prevista'].min(), df_delete['dt_prevista'].max())
+        )
         q_delete = ChuvaMembro.tb.delete().where(db.and_(
             *search_params
         ))
+        
         linhas_delete = __DB__.db_execute(q_delete).rowcount
         print(f"{linhas_delete} linhas inseridas chuva membro")
 

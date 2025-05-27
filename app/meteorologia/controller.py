@@ -50,16 +50,17 @@ def post_rodada_vento_previsto_completo(request: VentoPrevistoRequest):
         "n_registros_inseridos": resultado['n_registros_inseridos']
     }
 
-# @router.post('/rodada/vento-previsto', tags=['Meteorologia'])
-# def post_rodada_vento_previsto(dt_rodada: str, hr_rodada: int, modelo: str):
-#     return service.VentoPrevistoWEOL.insert_rodadas(dt_rodada, hr_rodada, modelo)
-
-# ##############################################################################################################################################################
-
-# @router.post('/rodada/vento-previsto/valores', tags=['Meteorologia'])
-# def post_rodada_vento_previsto_valores(request: VentoPrevistoRequest):
-#     dt_rodada = request.dt_rodada
-#     hr_rodada = request.hr_rodada
-#     modelo = request.modelo
-#     valores = request.valores
-#     return service.VentoPrevistoWEOL.insert_valores_vento_previsto(valores, dt_rodada, hr_rodada, modelo)
+@router.get('/vento-previsto', tags=['Meteorologia'])
+def get_vento_previsto(
+    dt_rodada: Optional[datetime.date] = None,
+    hr_rodada: Optional[str] = None,
+    modelo: Optional[str] = None,
+):
+    """
+    Obtém os dados de vento previsto para uma rodada específica.
+    """
+    return service.VentoPrevistoWEOL.get_vento_previsto(
+        dt_rodada=dt_rodada,
+        hr_rodada=hr_rodada,
+        modelo=modelo,
+    )

@@ -148,6 +148,39 @@ class VentoPrevistoWEOL:
             'n_registros_inseridos': len(df_valores)
         }
 
+    @staticmethod
+    def get_vento_previsto(dt_rodada: str = None, hr_rodada: int = None, modelo: str = None):
+        """
+        Obtém os dados de vento previsto para uma rodada específica.
+        Se nenhum parâmetro for fornecido, retorna todos os registros.
+        """
+
+        query = sa.select(
+            VentoPrevistoWEOL.tb_valores_vento_previsto.c.dt_prevista,
+            VentoPrevistoWEOL.tb_valores_vento_previsto.c.vl_vento,
+            VentoPrevistoWEOL.tb_valores_vento_previsto.c.estado,
+            VentoPrevistoWEOL.tb_valores_vento_previsto.c.aglomerado,
+        ).select_from(
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.join(
+                VentoPrevistoWEOL.tb_valores_vento_previsto,
+                VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.id == VentoPrevistoWEOL.tb_valores_vento_previsto.c.id_cadastro
+            )
+        )
+
+        if dt_rodada:
+            query = query.where(VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.dt_rodada == dt_rodada)
+        if hr_rodada:
+            query = query.where(VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.hr_rodada == hr_rodada)
+        if modelo:
+            query = query.where(VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.str_modelo == modelo)
+
+        results = __DB__.db_execute(query).fetchall()
+        df_results = pd.DataFrame(results, columns=[
+            'dt_prevista', 'vl_vento', 'estado', 'aglomerado'
+        ])
+
+        return df_results.to_dict('records')
+
 # class VentoPrevistoWEOL:
 
 #     # Define tables at class level - they'll be assigned in the methods since they depend on parameters    

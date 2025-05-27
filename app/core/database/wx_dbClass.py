@@ -954,6 +954,26 @@ class db_mysql_master():
 
             )
 
+        elif table_name.lower() == 'tb_cadastro_vento_previsto':
+
+            table_schema = db.Table('tb_cadastro_vento_previsto', self.meta,
+                db.Column('id', db.Integer, primary_key=True),
+                db.Column('dt_rodada', db.Date, nullable=True),
+                db.Column('hr_rodada', db.Integer, nullable=True),
+                db.Column('str_modelo', db.String(255), nullable=True),
+            ) 
+
+        elif table_name.lower() == 'tb_valores_vento_previsto':
+
+            table_schema = db.Table('tb_valores_vento_previsto', self.meta,
+                db.Column('id_cadastro', db.Integer),
+                db.Column('dt_prevista', db.Date, nullable=True),
+                db.Column('vl_vento', db.Float, nullable=True),
+                db.Column('estado', db.String(255), nullable=True),
+                db.Column('aglomerado', db.String(255), nullable=True),
+
+            )
+
         elif table_name.lower() == 'tb_cmo_semanal':
             
             table_schema = db.Table('tb_cmo_semanal', self.meta,

@@ -98,3 +98,97 @@ class ClimatologiaChuva:
         df_climatologia = pd.DataFrame(vl_chuva, columns=["bacia", "time", "climatologia"])
 
         return df_climatologia.to_dict('records')
+    
+class VentoPrevistoWEOL:
+
+    tb_cadastro_vento_previsto = __DB__.getSchema('tb_cadastro_vento_previsto')
+    tb_valores_vento_previsto = __DB__.getSchema('tb_valores_vento_previsto')
+
+    @staticmethod
+    def insert_vento_previsto(valores: list, dt_rodada: str, hr_rodada: int, modelo: str):
+        """
+        Insere os dados de vento previsto:
+        - Remove cadastro anterior da mesma rodada e modelo
+        - Cria um novo cadastro
+        - Insere os valores vinculados ao novo cadastro
+        """
+
+        # Remove cadastro anterior (se existir)
+        query_delete = sa.delete(VentoPrevistoWEOL.tb_cadastro_vento_previsto).where(
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.dt_rodada == dt_rodada,
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.hr_rodada == hr_rodada,
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.str_modelo == modelo
+        )
+        __DB__.db_execute(query_delete)
+
+        # Insere novo cadastro
+        query_insert = VentoPrevistoWEOL.tb_cadastro_vento_previsto.insert().values(
+            dt_rodada=dt_rodada,
+            hr_rodada=hr_rodada,
+            str_modelo=modelo
+        )
+        id_cadastro = __DB__.db_execute(query_insert).inserted_primary_key[0]
+
+        # Prepara os valores para inserir
+        df_valores = pd.DataFrame(valores)
+        df_valores = df_valores.to_dict(orient='records')
+        df_valores = [{v[0]: v[1] for v in item.values()} for item in df_valores]
+        df_valores = pd.DataFrame(df_valores)
+        df_valores['id_cadastro'] = id_cadastro
+        print(df_valores)
+
+        # Insere os valores na tabela
+        query_insert_valores = VentoPrevistoWEOL.tb_valores_vento_previsto.insert().values(
+            df_valores.to_dict(orient='records')
+        )
+        __DB__.db_execute(query_insert_valores)
+
+        return {
+            'id_cadastro': id_cadastro,
+            'n_registros_inseridos': len(df_valores)
+        }
+
+# class VentoPrevistoWEOL:
+
+#     # Define tables at class level - they'll be assigned in the methods since they depend on parameters    
+#     tb_cadastro_vento_previsto = __DB__.getSchema('tb_cadastro_vento_previsto')
+#     tb_valores_vento_previsto = __DB__.getSchema('tb_valores_vento_previsto')
+
+#     @staticmethod
+#     def insert_rodadas(dt_rodada: str, hr_rodada: int, modelo: str):
+
+#         # Query para deletar o cadastro da rodada 
+#         query_delete = sa.delete(VentoPrevistoWEOL.tb_cadastro_vento_previsto).where(
+#             VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.dt_rodada == dt_rodada,
+#             VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.hr_rodada == hr_rodada,
+#             VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.str_modelo == modelo
+#         )
+
+#         __DB__.db_execute(query_delete)
+
+#         # Query para inserir o novo cadastro
+#         query_insert = VentoPrevistoWEOL.tb_cadastro_vento_previsto.insert().values(
+#             dt_rodada=dt_rodada,
+#             hr_rodada=hr_rodada,
+#             str_modelo=modelo,
+#         )
+
+#         id = __DB__.db_execute(query_insert).inserted_primary_key[0]
+
+#         return id
+    
+#     @staticmethod
+#     def insert_valores_vento_previsto(valores: list, dt_rodada: str, hr_rodada: int, modelo: str):
+
+#         # Query para inserir os valores de previsão do modelo
+#         id_cadastro = VentoPrevistoWEOL.insert_rodadas(dt_rodada, hr_rodada, modelo)
+#         valores = pd.DataFrame(valores).to_dict(orient='records')
+#         valores = [{v[0]: v[1] for v in item.values()} for item in valores]
+#         valores = pd.DataFrame(valores)
+#         valores['id_cadastro'] = id_cadastro
+#         print(valores)
+#         query = VentoPrevistoWEOL.tb_valores_vento_previsto.insert().values(valores.to_dict(orient='records'))
+
+#         __DB__.db_execute(query)
+
+#         return valores

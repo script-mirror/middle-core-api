@@ -73,9 +73,6 @@ class tb_submercado:
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
         
-class VeBacias:
-    tb:db.Table = __DB__.getSchema('tb_ve_bacias')
-    
 
 class Acomph:
     tb:db.Table = __DB__.getSchema('tb_acomph')

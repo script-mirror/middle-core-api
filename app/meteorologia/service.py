@@ -149,6 +149,33 @@ class VentoPrevistoWEOL:
         }
 
     @staticmethod
+    def get_rodadas(dt_rodada: str = None, hr_rodada: int = None, modelo: str = None):
+        """
+        Obtém as rodadas de vento previsto.
+        Se nenhum parâmetro for fornecido, retorna todas as rodadas.
+        """
+
+        query = sa.select(
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.dt_rodada,
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.hr_rodada,
+            VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.str_modelo,
+        )
+
+        if dt_rodada:
+            query = query.where(VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.dt_rodada == dt_rodada)
+        if hr_rodada:
+            query = query.where(VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.hr_rodada == hr_rodada)
+        if modelo:
+            query = query.where(VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.str_modelo == modelo)
+
+        results = __DB__.db_execute(query).fetchall()
+        df_results = pd.DataFrame(results, columns=[
+            'dt_rodada', 'hr_rodada', 'modelo'
+        ])
+
+        return df_results.to_dict('records')
+
+    @staticmethod
     def get_vento_previsto(dt_rodada: str = None, hr_rodada: int = None, modelo: str = None):
         """
         Obtém os dados de vento previsto para uma rodada específica.
@@ -180,48 +207,3 @@ class VentoPrevistoWEOL:
         ])
 
         return df_results.to_dict('records')
-
-# class VentoPrevistoWEOL:
-
-#     # Define tables at class level - they'll be assigned in the methods since they depend on parameters    
-#     tb_cadastro_vento_previsto = __DB__.getSchema('tb_cadastro_vento_previsto')
-#     tb_valores_vento_previsto = __DB__.getSchema('tb_valores_vento_previsto')
-
-#     @staticmethod
-#     def insert_rodadas(dt_rodada: str, hr_rodada: int, modelo: str):
-
-#         # Query para deletar o cadastro da rodada 
-#         query_delete = sa.delete(VentoPrevistoWEOL.tb_cadastro_vento_previsto).where(
-#             VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.dt_rodada == dt_rodada,
-#             VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.hr_rodada == hr_rodada,
-#             VentoPrevistoWEOL.tb_cadastro_vento_previsto.c.str_modelo == modelo
-#         )
-
-#         __DB__.db_execute(query_delete)
-
-#         # Query para inserir o novo cadastro
-#         query_insert = VentoPrevistoWEOL.tb_cadastro_vento_previsto.insert().values(
-#             dt_rodada=dt_rodada,
-#             hr_rodada=hr_rodada,
-#             str_modelo=modelo,
-#         )
-
-#         id = __DB__.db_execute(query_insert).inserted_primary_key[0]
-
-#         return id
-    
-#     @staticmethod
-#     def insert_valores_vento_previsto(valores: list, dt_rodada: str, hr_rodada: int, modelo: str):
-
-#         # Query para inserir os valores de previsão do modelo
-#         id_cadastro = VentoPrevistoWEOL.insert_rodadas(dt_rodada, hr_rodada, modelo)
-#         valores = pd.DataFrame(valores).to_dict(orient='records')
-#         valores = [{v[0]: v[1] for v in item.values()} for item in valores]
-#         valores = pd.DataFrame(valores)
-#         valores['id_cadastro'] = id_cadastro
-#         print(valores)
-#         query = VentoPrevistoWEOL.tb_valores_vento_previsto.insert().values(valores.to_dict(orient='records'))
-
-#         __DB__.db_execute(query)
-
-#         return valores

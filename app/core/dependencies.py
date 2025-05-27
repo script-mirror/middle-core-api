@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
-from fastapi_cognito import CognitoAuth, CognitoSettings
+from typing import Any, Optional
+from fastapi_cognito import CognitoAuth, CognitoSettings, CognitoToken
 from app.core.config import settings
-from typing import Any
 
 class Settings(BaseSettings):
     check_expiration: bool = True
@@ -17,11 +17,19 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+class CognitoTokenSemUsername(CognitoToken):
+    username: Optional[str] = None
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        if self.username is None:
+            self.username = self.client_id
 
 
 cognito = CognitoAuth(
     settings=CognitoSettings.from_global_settings(settings),
-    userpool_name="us"
+    userpool_name="us",
+    custom_model=CognitoTokenSemUsername,
 )
 
 

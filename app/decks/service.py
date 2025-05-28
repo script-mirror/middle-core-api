@@ -541,6 +541,8 @@ class CargaPmo:
         # Convert dt_inicio from string to datetime
         for item in body_dict:
             item['dt_inicio'] = datetime.datetime.strptime(item['dt_inicio'], '%Y%m%d').date()
+            item['periodicidade_inicial'] = datetime.datetime.strptime(item['periodicidade_inicial'], '%Y%m%d').date()
+            item['periodicidade_final'] = datetime.datetime.strptime(item['periodicidade_final'], '%Y%m%d').date()
         
         # Insert new records
         query = db.insert(CargaPmo.tb).values(body_dict)

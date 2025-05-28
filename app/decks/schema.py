@@ -72,5 +72,5 @@ class CargaPmoSchema(BaseModel):
     semana: Optional[int] = None
     dt_inicio: str
     tipo: str
-    periodicidade_inicial: str
-    periodicidade_final: str
+    periodicidade_inicial: datetime.date
+    periodicidade_final: datetime.date

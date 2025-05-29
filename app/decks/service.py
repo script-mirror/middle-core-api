@@ -653,8 +653,6 @@ class CargaPmo:
         ], ascending=[False, True, True])
         
         df_final['semana'] = df_final['semana'].fillna(0).astype(int)
-        print(f"Dados de carga PMO encontrados: {len(df_final)} registros")
-        print(df_final.to_string())
         return df_final.to_dict('records')
     
     @staticmethod

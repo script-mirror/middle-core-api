@@ -66,3 +66,16 @@ class ChuvaPrevisaoResposta(BaseModel):
     vl_chuva: float
     dia_semana: str
     semana: int
+
+class SmapCreateDto(BaseModel):
+    cd_posto: int
+    dt_prevista: datetime.date
+    vl_vazao_vna: float
+    vl_vazao_prevs: float
+    cenario: str
+class SmapReadDto(BaseModel):
+    id: int
+    cd_posto: int
+    dt_prevista: datetime.date
+    vl_vazao_vna: float
+    vl_vazao_prevs: float

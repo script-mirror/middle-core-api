@@ -1,4 +1,5 @@
 from app.core.utils.logger import logging
+import pdb
 import sqlalchemy as db
 import pandas as pd
 import numpy as np
@@ -14,7 +15,9 @@ from .schema import (
     PesquisaPrevisaoChuva,
     ChuvaObsReq,
     ChuvaPrevisaoCriacao,
-    ChuvaPrevisaoCriacaoMembro
+    ChuvaPrevisaoCriacaoMembro,
+    SmapCreateDto,
+    SmapReadDto
 )
 
 from app.core.utils import cache, date_util
@@ -272,7 +275,7 @@ class CadastroRodadas:
 
         n_value = __DB__.db_execute(query_update).rowcount
 
-        print(f"{n_value} Linhas inseridas na tb_cadastro_rodadas")
+        logger.info(f"{n_value} Linhas inseridas na tb_cadastro_rodadas")
 
     @staticmethod
     def delete_por_id(id: int):
@@ -281,7 +284,7 @@ class CadastroRodadas:
             CadastroRodadas.tb.c['id'] == id
         )
         n_value = __DB__.db_execute(query).rowcount
-        print(f"{n_value} Linhas deletadas na cadastro rodadas")
+        logger.info(f"{n_value} Linhas deletadas na cadastro rodadas")
         return None
 
     @staticmethod
@@ -306,8 +309,86 @@ class CadastroRodadas:
             Smap.delete_por_id(ids['id_smap'])
             CadastroRodadas.delete_por_id(ids['id_rodada'])
         except IndexError:
-            print(f'id rodada {id_rodada} nao existe.')
+            logger.info(f'id rodada {id_rodada} nao existe.')
 
+    def get_by_id_smap(id_smap:int) -> List[dict]:
+        query_select = CadastroRodadas.tb.select(
+            CadastroRodadas.tb.c['id_smap'],
+            CadastroRodadas.tb.c['dt_rodada'],
+            CadastroRodadas.tb.c['hr_rodada'],
+            CadastroRodadas.tb.c['str_modelo'],
+            CadastroRodadas.tb.c['fl_preliminar'],
+            CadastroRodadas.tb.c['fl_pdp'],
+            CadastroRodadas.tb.c['fl_psat']
+            ).where(CadastroRodadas.tb.c['id_smap']==id_smap)
+        result = __DB__.db_execute(query_select).fetchall()
+        if not result:
+            raise HTTPException(
+                404, {
+                    "erro": f"Nenhuma rodada encontrada com id_smap {id_smap}"})
+        df = pd.DataFrame(result, columns=['id_smap', 
+                                           'dt_rodada', 
+                                           'hr_rodada', 
+                                           'str_modelo', 
+                                           'fl_preliminar', 
+                                           'fl_pdp', 
+                                           'fl_psat'])
+        return df.to_dict('records')
+        
+        
+    @staticmethod
+    def update_id_smap(id_rodada:int, id_smap:int):
+        id_rodada = int(id_rodada.iloc[0])
+        query_update = CadastroRodadas.tb.update().values(
+            id_smap=id_smap).where(
+            CadastroRodadas.tb.c['id'] == id_rodada)
+        n_value = __DB__.db_execute(query_update).rowcount
+        logger.info(f"{n_value} Linhas atualizadas na tb_cadastro_rodadas")
+        return None
+    @staticmethod
+    def upsert_rodada_smap(
+        cenario:str,
+        id_smap:int
+    ):
+        modelo_flags, dt_rodada ,hr_rodada, = cenario.split('_')
+        modelo_splited = modelo_flags.split('.')
+        
+        str_modelo = modelo_splited[0]
+        flags = modelo_splited[1:]
+        flags = [flags] if isinstance(flags,str) else flags
+
+        flag_preliminar,flag_psat,flag_pdp = 0,0,0
+
+        for flag in flags:
+            if flag == "PRELIMINAR" : 
+                flag_preliminar = 1
+                dt_rodada = (pd.to_datetime(dt_rodada) + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            elif flag == "PDP": flag_pdp = 1 
+            elif flag == "PSAT": flag_psat = 1
+            if flag == "GPM": break
+
+
+        rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
+        cadastro_rodada = ({
+            "str_modelo":str_modelo,
+            "dt_rodada": dt_rodada,
+            "hr_rodada": hr_rodada,
+            "fl_preliminar":flag_preliminar,
+            "fl_pdp":flag_pdp,
+            "fl_psat":flag_psat,
+            "id_chuva":rodada['id_chuva'].values[0],
+            "id_previvaz":rodada['id_previvaz'].values[0],
+            "id_prospec":rodada['id_prospec'].values[0],
+            "id_smap":id_smap,
+        })
+        if len(rodada)==1 and rodada['id_smap'][0] == None:
+            CadastroRodadas.update_id_smap(rodada['id'], id_smap)
+            return {"message": f"Rodada {rodada['id'].max()} atualizada com sucesso."}
+        else:
+            CadastroRodadas.inserir_cadastro_rodadas([cadastro_rodada])
+            rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
+            return {"message": f"Rodada {rodada['id'].max()} inserida com sucesso."}
+        
 
 class Chuva:
     tb: db.Table = __DB__.getSchema('tb_chuva')
@@ -930,7 +1011,7 @@ class Chuva:
                 prevs[0]['dt_rodada'], prevs[0]['modelo'])[0]['id']
             CadastroRodadas.delete_rodada_chuva_smap_por_id_rodada(id_rodada)
         except HTTPException:
-            print("Modelo nao encontrado.")
+            logger.info("Modelo nao encontrado.")
 
         modelo = (
             prevs[0]['modelo'],
@@ -950,7 +1031,7 @@ class Chuva:
         id_dataviz_chuva = Chuva.export_rain(id_chuva)
 
         if rodar_smap:
-            Smap.post_rodada_smap(
+            Smap.trigger_rodada_smap(
                 RodadaSmap.model_validate(
                     {
                         'dt_rodada': datetime.datetime.strptime(
@@ -969,7 +1050,7 @@ class Chuva:
             'id_chuva', 'cd_subbacia', 'dt_prevista', 'vl_chuva']].values.tolist()
         query_insert = Chuva.tb.insert().values(values_chuva)
         n_value = __DB__.db_execute(query_insert).rowcount
-        print(f"{n_value} Linhas inseridas na Chuva")
+        logger.info(f"{n_value} Linhas inseridas na Chuva")
 
     @staticmethod
     def inserir_chuva_modelos(
@@ -1025,14 +1106,14 @@ class Chuva:
                     str).str.replace('nan', 'None')
                 id_chuva = df_info_rodadas[mask_id_chuva]['id_chuva'].unique()[
                     0]
-                print(
+                logger.info(
                     f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada com id_chuva: {id_chuva}")
 
                 if id_chuva != 'None':
                     df_prev_chuva.loc[df_prev_chuva['cenario']
                                       == cenario, 'id_chuva'] = id_chuva
                 else:
-                    print(
+                    logger.info(
                         f"    cenario: {cenario} || modelo: {str_modelo} -> rodada ja esta cadastrada porem sem id_chuva, será cadastrado com id_chuva: {new_chuva_id}")
                     df_prev_chuva.loc[df_prev_chuva['cenario']
                                       == cenario, 'id_chuva'] = new_chuva_id
@@ -1051,7 +1132,7 @@ class Chuva:
             Chuva.tb.c['id'] == id
         )
         n_value = __DB__.db_execute(query).rowcount
-        print(f"{n_value} Linhas deletadas na Chuva")
+        logger.info(f"{n_value} Linhas deletadas na Chuva")
         return None
 
 
@@ -1111,11 +1192,11 @@ class ChuvaMembro:
         ))
         
         linhas_delete = __DB__.db_execute(q_delete).rowcount
-        print(f"{linhas_delete} linhas inseridas chuva membro")
+        logger.info(f"{linhas_delete} linhas inseridas chuva membro")
 
         query = ChuvaMembro.tb.insert().values(body)
         linhas_insert = __DB__.db_execute(query).rowcount
-        print(f"{linhas_insert} linhas inseridas chuva membro")
+        logger.info(f"{linhas_insert} linhas inseridas chuva membro")
 
     @staticmethod
     def media_membros(
@@ -1295,7 +1376,26 @@ class Smap:
     tb: db.Table = __DB__.getSchema('tb_smap')
 
     @staticmethod
-    def post_rodada_smap(rodada: RodadaSmap):
+    def get_last_id_smap() -> int:
+        query = db.select(
+            db.func.max(Smap.tb.c['id'])
+        )
+        result = __DB__.db_execute(query).scalar()
+        return result if result is not None else 0
+    @staticmethod
+    def create(body:List[SmapCreateDto]) -> List[SmapReadDto]:
+        id_smap = Smap.get_last_id_smap()+1
+        df = pd.DataFrame([obj.model_dump() for obj in body])
+        CadastroRodadas.upsert_rodada_smap(df['cenario'].unique()[0], id_smap)
+        df['id'] = id_smap
+        query = Smap.tb.insert().values(df.drop(columns=['cenario']).to_dict('records'))
+        n_value = __DB__.db_execute(query).rowcount
+        logger.info(f"{n_value} Linhas inseridas na tb_smap")
+        return Smap.get_vazao_smap_by_id(id_smap)
+        
+
+    @staticmethod
+    def trigger_rodada_smap(rodada: RodadaSmap):
         momento_req: datetime.datetime = datetime.datetime.now()
         # trigger_dag_SMAP(rodada.dt_rodada, [rodada.str_modelo], rodada.hr_rodada, momento_req)
         airflow_service.trigger_airflow_dag(
@@ -1337,7 +1437,9 @@ class Smap:
                 'dt_prevista',
                 'vl_vazao_vna',
                 'vl_vazao_prevs'])
-        return df.to_dict('records')
+        vazao_dto = [SmapReadDto.model_validate(x) for x in df.to_dict('records')]
+        
+        return vazao_dto
 
     @staticmethod
     def delete_por_id(id: int):
@@ -1346,7 +1448,7 @@ class Smap:
             Smap.tb.c['id'] == id
         )
         n_value = __DB__.db_execute(query).rowcount
-        print(f"{n_value} Linhas deletadas tb smap")
+        logger.info(f"{n_value} Linhas deletadas tb smap")
         return None
 
 
@@ -1364,10 +1466,10 @@ class MembrosModelo:
             *search_params
         ))
         linhas_delete = __DB__.db_execute(q_delete, debug=f"{df_delete['dt_hr_rodada'].unique().tolist()}\n{df_delete['nome'].unique().tolist()}\n{df_delete['modelo'].unique().tolist()}").rowcount
-        print(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
+        logger.info(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
         q_insert = MembrosModelo.tb.insert().values(body)
         linhas_insert = __DB__.db_execute(q_insert).rowcount
-        print(f'{linhas_insert} linha(s) inserida(s) tb membro modelo')
+        logger.info(f'{linhas_insert} linha(s) inserida(s) tb membro modelo')
         q_select = db.select(
             MembrosModelo.tb.c["id"],
             MembrosModelo.tb.c["dt_hr_rodada"],
@@ -1453,13 +1555,13 @@ class ChuvaObs:
                 ChuvaObs.tb.c['dt_observado'] == chuva_obs[0]['dt_observado']
                 ))
         rows_delete = __DB__.db_execute(query_delete).rowcount
-        print(f'{rows_delete} linha(s) deletada(s)')
+        logger.info(f'{rows_delete} linha(s) deletada(s)')
         query_insert = ChuvaObs.tb.insert(
         ).values(
             df.to_dict('records')
         )
         rows_insert = __DB__.db_execute(query_insert).rowcount
-        print(f'{rows_insert} linha(s) inserida(s)')
+        logger.info(f'{rows_insert} linha(s) inserida(s)')
 
     @staticmethod
     def get_chuva_observada_por_data(
@@ -1521,13 +1623,13 @@ class ChuvaObsPsat:
         query_delete = ChuvaObsPsat.tb.delete().where(db.and_(
             ChuvaObsPsat.tb.c['dt_ini_observado'] == chuva_obs[0]['dt_observado']))
         rows_delete = __DB__.db_execute(query_delete).rowcount
-        print(f'{rows_delete} linha(s) deletada(s)')
+        logger.info(f'{rows_delete} linha(s) deletada(s)')
         query_insert = ChuvaObsPsat.tb.insert(
         ).values(
             df.to_dict('records')
         )
         rows_insert = __DB__.db_execute(query_insert).rowcount
-        print(f'{rows_insert} linha(s) inserida(s)')
+        logger.info(f'{rows_insert} linha(s) inserida(s)')
 
     @staticmethod
     def get_chuva_observada_psat_por_data(

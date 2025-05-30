@@ -10,7 +10,9 @@ from .schema import (
     ChuvaPrevisaoCriacaoMembro,
     ChuvaPrevisaoResposta,
     ChuvaObsReq,
-    RodadaSmap
+    RodadaSmap,
+    SmapCreateDto,
+    SmapReadDto,
     )
 
 import datetime
@@ -171,12 +173,17 @@ def post_chuva_observada_psat(
     return service.ChuvaObsPsat.post_chuva_obs_psat(chuva_obs)
 
 
-@router.post('/smap', tags=['Rodadas'])
-def post_smap(
+@router.post('/smap/trigger-dag', tags=['Rodadas'])
+def trigger_smap(
     rodada: RodadaSmap
 ):
-    return service.Smap.post_rodada_smap(rodada)
+    return service.Smap.trigger_rodada_smap(rodada)
 
+@router.post('/smap', tags=['Rodadas'], response_model=List[SmapReadDto])
+def post_smap(
+    body: List[SmapCreateDto]
+) -> List[SmapReadDto]:
+    return service.Smap.create(body)
 
 @router.get('/smap', tags=['Rodadas'])
 def get_vazao_smap_by_id(

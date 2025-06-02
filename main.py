@@ -57,7 +57,7 @@ def get_auth_header(
 
 app.include_router(rodadas_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
 app.include_router(ons_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
-app.include_router(bbce_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
+app.include_router(bbce_controller, prefix="/api/v2")
 app.include_router(decks_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
 app.include_router(speech_to_text_controller, prefix="/api/v2",
                    dependencies=[Depends(auth_scheme),

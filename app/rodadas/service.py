@@ -369,7 +369,7 @@ class CadastroRodadas:
 
 
         rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
-        cadastro_rodada = ({
+        cadastro_rodada = {
             "str_modelo":str_modelo,
             "dt_rodada": dt_rodada,
             "hr_rodada": hr_rodada,
@@ -380,14 +380,13 @@ class CadastroRodadas:
             "id_previvaz":rodada['id_previvaz'].values[0],
             "id_prospec":rodada['id_prospec'].values[0],
             "id_smap":id_smap,
-        })
+        }
         if len(rodada)==1 and rodada['id_smap'][0] == None:
             CadastroRodadas.update_id_smap(rodada['id'], id_smap)
-            return {"message": f"Rodada {rodada['id'].max()} atualizada com sucesso."}
         else:
             CadastroRodadas.inserir_cadastro_rodadas([cadastro_rodada])
             rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
-            return {"message": f"Rodada {rodada['id'].max()} inserida com sucesso."}
+        return cadastro_rodada
         
 
 class Chuva:
@@ -1386,12 +1385,12 @@ class Smap:
     def create(body:List[SmapCreateDto]) -> List[SmapReadDto]:
         id_smap = Smap.get_last_id_smap()+1
         df = pd.DataFrame([obj.model_dump() for obj in body])
-        CadastroRodadas.upsert_rodada_smap(df['cenario'].unique()[0], id_smap)
+        rodada = CadastroRodadas.upsert_rodada_smap(df['cenario'].unique()[0], id_smap)
         df['id'] = id_smap
         query = Smap.tb.insert().values(df.drop(columns=['cenario']).to_dict('records'))
         n_value = __DB__.db_execute(query).rowcount
         logger.info(f"{n_value} Linhas inseridas na tb_smap")
-        return Smap.get_vazao_smap_by_id(id_smap)
+        return rodada
         
 
     @staticmethod

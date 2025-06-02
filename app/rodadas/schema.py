@@ -8,7 +8,18 @@ class RodadaSmap(BaseModel):
     str_modelo: str
     id_dataviz_chuva: str = Field(default="")
     prev_estendida: bool = Field(default=False)
-    
+
+class CadastroRodadaResponseDto(BaseModel):
+    str_modelo: str
+    dt_rodada: datetime.date
+    hr_rodada: int
+    fl_preliminar: bool
+    fl_pdp: bool
+    fl_psat: bool
+    id_chuva: int
+    id_previvaz: int
+    id_prospec: int
+    id_smap: int
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date
     hr_rodada: int

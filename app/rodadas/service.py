@@ -17,7 +17,8 @@ from .schema import (
     ChuvaPrevisaoCriacao,
     ChuvaPrevisaoCriacaoMembro,
     SmapCreateDto,
-    SmapReadDto
+    SmapReadDto,
+    CadastroRodadasReadDto,
 )
 
 from app.core.utils import cache, date_util
@@ -337,10 +338,14 @@ class CadastroRodadas:
         
         
     @staticmethod
-    def update_id_smap(id_rodada:int, id_smap:int):
+    def update_id_smap(id_rodada:int, id_smap:int, flag_preliminar:int, flag_pdp:int, flag_psat:int):
         id_rodada = int(id_rodada.iloc[0])
         query_update = CadastroRodadas.tb.update().values(
-            id_smap=id_smap).where(
+            id_smap=id_smap,
+            fl_preliminar=flag_preliminar,
+            fl_pdp=flag_pdp,
+            fl_psat=flag_psat
+            ).where(
             CadastroRodadas.tb.c['id'] == id_rodada)
         n_value = __DB__.db_execute(query_update).rowcount
         logger.info(f"{n_value} Linhas atualizadas na tb_cadastro_rodadas")
@@ -382,7 +387,7 @@ class CadastroRodadas:
             "id_smap":id_smap,
         }
         if len(rodada)==1 and rodada['id_smap'][0] == None:
-            CadastroRodadas.update_id_smap(rodada['id'], id_smap)
+            CadastroRodadas.update_id_smap(rodada['id'], id_smap, flag_preliminar, flag_pdp, flag_psat)
         else:
             CadastroRodadas.inserir_cadastro_rodadas([cadastro_rodada])
             rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
@@ -1383,7 +1388,7 @@ class Smap:
         result = __DB__.db_execute(query).scalar()
         return result if result is not None else 0
     @staticmethod
-    def create(body:List[SmapCreateDto]) -> List[SmapReadDto]:
+    def create(body:List[SmapCreateDto]) -> CadastroRodadasReadDto:
         id_smap = Smap.get_last_id_smap()+1
         df = pd.DataFrame([obj.model_dump() for obj in body])
         rodada = CadastroRodadas.upsert_rodada_smap(df['cenario'].unique()[0], id_smap)

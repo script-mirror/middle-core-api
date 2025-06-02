@@ -9,7 +9,7 @@ class RodadaSmap(BaseModel):
     id_dataviz_chuva: str = Field(default="")
     prev_estendida: bool = Field(default=False)
 
-class CadastroRodadaResponseDto(BaseModel):
+class CadastroRodadasReadDto(BaseModel):
     id: int
     str_modelo: str
     dt_rodada: datetime.date

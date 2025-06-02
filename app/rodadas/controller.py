@@ -13,7 +13,7 @@ from .schema import (
     RodadaSmap,
     SmapCreateDto,
     SmapReadDto,
-    CadastroRodadaResponseDto
+    CadastroRodadasReadDto
     )
 
 import datetime
@@ -183,7 +183,7 @@ def trigger_smap(
 @router.post('/smap', tags=['Rodadas'], response_model=List[SmapReadDto])
 def post_smap(
     body: List[SmapCreateDto]
-) -> CadastroRodadaResponseDto:
+) -> CadastroRodadasReadDto:
     return service.Smap.create(body)
 
 @router.get('/smap', tags=['Rodadas'])

@@ -1,32 +1,30 @@
-FROM python:3.10
+FROM python:3.10-alpine
 
 WORKDIR /app
 
 COPY ./requirements.txt /app/requirements.txt
 
-RUN pip install -r /app/requirements.txt
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    linux-headers \
+    && pip install --no-cache-dir -r /app/requirements.txt \
+    && apk del gcc musl-dev linux-headers
 
-RUN apt-get update && \
-    apt-get install -y ffmpeg locales tzdata && \
-    rm -rf /var/lib/apt/lists/* && \
-    sed -i '/pt_BR.UTF-8/s/^# //g' /etc/locale.gen && \
-    locale-gen
+RUN apk add --no-cache \
+    ffmpeg \
+    tzdata \
+    chromium \
+    chromium-chromedriver \
+    xvfb-run \
+    && ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
+    && echo "America/Sao_Paulo" > /etc/timezone
 
-ENV LANG pt_BR.UTF-8
-ENV LC_ALL pt_BR.UTF-8
-ENV TZ=America/Sao_Paulo
-
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
-
-RUN apt-get update && apt-get install -y \
-    google-chrome-stable \
-    xvfb \
-    libxi6 \
-    libgconf-2-4 \
-    && rm -rf /var/lib/apt/lists/*
+ENV LANG=pt_BR.UTF-8 \
+    LC_ALL=pt_BR.UTF-8 \
+    TZ=America/Sao_Paulo \
+    CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/lib/chromium/
 
 COPY . /app
 

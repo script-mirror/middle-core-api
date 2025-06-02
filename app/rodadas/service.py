@@ -386,6 +386,7 @@ class CadastroRodadas:
         else:
             CadastroRodadas.inserir_cadastro_rodadas([cadastro_rodada])
             rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
+        cadastro_rodada['id'] = rodada['id'].values[0] if not rodada.empty else None
         return cadastro_rodada
         
 

@@ -10,6 +10,7 @@ class RodadaSmap(BaseModel):
     prev_estendida: bool = Field(default=False)
 
 class CadastroRodadaResponseDto(BaseModel):
+    id: int
     str_modelo: str
     dt_rodada: datetime.date
     hr_rodada: int

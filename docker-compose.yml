@@ -1,5 +1,5 @@
 services:
-  api-middle:
+  app:
     build: .
     volumes:
       - .:/app

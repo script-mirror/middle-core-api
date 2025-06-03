@@ -152,13 +152,32 @@ def get_chuva_observada_por_data_entre(
     return service.ChuvaObs.get_chuva_observada_range_datas(dt_ini=dt_inicio,
                                                             dt_fim=dt_fim)
 
-
 @router.post('/chuva/observada', tags=['Rodadas'])
 def post_chuva_observada(
     chuva_obs: List[ChuvaObsReq]
 ):
     return service.ChuvaObs.post_chuva_obs(chuva_obs)
 
+
+@router.get('/chuva/observada/cpc', tags=['Rodadas'])
+def get_chuva_observada_cpc_por_data(
+    dt_observada: datetime.date
+):
+    return service.ChuvaObsCPC.get_chuva_observada_por_data(dt_observada)
+
+
+@router.post('/chuva/observada/cpc', tags=['Rodadas'])
+def post_chuva_observada_cpc(
+    chuva_obs: List[ChuvaObsReq]
+):
+    return service.ChuvaObsCPC.post_chuva_obs(chuva_obs)
+
+@router.get('/chuva/observada/cpc-range-datas', tags=['Rodadas'])
+def get_chuva_observada_cpc_por_data_entre(
+    dt_inicio: datetime.date,
+    dt_fim: datetime.date
+):
+    return service.ChuvaObsCPC.get_chuva_observada_range_datas(dt_inicio, dt_fim)
 
 @router.get('/chuva/observada/psat', tags=['Rodadas'])
 def get_chuva_observada_psat_por_data(

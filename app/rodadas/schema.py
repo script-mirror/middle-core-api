@@ -14,13 +14,13 @@ class CadastroRodadasReadDto(BaseModel):
     str_modelo: str
     dt_rodada: datetime.date
     hr_rodada: int
-    fl_preliminar: bool
-    fl_pdp: bool
-    fl_psat: bool
+    fl_preliminar: bool = Field(default=None)
+    fl_pdp: bool = Field(default=None)
+    fl_psat: bool = Field(default=None)
     id_chuva: int
-    id_previvaz: int
-    id_prospec: int
-    id_smap: int
+    id_previvaz: int = Field(default=None)
+    id_prospec: int = Field(default=None)
+    id_smap: int = Field(default=None)
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date
     hr_rodada: int

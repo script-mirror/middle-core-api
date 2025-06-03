@@ -180,7 +180,7 @@ def trigger_smap(
 ):
     return service.Smap.trigger_rodada_smap(rodada)
 
-@router.post('/smap', tags=['Rodadas'], response_model=List[SmapReadDto])
+@router.post('/smap', tags=['Rodadas'], response_model=CadastroRodadasReadDto)
 def post_smap(
     body: List[SmapCreateDto]
 ) -> CadastroRodadasReadDto:

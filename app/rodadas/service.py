@@ -1396,7 +1396,7 @@ class Smap:
         query = Smap.tb.insert().values(df.drop(columns=['cenario']).to_dict('records'))
         n_value = __DB__.db_execute(query).rowcount
         logger.info(f"{n_value} Linhas inseridas na tb_smap")
-        return rodada
+        return CadastroRodadasReadDto.model_validate(rodada)
         
 
     @staticmethod

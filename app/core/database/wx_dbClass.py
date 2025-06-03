@@ -964,9 +964,9 @@ class db_mysql_master():
             ) 
 
         elif table_name.lower() == 'tb_valores_vento_previsto':
-
+            self.meta.reflect(bind=self.engine)
             table_schema = db.Table('tb_valores_vento_previsto', self.meta,
-                db.Column('id_cadastro', db.Integer),
+                db.Column('id_cadastro', db.ForeignKey('tb_cadastro_vento_previsto.id', ondelete='CASCADE'), nullable=True),
                 db.Column('dt_prevista', db.Date, nullable=True),
                 db.Column('vl_vento', db.Float, nullable=True),
                 db.Column('estado', db.String(255), nullable=True),

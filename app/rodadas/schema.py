@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, Optional
 from enum import Enum
 import datetime
 
@@ -14,13 +14,13 @@ class CadastroRodadasReadDto(BaseModel):
     str_modelo: str
     dt_rodada: datetime.date
     hr_rodada: int
-    fl_preliminar: bool = Field(default=None)
-    fl_pdp: bool = Field(default=None)
-    fl_psat: bool = Field(default=None)
+    fl_preliminar: Optional[bool] = Field(default=None)
+    fl_pdp: Optional[bool] = Field(default=None)
+    fl_psat: Optional[bool] = Field(default=None)
     id_chuva: int
-    id_previvaz: int = Field(default=None)
-    id_prospec: int = Field(default=None)
-    id_smap: int = Field(default=None)
+    id_previvaz: Optional[int] = Field(default=None)
+    id_prospec: Optional[int] = Field(default=None)
+    id_smap: Optional[int] = Field(default=None)
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date
     hr_rodada: int

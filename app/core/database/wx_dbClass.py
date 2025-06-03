@@ -961,6 +961,7 @@ class db_mysql_master():
                 db.Column('dt_rodada', db.Date, nullable=True),
                 db.Column('hr_rodada', db.Integer, nullable=True),
                 db.Column('str_modelo', db.String(255), nullable=True),
+                extend_existing=True
             ) 
 
         elif table_name.lower() == 'tb_valores_vento_previsto':
@@ -971,7 +972,7 @@ class db_mysql_master():
                 db.Column('vl_vento', db.Float, nullable=True),
                 db.Column('estado', db.String(255), nullable=True),
                 db.Column('aglomerado', db.String(255), nullable=True),
-
+                extend_existing=True
             )
 
         elif table_name.lower() == 'tb_cmo_semanal':

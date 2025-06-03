@@ -149,17 +149,14 @@ def post_carga_pmo(
 
 
 @router.get("/carga-pmo", tags=["PMO"])
-def get_carga_pmo(
-    dt_inicio: datetime.date,
-    revisao: Optional[str] = None
-):
-    return service.CargaPmo.get_by_dt_inicio(dt_inicio, revisao)
+def get_carga_pmo():
+    return service.CargaPmo.get_most_recent_data()
 
 
 @router.get("/carga-pmo/historico-previsao", tags=["PMO"])
 def get_carga_pmo_historico_previsao(
-    dt_referencia: datetime.date = None,
-    revisao: str = None
+    dt_referencia: Optional[datetime.date] = None,
+    revisao: Optional[str] = None
 ):
     """
     Retorna os dados de carga PMO separados em histórico (realizados) e previsões.
@@ -179,6 +176,6 @@ def get_carga_pmo_historico_previsao(
     if revisao is None:
         # Implementação para obter a revisão mais recente
         # (temporariamente usando "4" como exemplo)
-        revisao = "4"
+        revisao = "0"
     
     return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)

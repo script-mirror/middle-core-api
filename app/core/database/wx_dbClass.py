@@ -1151,6 +1151,8 @@ class db_mysql_master():
                     db.Column('semana', db.Integer),
                     db.Column('dt_inicio', db.Date, nullable=False),
                     db.Column('tipo', db.String(7), nullable=False),
+                    db.Column('periodicidade_inicial', db.DateTime),
+                    db.Column('periodicidade_final', db.DateTime),
                     db.Column('created_at', db.DateTime, default=db.func.current_timestamp()),
                     db.Column('updated_at', db.DateTime, default=db.func.current_timestamp(), 
                              onupdate=db.func.current_timestamp())

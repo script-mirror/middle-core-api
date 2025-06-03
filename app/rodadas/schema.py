@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 from enum import Enum
 import datetime
 
@@ -8,7 +9,19 @@ class RodadaSmap(BaseModel):
     str_modelo: str
     id_dataviz_chuva: str = Field(default="")
     prev_estendida: bool = Field(default=False)
-    
+
+class CadastroRodadasReadDto(BaseModel):
+    id: int
+    str_modelo: str
+    dt_rodada: datetime.date
+    hr_rodada: int
+    fl_preliminar: Optional[bool] = Field(default=None)
+    fl_pdp: Optional[bool] = Field(default=None)
+    fl_psat: Optional[bool] = Field(default=None)
+    id_chuva: int
+    id_previvaz: Optional[int] = Field(default=None)
+    id_prospec: Optional[int] = Field(default=None)
+    id_smap: Optional[int] = Field(default=None)
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date
     hr_rodada: int
@@ -66,3 +79,16 @@ class ChuvaPrevisaoResposta(BaseModel):
     vl_chuva: float
     dia_semana: str
     semana: int
+
+class SmapCreateDto(BaseModel):
+    cd_posto: int
+    dt_prevista: datetime.date
+    vl_vazao_vna: float
+    vl_vazao_prevs: float
+    cenario: str
+class SmapReadDto(BaseModel):
+    id: int
+    cd_posto: int
+    dt_prevista: datetime.date
+    vl_vazao_vna: float
+    vl_vazao_prevs: float

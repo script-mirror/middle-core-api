@@ -55,17 +55,17 @@ def get_auth_header(
         )
 
 
-app.include_router(rodadas_controller, prefix="/api/v2")
-app.include_router(ons_controller, prefix="/api/v2")
+app.include_router(rodadas_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
+app.include_router(ons_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
 app.include_router(bbce_controller, prefix="/api/v2")
-app.include_router(decks_controller, prefix="/api/v2")
+app.include_router(decks_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
 app.include_router(speech_to_text_controller, prefix="/api/v2",
                    dependencies=[Depends(auth_scheme),
                                  Depends(cognito.auth_required)])
-app.include_router(bot_sintegre_controller, prefix="/api/v2")
-app.include_router(meteorologia_controller, prefix="/api/v2")
-app.include_router(pluvia_controller, prefix="/api/v2")
-app.include_router(utils_controller, prefix="/api/v2")
+app.include_router(bot_sintegre_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
+app.include_router(meteorologia_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
+app.include_router(pluvia_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
+app.include_router(utils_controller, prefix="/api/v2", dependencies=[Depends(get_auth_header)])
 
 
 @app.get("/api/v2/health")

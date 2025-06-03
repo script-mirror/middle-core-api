@@ -567,6 +567,9 @@ class CargaPmo:
     
     @staticmethod
     def get_by_dt_inicio(dt_inicio: datetime.date, revisao: Optional[str] = None):
+        if dt_inicio is None:
+            #today
+            dt_inicio = datetime.date.today()
         # Build query conditions
         conditions = [CargaPmo.tb.c.dt_inicio == dt_inicio]
         
@@ -589,6 +592,68 @@ class CargaPmo:
         columns = ['id', 'carga', 'mes', 'revisao', 'subsistema', 'semana', 'dt_inicio', 'tipo', 'created_at', 'updated_at']
         df = pd.DataFrame(result, columns=columns)
         return df.to_dict('records')
+
+    @staticmethod
+    def get_most_recent_data():
+        """
+        Obtem os dados mais recentes de carga PMO.
+        Busca os 2 períodos mais recentes que já começaram (periodicidade_inicial <= hoje),
+        filtrando duplicatas por subsistema+dt_inicio e mantendo apenas registros com carga > 0.
+        """
+        today = datetime.date.today()
+        
+        # Step 1: Get the top 2 most recent periods that have already started
+        query_periodos = db.select(
+            CargaPmo.tb.c.periodicidade_inicial.distinct()
+        ).where(
+            CargaPmo.tb.c.periodicidade_inicial <= today
+        ).order_by(
+            CargaPmo.tb.c.periodicidade_inicial.desc()
+        ).limit(2)
+        
+        periodos_result = __DB__.db_execute(query_periodos).fetchall()
+        
+        if not periodos_result:
+            raise HTTPException(status_code=404, detail="Nenhum período válido encontrado")
+        
+        # Extract the period dates
+        periodos_validos = [row[0] for row in periodos_result]
+        
+        # Step 2: Get all records from these periods
+        query_dados = db.select(CargaPmo.tb).where(
+            CargaPmo.tb.c.periodicidade_inicial.in_(periodos_validos)
+        ).order_by(
+            CargaPmo.tb.c.periodicidade_inicial.desc(),
+            CargaPmo.tb.c.subsistema,
+            CargaPmo.tb.c.dt_inicio,
+            CargaPmo.tb.c.id.desc()
+        )
+        
+        result = __DB__.db_execute(query_dados).fetchall()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Dados de carga PMO não encontrados")
+        
+        # Step 3: Convert to DataFrame and apply deduplication logic
+        columns = ['id', 'carga', 'mes', 'revisao', 'subsistema', 'semana', 'dt_inicio', 'tipo', 
+                   'periodicidade_inicial', 'periodicidade_final', 'created_at', 'updated_at']
+        df = pd.DataFrame(result, columns=columns)
+        
+        # Step 4: Apply filters and deduplication
+        # Filter out records with carga <= 0
+        df = df[df['carga'] > 0]
+        
+        # Deduplicate: keep only the first row for each subsistema+dt_inicio combination
+        # (already ordered by periodicidade_inicial desc, id desc)
+        df_deduplicated = df.drop_duplicates(subset=['subsistema', 'dt_inicio'], keep='first')
+        
+        # Final ordering
+        df_final = df_deduplicated.sort_values([
+            'periodicidade_inicial', 'subsistema', 'dt_inicio'
+        ], ascending=[False, True, True])
+        
+        df_final['semana'] = df_final['semana'].fillna(0).astype(int)
+        return df_final.to_dict('records')
     
     @staticmethod
     def get_historico_versus_previsao(dt_referencia: datetime.date, revisao: str):

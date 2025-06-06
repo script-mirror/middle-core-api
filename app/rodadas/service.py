@@ -1656,6 +1656,74 @@ class ChuvaObsPsat:
                 'vl_chuva'])
         return df.to_dict('records')
 
+class ChuvaObsCPC:
+    tb: db.Table = __DB__.getSchema('tb_chuva_obs_cpc')
+
+    @staticmethod
+    def post_chuva_obs(
+        chuva_obs: List[ChuvaObsReq]
+    ):
+        chuva_obs = [c.model_dump() for c in chuva_obs]
+        df = pd.DataFrame(chuva_obs)
+        df['dt_ini_observado'].to_list()
+
+        query_delete = ChuvaObsCPC.tb.delete(
+        ).where(db.and_(
+                ChuvaObsCPC.tb.c['dt_ini_observado'] == chuva_obs[0]['dt_ini_observado']
+                ))
+        rows_delete = __DB__.db_execute(query_delete).rowcount
+        logger.info(f'{rows_delete} linha(s) deletada(s)')
+        query_insert = ChuvaObsCPC.tb.insert(
+        ).values(
+            df.to_dict('records')
+        )
+        rows_insert = __DB__.db_execute(query_insert).rowcount
+        logger.info(f'{rows_insert} linha(s) inserida(s)')
+
+    @staticmethod
+    def get_chuva_observada_por_data(
+        dt_observado: datetime.date
+    ):
+        query_select = db.select(
+            ChuvaObsCPC.tb.c['cd_subbacia'],
+            ChuvaObsCPC.tb.c['dt_ini_observado'],
+            ChuvaObsCPC.tb.c['vl_chuva']
+        ).where(
+            ChuvaObsCPC.tb.c['dt_ini_observado'] == dt_observado
+        )
+        result = __DB__.db_execute(query_select)
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'cd_subbacia',
+                'dt_ini_observado',
+                'vl_chuva'])
+        return df.to_dict('records')
+
+    @staticmethod
+    def get_chuva_observada_range_datas(
+        dt_ini: datetime.date,
+        dt_fim: datetime.date
+    ):
+        query_select = db.select(
+            ChuvaObsCPC.tb.c['cd_subbacia'],
+            ChuvaObsCPC.tb.c['dt_ini_observado'],
+            ChuvaObsCPC.tb.c['vl_chuva'],
+        ).where(
+            ChuvaObsCPC.tb.c['dt_ini_observado'] >= dt_ini,
+            ChuvaObsCPC.tb.c['dt_ini_observado'] <= dt_fim
+        )
+
+        result = __DB__.db_execute(query_select, True)
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'cd_subbacia',
+                'dt_ini_observado',
+                'vl_chuva'])
+        df['dt_ini_observado'] = pd.to_datetime(df['dt_ini_observado'].values)
+        df = df.sort_values(by='dt_ini_observado')
+        return df.to_dict('records')
 
 class VazoesObs:
     tb: db.Table = __DB__.getSchema('tb_vazoes_obs')

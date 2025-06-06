@@ -789,7 +789,7 @@ class CheckCvu:
         select_query = db.select(
             CheckCvu.tb
             ).where(db.and_(
-            CheckCvu.tb.c['title'] == title,
+            CheckCvu.tb.c['tipo_cvu'] == title,
                 CheckCvu.tb.c['data_atualizacao'] == data_atualizacao))
         record = __DB__.db_execute(select_query).fetchone()
         

@@ -179,3 +179,34 @@ def get_carga_pmo_historico_previsao(
         revisao = "0"
     
     return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)
+
+
+@router.post("/check-cvu", tags=["CVU"])
+def post_check_cvu(
+    body: CheckCvuCreateDto
+):
+    return service.CheckCvu.create(body)
+
+
+@router.get("/check-cvu/{check_cvu_id}", tags=["CVU"])
+def get_check_cvu_by_id(
+    check_cvu_id: int
+):
+    return service.CheckCvu.get_by_id(check_cvu_id)
+
+
+@router.patch("/check-cvu/{check_cvu_id}/status", tags=["CVU"])
+def update_check_cvu_status(
+    check_cvu_id: int,
+    status: str
+):
+    return service.CheckCvu.update_status_by_id(check_cvu_id, status)
+
+
+@router.get("/check-cvu", tags=["CVU"])
+def get_check_cvu_by_data_atualizacao_title(
+    data_atualizacao: datetime.datetime, 
+    title: str
+):
+    return service.CheckCvu.get_by_data_atualizacao_title(data_atualizacao, title)
+

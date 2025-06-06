@@ -11,7 +11,16 @@ from fastapi import HTTPException
 from app.core.utils.logger import logging
 from app.core.utils.date_util import MONTH_DICT, ElecData
 from app.core.database.wx_dbClass import db_mysql_master
-from .schema import *
+from .schema import (
+    WeolSemanalSchema,
+    PatamaresDecompSchema,
+    CvuMerchantSchema,
+    CvuSchema,
+    CargaSemanalDecompSchema,
+    CargaPmoSchema,
+    CheckCvuCreateDto,
+    CheckCvuReadDto,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -724,3 +733,67 @@ class CargaPmo:
                 item['status'] = 'realizado' if semana and semana <= semanas_passadas_desde_inicio else 'previsto'
         
         return dados_carga
+    
+class CheckCvu:
+    tb: db.Table = __DB__.getSchema('check_cvu')
+    
+    @staticmethod
+    def create(body: CheckCvuCreateDto) -> CheckCvuReadDto:
+        create_data = body.model_dump(exclude_none=True)
+        
+        query = db.insert(CheckCvu.tb).values(**create_data)
+        result = __DB__.db_execute(query, commit=prod)
+        
+        record_id = result.inserted_primary_key[0]
+        
+        select_query = db.select(CheckCvu.tb).where(CheckCvu.tb.c.id == record_id)
+        created_record = __DB__.db_execute(select_query).fetchone()
+        
+        if not created_record:
+            raise Exception("Erro ao criar registro de check cvu")
+        
+        record_dict = dict(created_record._mapping)
+        read_dto = CheckCvuReadDto(**record_dict)
+        
+        logger.info(f"Novo cvu criado: {record_id}")
+        return read_dto
+    
+    
+    def get_by_id(check_cvu_id: int) -> CheckCvuReadDto:
+        select_query = db.select(CheckCvu.tb).where(CheckCvu.tb.c.id == check_cvu_id)
+        record = __DB__.db_execute(select_query).fetchone()
+        
+        if not record:
+            raise HTTPException(status_code=404, detail=f"Check CVU com ID {check_cvu_id} não encontrado")
+        record_dict = dict(record._mapping)
+        return CheckCvuReadDto(**record_dict)
+        
+    @staticmethod
+    def update_status_by_id(check_cvu_id: int, status: str) -> CheckCvuReadDto:
+        CheckCvu.get_by_id(check_cvu_id)
+        
+        update_query = db.update(CheckCvu.tb).where(
+            CheckCvu.tb.c.id == check_cvu_id
+        ).values(status=status)
+        
+        result = __DB__.db_execute(update_query, commit=prod)
+        
+        if result.rowcount == 0:
+            raise Exception("Erro ao atualizar status do check cvu")
+        
+        logger.info(f"Status do check cvu ID {check_cvu_id} atualizado para: {status}")
+        return CheckCvu.get_by_id(check_cvu_id)
+
+    @staticmethod
+    def get_by_data_atualizacao_title(data_atualizacao: datetime.datetime, title:str) -> CheckCvuReadDto:
+        select_query = db.select(
+            CheckCvu.tb
+            ).where(db.and_(
+            CheckCvu.tb.c['title'] == title,
+                CheckCvu.tb.c['data_atualizacao'] == data_atualizacao))
+        record = __DB__.db_execute(select_query).fetchone()
+        
+        if not record:
+            raise HTTPException(status_code=404, detail=f"Check CVU com data de atualizacao {data_atualizacao} não encontrado")
+        record_dict = dict(record._mapping)
+        return CheckCvuReadDto(**record_dict)

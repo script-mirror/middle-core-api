@@ -1157,6 +1157,16 @@ class db_mysql_master():
                     db.Column('updated_at', db.DateTime, default=db.func.current_timestamp(), 
                              onupdate=db.func.current_timestamp())
                 )
+        elif table_name.lower() == 'check_cvu':
+            table_schema = db.Table('check_cvu', self.meta,
+                db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                db.Column('tipo_csv', db.String(50), nullable=True),
+                db.Column('data_atualizacao', db.DateTime, nullable=True),
+                db.Column('status', db.String(50), nullable=True),
+                db.Column('created_at', db.DateTime, default=db.func.current_timestamp()),
+                db.Column('updated_at', db.DateTime, default=db.func.current_timestamp(), 
+                         onupdate=db.func.current_timestamp())
+            )
         return table_schema
 
             

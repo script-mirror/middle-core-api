@@ -74,3 +74,17 @@ class CargaPmoSchema(BaseModel):
     tipo: str
     periodicidade_inicial: datetime.datetime
     periodicidade_final: datetime.datetime
+
+
+class CheckCvuCreateDto(BaseModel):
+    tipo_csv: Optional[str] = None
+    data_atualizacao: Optional[datetime.datetime] = None
+    status: Optional[str] = None
+
+class CheckCvuReadDto(BaseModel):
+    id: int
+    tipo_csv: Optional[str] = None
+    data_atualizacao: Optional[datetime.datetime] = None
+    status: Optional[str] = None
+    created_at: Optional[datetime.datetime] = None
+    updated_at: Optional[datetime.datetime] = None

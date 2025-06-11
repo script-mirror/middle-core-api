@@ -1627,7 +1627,7 @@ class ChuvaObs:
         return df.to_dict('records')
 
 
-class ChuvaObsPsat:
+class ChuvaPsat:
     tb: db.Table = __DB__.getSchema('tb_chuva_psat')
 
     @staticmethod
@@ -1638,11 +1638,12 @@ class ChuvaObsPsat:
         df = pd.DataFrame(chuva_obs)
         df['dt_observado'].to_list()
 
-        query_delete = ChuvaObsPsat.tb.delete().where(db.and_(
-            ChuvaObsPsat.tb.c['dt_ini_observado'] == chuva_obs[0]['dt_observado']))
+        query_delete = ChuvaPsat.tb.delete().where(db.and_(
+            ChuvaPsat.tb.c['dt_ini_observado'] == chuva_obs[0]['dt_observado']
+        ))
         rows_delete = __DB__.db_execute(query_delete).rowcount
         logger.info(f'{rows_delete} linha(s) deletada(s)')
-        query_insert = ChuvaObsPsat.tb.insert(
+        query_insert = ChuvaPsat.tb.insert(
         ).values(
             df.to_dict('records')
         )
@@ -1650,15 +1651,15 @@ class ChuvaObsPsat:
         logger.info(f'{rows_insert} linha(s) inserida(s)')
 
     @staticmethod
-    def get_chuva_observada_psat_por_data(
+    def get_por_data(
         dt_observado: datetime.date
     ):
         query_select = db.select(
-            ChuvaObsPsat.tb.c['cd_subbacia'],
-            ChuvaObsPsat.tb.c['dt_ini_observado'],
-            ChuvaObsPsat.tb.c['vl_chuva']
+            ChuvaPsat.tb.c['cd_subbacia'],
+            ChuvaPsat.tb.c['dt_ini_observado'],
+            ChuvaPsat.tb.c['vl_chuva']
         ).where(
-            ChuvaObsPsat.tb.c['dt_ini_observado'] == dt_observado
+            ChuvaPsat.tb.c['dt_ini_observado'] == dt_observado
         )
         result = __DB__.db_execute(query_select)
         df = pd.DataFrame(
@@ -1667,6 +1668,48 @@ class ChuvaObsPsat:
                 'cd_subbacia',
                 'dt_observado',
                 'vl_chuva'])
+        return df.to_dict('records')
+
+    @staticmethod
+    def get_por_data_entre(
+        data_inicio: datetime.date,
+        data_fim: Optional[datetime.date] = None
+    ):
+        query_conditions = [ChuvaPsat.tb.c['dt_ini_observado'] >= data_inicio]
+
+        if data_fim is not None:
+            query_conditions.append(
+                ChuvaPsat.tb.c['dt_ini_observado'] <= data_fim)
+
+        query_select = db.select(
+            ChuvaPsat.tb.c['cd_subbacia'],
+            ChuvaPsat.tb.c['dt_ini_observado'],
+            ChuvaPsat.tb.c['vl_chuva'],
+            Subbacia.tb.c['txt_nome_subbacia'],
+            Subbacia.tb.c['vl_lat'],
+            Subbacia.tb.c['vl_lon'],
+            Subbacia.tb.c['txt_bacia'],
+        ).join(
+            Subbacia.tb,
+            Subbacia.tb.c['cd_subbacia'] == ChuvaPsat.tb.c['cd_subbacia']
+        ).where(
+            db.and_(*query_conditions)
+        )
+
+        result = __DB__.db_execute(query_select, True)
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'id_subbacia',
+                'data_observado',
+                'chuva',
+                'subbacia_psat',
+                'lat',
+                'lon',
+                'bacia'])
+        df['data_observado'] = pd.to_datetime(df['data_observado'].values)
+        df = df.sort_values(by=['data_observado', 'subbacia_psat', 'bacia'])
+        df['data_observado'] = df['data_observado'].dt.date
         return df.to_dict('records')
 
 

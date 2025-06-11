@@ -183,17 +183,25 @@ def get_chuva_observada_cpc_por_data_entre(
 
 
 @router.get('/chuva/observada/psat', tags=['Rodadas'])
-def get_chuva_observada_psat_por_data(
+def get_por_data(
     dt_observada: datetime.date
 ):
-    return service.ChuvaObsPsat.get_chuva_observada_psat_por_data(dt_observada)
+    return service.ChuvaPsat.get_por_data(dt_observada)
 
 
 @router.post('/chuva/observada/psat', tags=['Rodadas'])
 def post_chuva_observada_psat(
     chuva_obs: List[ChuvaObsReq]
 ):
-    return service.ChuvaObsPsat.post_chuva_obs_psat(chuva_obs)
+    return service.ChuvaPsat.post_chuva_obs_psat(chuva_obs)
+
+
+@router.get('/chuva/observada/psat/data-entre', tags=['Rodadas'])
+def get_chuva_observada_psat_por_data_entre(
+    data_inicio: datetime.date,
+    data_fim: Optional[datetime.date] = None
+):
+    return service.ChuvaPsat.get_por_data_entre(data_inicio, data_fim)
 
 
 @router.post('/smap/trigger-dag', tags=['Rodadas'])

@@ -46,7 +46,7 @@ class MembrosModeloSchema(BaseModel):
     id_rodada: int
 
 
-class ChuvaObsReq(BaseModel):
+class ChuvaMergeCptecReq(BaseModel):
     cd_subbacia: int
     dt_observado: datetime.date
     vl_chuva: float

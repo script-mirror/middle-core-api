@@ -13,7 +13,7 @@ from app.core.config import settings
 from .schema import (
     RodadaSmap,
     PesquisaPrevisaoChuva,
-    ChuvaObsReq,
+    ChuvaMergeCptecReq,
     ChuvaPrevisaoCriacao,
     ChuvaPrevisaoCriacaoMembro,
     SmapCreateDto,
@@ -1557,24 +1557,25 @@ class MembrosModelo:
             return df.to_dict('records')
 
 
-class ChuvaObs:
+class ChuvaMergeCptec:
     tb: db.Table = __DB__.getSchema('tb_chuva_obs')
 
     @staticmethod
     def post_chuva_obs(
-        chuva_obs: List[ChuvaObsReq]
+        chuva_obs: List[ChuvaMergeCptecReq]
     ):
         chuva_obs = [c.model_dump() for c in chuva_obs]
         df = pd.DataFrame(chuva_obs)
         df['dt_observado'].to_list()
 
-        query_delete = ChuvaObs.tb.delete(
+        query_delete = ChuvaMergeCptec.tb.delete(
         ).where(db.and_(
-                ChuvaObs.tb.c['dt_observado'] == chuva_obs[0]['dt_observado']
+                ChuvaMergeCptec.tb.c['dt_observado'] ==
+                chuva_obs[0]['dt_observado']
                 ))
         rows_delete = __DB__.db_execute(query_delete).rowcount
         logger.info(f'{rows_delete} linha(s) deletada(s)')
-        query_insert = ChuvaObs.tb.insert(
+        query_insert = ChuvaMergeCptec.tb.insert(
         ).values(
             df.to_dict('records')
         )
@@ -1586,11 +1587,11 @@ class ChuvaObs:
         dt_observado: datetime.date
     ):
         query_select = db.select(
-            ChuvaObs.tb.c['cd_subbacia'],
-            ChuvaObs.tb.c['dt_observado'],
-            ChuvaObs.tb.c['vl_chuva']
+            ChuvaMergeCptec.tb.c['cd_subbacia'],
+            ChuvaMergeCptec.tb.c['dt_observado'],
+            ChuvaMergeCptec.tb.c['vl_chuva']
         ).where(
-            ChuvaObs.tb.c['dt_observado'] == dt_observado
+            ChuvaMergeCptec.tb.c['dt_observado'] == dt_observado
         )
         result = __DB__.db_execute(query_select)
         df = pd.DataFrame(
@@ -1603,27 +1604,46 @@ class ChuvaObs:
 
     @staticmethod
     def get_chuva_observada_range_datas(
-        dt_ini: datetime.date,
-        dt_fim: datetime.date
+        data_inicio: datetime.date,
+        data_fim: Optional[datetime.date] = None
     ):
+        query_conditions = [
+            ChuvaMergeCptec.tb.c['dt_observado'] >= data_inicio
+        ]
+
+        if data_fim is not None:
+            query_conditions.append(
+                ChuvaMergeCptec.tb.c['dt_observado'] <= data_fim)
+
         query_select = db.select(
-            ChuvaObs.tb.c['cd_subbacia'],
-            ChuvaObs.tb.c['dt_observado'],
-            ChuvaObs.tb.c['vl_chuva'],
+            ChuvaMergeCptec.tb.c['cd_subbacia'],
+            ChuvaMergeCptec.tb.c['dt_observado'],
+            ChuvaMergeCptec.tb.c['vl_chuva'],
+            Subbacia.tb.c['txt_nome_subbacia'],
+            Subbacia.tb.c['vl_lat'],
+            Subbacia.tb.c['vl_lon'],
+            Subbacia.tb.c['txt_bacia'],
+        ).join(
+            Subbacia.tb,
+            Subbacia.tb.c['cd_subbacia'] == ChuvaMergeCptec.tb.c['cd_subbacia']
         ).where(
-            ChuvaObs.tb.c['dt_observado'] >= dt_ini,
-            ChuvaObs.tb.c['dt_observado'] <= dt_fim
+            db.and_(*query_conditions)
         )
 
         result = __DB__.db_execute(query_select, True)
         df = pd.DataFrame(
             result,
             columns=[
-                'cd_subbacia',
-                'dt_observado',
-                'vl_chuva'])
-        df['dt_observado'] = pd.to_datetime(df['dt_observado'].values)
-        df = df.sort_values(by='dt_observado')
+                'id_subbacia',
+                'data_observado',
+                'chuva',
+                'subbacia_psat',
+                'lat',
+                'lon',
+                'bacia'])
+        df['data_observado'] = pd.to_datetime(df['data_observado'].values)
+        df = df.sort_values(by=['data_observado', 'subbacia_psat', 'bacia'])
+        df['data_observado'] = df['data_observado'].dt.date
         return df.to_dict('records')
 
 
@@ -1632,7 +1652,7 @@ class ChuvaPsat:
 
     @staticmethod
     def post_chuva_obs_psat(
-        chuva_obs: List[ChuvaObsReq]
+        chuva_obs: List[ChuvaMergeCptecReq]
     ):
         chuva_obs = [c.model_dump() for c in chuva_obs]
         df = pd.DataFrame(chuva_obs)
@@ -1718,7 +1738,7 @@ class ChuvaObsCPC:
 
     @staticmethod
     def post_chuva_obs(
-        chuva_obs: List[ChuvaObsReq]
+        chuva_obs: List[ChuvaMergeCptecReq]
     ):
         chuva_obs = [c.model_dump() for c in chuva_obs]
         df = pd.DataFrame(chuva_obs)

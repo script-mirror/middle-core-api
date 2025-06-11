@@ -1809,8 +1809,13 @@ class VazoesObs:
     @staticmethod
     def get_vazao_observada_por_data_entre(
         data_inicio: datetime.date,
-        data_fim: datetime.date
+        data_fim: Optional[datetime.date] = None
     ):
+        conditions = [VazoesObs.tb.c['dt_referente'] >= data_inicio]
+        
+        if data_fim is not None:
+            conditions.append(VazoesObs.tb.c['dt_referente'] <= data_fim)
+        
         query = db.select(
             VazoesObs.tb.c["txt_subbacia"],
             VazoesObs.tb.c["cd_estacao"],
@@ -1818,20 +1823,17 @@ class VazoesObs:
             VazoesObs.tb.c["dt_referente"],
             VazoesObs.tb.c["vl_vaz"]
         ).where(
-            db.and_(
-                VazoesObs.tb.c['dt_referente'] >= data_inicio,
-                VazoesObs.tb.c['dt_referente'] <= data_fim
-            )
+            db.and_(*conditions)
         )
         result = __DB__.db_execute(query)
         df = pd.DataFrame(
             result,
             columns=[
-                "txt_subbacia",
+                "subbacia",
                 "cd_estacao",
-                "txt_tipo_vaz",
-                "dt_referente",
-                "vl_vaz"])
+                "tipo_vazao",
+                "data_referente",
+                "vazao"])
         return df.to_dict('records')
 
 

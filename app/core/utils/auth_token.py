@@ -2,6 +2,7 @@ import os
 import requests as req
 from app.core.config import settings
 
+
 def get_access_token() -> str:
     response = req.post(
         settings.cognito_url,

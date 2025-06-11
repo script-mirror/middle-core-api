@@ -10,14 +10,14 @@ import datetime
 router = APIRouter(prefix="/decks")
 
 
-@router.post("/weol",tags=["Decomp"])
+@router.post("/weol", tags=["Decomp"])
 def post_weol(
     body: List[WeolSemanalSchema]
 ):
     return service.WeolSemanal.create(body)
 
 
-@router.get("/weol",tags=["Decomp"])
+@router.get("/weol", tags=["Decomp"])
 def get_weol(
     data_produto: datetime.date
 ):
@@ -42,7 +42,7 @@ def get_weol_by_product_date_start_week(
     return service.WeolSemanal.get_by_product_start_week_date_product_date(inicioSemana, dataProduto)
 
 
-@router.delete("/weol",tags=["Decomp"])
+@router.delete("/weol", tags=["Decomp"])
 def delete_weol(
     data_produto: datetime.date
 ):
@@ -52,7 +52,7 @@ def delete_weol(
 @router.post("/patamares", tags=["Decomp"])
 def post_patamares(
     body: List[PatamaresDecompSchema]
-    
+
 ):
     return service.Patamares.create(body)
 
@@ -74,7 +74,7 @@ def get_weol_by_product_date_start_week_year_month_rv(
 
 @router.get("/patamares/weighted-average", tags=["Decomp"])
 def get_weighted_avg_by_product_date(
-    dataProduto:datetime.date,
+    dataProduto: datetime.date,
 ):
     return service.WeolSemanal.get_weighted_avg_by_product_date(dataProduto)
 
@@ -95,39 +95,39 @@ def get_weighted_avg_table_weekly_by_product_date(
     return service.WeolSemanal.get_weighted_avg_table_weekly_by_product_date(dataProduto, quantidadeProdutos)
 
 
-@router.get("/cvu/usinas",tags=["CVU"])
+@router.get("/cvu/usinas", tags=["CVU"])
 def get_usinas_cvu():
     return service.CvuUsinasTermicas.get_usinas_termicas()
 
 
-@router.get("/cvu",tags=["CVU"])
+@router.get("/cvu", tags=["CVU"])
 def get_usinas_cvu(
     ano_mes_referencia: Optional[datetime.date] = None,
     dt_atualizacao: Optional[datetime.datetime] = None,
     fonte: Optional[str] = None,
 ):
     return service.Cvu.get_cvu_by_params_deck(
-        ano_mes_referencia = ano_mes_referencia,
-        dt_atualizacao = dt_atualizacao,
-        fonte = fonte
-        )
+        ano_mes_referencia=ano_mes_referencia,
+        dt_atualizacao=dt_atualizacao,
+        fonte=fonte
+    )
 
 
-@router.post("/cvu",tags=["CVU"])
+@router.post("/cvu", tags=["CVU"])
 def post_cvu(
     body: List[CvuSchema]
 ):
     return service.Cvu.create(body)
 
 
-@router.post("/cvu/merchant",tags=["CVU"])
+@router.post("/cvu/merchant", tags=["CVU"])
 def post_cvu_merchant(
     body: List[CvuMerchantSchema]
 ):
     return service.CvuMerchant.create(body)
 
 
-@router.post("/carga-decomp",tags=["Decomp"])
+@router.post("/carga-decomp", tags=["Decomp"])
 def post_carga_decomp(
     body: List[CargaSemanalDecompSchema]
 ):
@@ -160,24 +160,24 @@ def get_carga_pmo_historico_previsao(
 ):
     """
     Retorna os dados de carga PMO separados em histórico (realizados) e previsões.
-    
+
     Args:
         dt_referencia: Data de referência para comparação (se não fornecida, usa a data atual)
         revisao: Número da revisão a ser considerada
-        
+
     Returns:
         Um dicionário com dados históricos e previsões separados
     """
     # Se não for fornecida data de referência, usa a data atual
     if dt_referencia is None:
         dt_referencia = datetime.date.today()
-    
+
     # Se não for fornecida revisão, usa a mais recente
     if revisao is None:
         # Implementação para obter a revisão mais recente
         # (temporariamente usando "4" como exemplo)
         revisao = "0"
-    
+
     return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)
 
 
@@ -205,8 +205,7 @@ def update_check_cvu_status(
 
 @router.get("/check-cvu", tags=["CVU"])
 def get_check_cvu_by_data_atualizacao_title(
-    data_atualizacao: datetime.datetime, 
+    data_atualizacao: datetime.datetime,
     title: str
 ):
     return service.CheckCvu.get_by_data_atualizacao_title(data_atualizacao, title)
-

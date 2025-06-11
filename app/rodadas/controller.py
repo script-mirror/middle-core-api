@@ -14,7 +14,7 @@ from .schema import (
     SmapCreateDto,
     SmapReadDto,
     CadastroRodadasReadDto
-    )
+)
 
 import datetime
 from typing import Optional, List
@@ -152,6 +152,7 @@ def get_chuva_observada_por_data_entre(
     return service.ChuvaObs.get_chuva_observada_range_datas(dt_ini=dt_inicio,
                                                             dt_fim=dt_fim)
 
+
 @router.post('/chuva/observada', tags=['Rodadas'])
 def post_chuva_observada(
     chuva_obs: List[ChuvaObsReq]
@@ -172,12 +173,14 @@ def post_chuva_observada_cpc(
 ):
     return service.ChuvaObsCPC.post_chuva_obs(chuva_obs)
 
+
 @router.get('/chuva/observada/cpc-range-datas', tags=['Rodadas'])
 def get_chuva_observada_cpc_por_data_entre(
     dt_inicio: datetime.date,
     dt_fim: datetime.date
 ):
     return service.ChuvaObsCPC.get_chuva_observada_range_datas(dt_inicio, dt_fim)
+
 
 @router.get('/chuva/observada/psat', tags=['Rodadas'])
 def get_chuva_observada_psat_por_data(
@@ -199,11 +202,13 @@ def trigger_smap(
 ):
     return service.Smap.trigger_rodada_smap(rodada)
 
+
 @router.post('/smap', tags=['Rodadas'], response_model=CadastroRodadasReadDto)
 def post_smap(
     body: List[SmapCreateDto]
 ) -> CadastroRodadasReadDto:
     return service.Smap.create(body)
+
 
 @router.get('/smap', tags=['Rodadas'])
 def get_vazao_smap_by_id(

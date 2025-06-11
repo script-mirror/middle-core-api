@@ -3,6 +3,7 @@ from typing import Any, Optional
 from fastapi_cognito import CognitoAuth, CognitoSettings, CognitoToken
 from app.core.config import settings
 
+
 class Settings(BaseSettings):
     check_expiration: bool = True
     jwt_header_prefix: str = "Bearer"
@@ -17,9 +18,11 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
 class CognitoTokenSemUsername(CognitoToken):
     username: Optional[str] = None
-    
+
     def __init__(self, **data):
         super().__init__(**data)
         if self.username is None:
@@ -31,5 +34,3 @@ cognito = CognitoAuth(
     userpool_name="us",
     custom_model=CognitoTokenSemUsername,
 )
-
-

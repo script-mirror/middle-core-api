@@ -6,7 +6,7 @@ cache = dc.Cache('app/cache')
 
 def get_key(function_key, *args):
     key = str(args).replace('(', '').replace(')', '') \
-          .replace(',', ':').replace('\'', '')
+        .replace(',', ':').replace('\'', '')
     return f'{function_key}:{key}'
 
 

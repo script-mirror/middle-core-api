@@ -1,12 +1,13 @@
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
     app_name: str = "API Middle"
     version: str = "2.0.0"
     docs_url: str = "/api/v2/docs"
     redoc_url: str = "/api/v2/redoc"
     openapi_url: str = "/api/v2/openapi.json"
-    user_airflow:str
+    user_airflow: str
     password_airflow: str
     url_airflow_api: str
     host_mysql: str
@@ -17,12 +18,14 @@ class Settings(BaseSettings):
     cognito_config: str
     sintegre_email: str
     sintegre_password: str
-    aws_region:str 
-    cognito_userpool_id:str 
-    url_message_api:str
-    API_URL:str = "http://localhost:3000/api"
+    aws_region: str
+    cognito_userpool_id: str
+    url_message_api: str
+    API_URL: str = "http://localhost:3000/api"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
+
 
 settings = Settings()

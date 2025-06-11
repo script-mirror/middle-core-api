@@ -196,8 +196,8 @@ class CadastroRodadas:
             raise HTTPException(
                 404, {
                     "erro": f"Nenhum modelo encontrado com nome "
-                            f"{nome} e data de rodada {dt}"
-                    })
+                    f"{nome} e data de rodada {dt}"
+                })
 
         df['dt_rodada'] = df['dt_rodada'].astype(
             'datetime64[ns]').dt.strftime('%Y-%m-%d')
@@ -312,7 +312,7 @@ class CadastroRodadas:
         except IndexError:
             logger.info(f'id rodada {id_rodada} nao existe.')
 
-    def get_by_id_smap(id_smap:int) -> List[dict]:
+    def get_by_id_smap(id_smap: int) -> List[dict]:
         query_select = CadastroRodadas.tb.select(
             CadastroRodadas.tb.c['id_smap'],
             CadastroRodadas.tb.c['dt_rodada'],
@@ -321,79 +321,85 @@ class CadastroRodadas:
             CadastroRodadas.tb.c['fl_preliminar'],
             CadastroRodadas.tb.c['fl_pdp'],
             CadastroRodadas.tb.c['fl_psat']
-            ).where(CadastroRodadas.tb.c['id_smap']==id_smap)
+        ).where(CadastroRodadas.tb.c['id_smap'] == id_smap)
         result = __DB__.db_execute(query_select).fetchall()
         if not result:
             raise HTTPException(
                 404, {
                     "erro": f"Nenhuma rodada encontrada com id_smap {id_smap}"})
-        df = pd.DataFrame(result, columns=['id_smap', 
-                                           'dt_rodada', 
-                                           'hr_rodada', 
-                                           'str_modelo', 
-                                           'fl_preliminar', 
-                                           'fl_pdp', 
+        df = pd.DataFrame(result, columns=['id_smap',
+                                           'dt_rodada',
+                                           'hr_rodada',
+                                           'str_modelo',
+                                           'fl_preliminar',
+                                           'fl_pdp',
                                            'fl_psat'])
         return df.to_dict('records')
-        
-        
+
     @staticmethod
-    def update_id_smap(id_rodada:int, id_smap:int, flag_preliminar:int, flag_pdp:int, flag_psat:int):
+    def update_id_smap(id_rodada: int, id_smap: int, flag_preliminar: int, flag_pdp: int, flag_psat: int):
         id_rodada = int(id_rodada.iloc[0])
         query_update = CadastroRodadas.tb.update().values(
             id_smap=id_smap,
             fl_preliminar=flag_preliminar,
             fl_pdp=flag_pdp,
             fl_psat=flag_psat
-            ).where(
+        ).where(
             CadastroRodadas.tb.c['id'] == id_rodada)
         n_value = __DB__.db_execute(query_update).rowcount
         logger.info(f"{n_value} Linhas atualizadas na tb_cadastro_rodadas")
         return None
+
     @staticmethod
     def upsert_rodada_smap(
-        cenario:str,
-        id_smap:int
+        cenario: str,
+        id_smap: int
     ):
-        modelo_flags, dt_rodada ,hr_rodada, = cenario.split('_')
+        modelo_flags, dt_rodada, hr_rodada, = cenario.split('_')
         modelo_splited = modelo_flags.split('.')
-        
+
         str_modelo = modelo_splited[0]
         flags = modelo_splited[1:]
-        flags = [flags] if isinstance(flags,str) else flags
+        flags = [flags] if isinstance(flags, str) else flags
 
-        flag_preliminar,flag_psat,flag_pdp = 0,0,0
+        flag_preliminar, flag_psat, flag_pdp = 0, 0, 0
 
         for flag in flags:
-            if flag == "PRELIMINAR" : 
+            if flag == "PRELIMINAR":
                 flag_preliminar = 1
-                dt_rodada = (pd.to_datetime(dt_rodada) + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-            elif flag == "PDP": flag_pdp = 1 
-            elif flag == "PSAT": flag_psat = 1
-            if flag == "GPM": break
+                dt_rodada = (pd.to_datetime(dt_rodada) +
+                             datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+            elif flag == "PDP":
+                flag_pdp = 1
+            elif flag == "PSAT":
+                flag_psat = 1
+            if flag == "GPM":
+                break
 
-
-        rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
+        rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(
+            datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
         cadastro_rodada = {
-            "str_modelo":str_modelo,
+            "str_modelo": str_modelo,
             "dt_rodada": dt_rodada,
             "hr_rodada": hr_rodada,
-            "fl_preliminar":flag_preliminar,
-            "fl_pdp":flag_pdp,
-            "fl_psat":flag_psat,
-            "id_chuva":rodada['id_chuva'].values[0],
-            "id_previvaz":rodada['id_previvaz'].values[0],
-            "id_prospec":rodada['id_prospec'].values[0],
-            "id_smap":id_smap,
+            "fl_preliminar": flag_preliminar,
+            "fl_pdp": flag_pdp,
+            "fl_psat": flag_psat,
+            "id_chuva": rodada['id_chuva'].values[0],
+            "id_previvaz": rodada['id_previvaz'].values[0],
+            "id_prospec": rodada['id_prospec'].values[0],
+            "id_smap": id_smap,
         }
-        if len(rodada)==1 and rodada['id_smap'][0] == None:
-            CadastroRodadas.update_id_smap(rodada['id'], id_smap, flag_preliminar, flag_pdp, flag_psat)
+        if len(rodada) == 1 and rodada['id_smap'][0] == None:
+            CadastroRodadas.update_id_smap(
+                rodada['id'], id_smap, flag_preliminar, flag_pdp, flag_psat)
         else:
             CadastroRodadas.inserir_cadastro_rodadas([cadastro_rodada])
-            rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
+            rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(
+                datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
         cadastro_rodada['id'] = rodada['id'].values[0] if not rodada.empty else None
         return cadastro_rodada
-        
+
 
 class Chuva:
     tb: db.Table = __DB__.getSchema('tb_chuva')
@@ -490,7 +496,8 @@ class Chuva:
             df_subbacia,
             on=['cd_subbacia'],
             how='inner')
-        df_chuva_concat = pd.merge(df_chuva_concat, df_bacia, on=['cd_bacia'], how='inner')
+        df_chuva_concat = pd.merge(df_chuva_concat, df_bacia, on=[
+                                   'cd_bacia'], how='inner')
 
         df_chuva_concat['dt_prevista'] = pd.to_datetime(
             df_chuva_concat['dt_prevista'])
@@ -528,7 +535,7 @@ class Chuva:
             else 'S' if x == 'Sul'
             else 'N' if x == 'Norte'
             else 'NE'
-            )
+        )
         df = df_concatenado.groupby(["str_modelo",
                                      "id",
                                      'hr_rodada',
@@ -666,7 +673,7 @@ class Chuva:
             else 'S' if x == 'Sul'
             else 'N' if x == 'Norte'
             else 'NE'
-            )
+        )
 
         df_concatenado['dt_observado'] = pd.to_datetime(
             df_concatenado['dt_observado']).dt.strftime('%Y-%m-%d')
@@ -812,7 +819,7 @@ class Chuva:
                                       'dt_rodada',
                                       'modelo']).agg(
                                           {'vl_chuva': 'mean'}
-                                                    ).reset_index()
+            ).reset_index()
             grouped = grouped.rename(columns={'nome_submercado': 'nome'}
                                      ).merge(
                 df_submercado[['id', 'nome']], on='nome')
@@ -1186,16 +1193,17 @@ class ChuvaMembro:
         df_delete = pd.DataFrame(body)
         id_membro_modelo = df_delete["id_membro_modelo"].unique().tolist()
         cd_subbacia = df_delete["cd_subbacia"].unique().tolist()
-        
+
         search_params = (
             ChuvaMembro.tb.c["id_membro_modelo"].in_(id_membro_modelo),
             ChuvaMembro.tb.c["cd_subbacia"].in_(cd_subbacia),
-            ChuvaMembro.tb.c["dt_prevista"].between(df_delete['dt_prevista'].min(), df_delete['dt_prevista'].max())
+            ChuvaMembro.tb.c["dt_prevista"].between(
+                df_delete['dt_prevista'].min(), df_delete['dt_prevista'].max())
         )
         q_delete = ChuvaMembro.tb.delete().where(db.and_(
             *search_params
         ))
-        
+
         linhas_delete = __DB__.db_execute(q_delete).rowcount
         logger.info(f"{linhas_delete} linhas inseridas chuva membro")
 
@@ -1387,17 +1395,19 @@ class Smap:
         )
         result = __DB__.db_execute(query).scalar()
         return result if result is not None else 0
+
     @staticmethod
-    def create(body:List[SmapCreateDto]) -> CadastroRodadasReadDto:
+    def create(body: List[SmapCreateDto]) -> CadastroRodadasReadDto:
         id_smap = Smap.get_last_id_smap()+1
         df = pd.DataFrame([obj.model_dump() for obj in body])
-        rodada = CadastroRodadas.upsert_rodada_smap(df['cenario'].unique()[0], id_smap)
+        rodada = CadastroRodadas.upsert_rodada_smap(
+            df['cenario'].unique()[0], id_smap)
         df['id'] = id_smap
-        query = Smap.tb.insert().values(df.drop(columns=['cenario']).to_dict('records'))
+        query = Smap.tb.insert().values(
+            df.drop(columns=['cenario']).to_dict('records'))
         n_value = __DB__.db_execute(query).rowcount
         logger.info(f"{n_value} Linhas inseridas na tb_smap")
         return CadastroRodadasReadDto.model_validate(rodada)
-        
 
     @staticmethod
     def trigger_rodada_smap(rodada: RodadaSmap):
@@ -1442,8 +1452,9 @@ class Smap:
                 'dt_prevista',
                 'vl_vazao_vna',
                 'vl_vazao_prevs'])
-        vazao_dto = [SmapReadDto.model_validate(x) for x in df.to_dict('records')]
-        
+        vazao_dto = [SmapReadDto.model_validate(
+            x) for x in df.to_dict('records')]
+
         return vazao_dto
 
     @staticmethod
@@ -1463,14 +1474,16 @@ class MembrosModelo:
     @staticmethod
     def inserir(body: List[dict]) -> List[dict]:
         df_delete = pd.DataFrame(body)
-        
+
         search_params = (MembrosModelo.tb.c["dt_hr_rodada"].in_(df_delete["dt_hr_rodada"].unique().tolist()),
-                         MembrosModelo.tb.c["nome"].in_(df_delete["nome"].unique().tolist()),
+                         MembrosModelo.tb.c["nome"].in_(
+                             df_delete["nome"].unique().tolist()),
                          MembrosModelo.tb.c["modelo"].in_(df_delete["modelo"].unique().tolist()))
         q_delete = MembrosModelo.tb.delete().where(db.and_(
             *search_params
         ))
-        linhas_delete = __DB__.db_execute(q_delete, debug=f"{df_delete['dt_hr_rodada'].unique().tolist()}\n{df_delete['nome'].unique().tolist()}\n{df_delete['modelo'].unique().tolist()}").rowcount
+        linhas_delete = __DB__.db_execute(
+            q_delete, debug=f"{df_delete['dt_hr_rodada'].unique().tolist()}\n{df_delete['nome'].unique().tolist()}\n{df_delete['modelo'].unique().tolist()}").rowcount
         logger.info(f'{linhas_delete} linha(s) deletada(s) tb membro modelo')
         q_insert = MembrosModelo.tb.insert().values(body)
         linhas_insert = __DB__.db_execute(q_insert).rowcount
@@ -1656,6 +1669,7 @@ class ChuvaObsPsat:
                 'vl_chuva'])
         return df.to_dict('records')
 
+
 class ChuvaObsCPC:
     tb: db.Table = __DB__.getSchema('tb_chuva_obs_cpc')
 
@@ -1725,6 +1739,7 @@ class ChuvaObsCPC:
         df = df.sort_values(by='dt_ini_observado')
         return df.to_dict('records')
 
+
 class VazoesObs:
     tb: db.Table = __DB__.getSchema('tb_vazoes_obs')
 
@@ -1749,12 +1764,13 @@ class VazoesObs:
         df = pd.DataFrame(
             result,
             columns=[
-            "txt_subbacia",
-            "cd_estacao",
-            "txt_tipo_vaz",
-            "dt_referente",
-            "vl_vaz"])
+                "txt_subbacia",
+                "cd_estacao",
+                "txt_tipo_vaz",
+                "dt_referente",
+                "vl_vaz"])
         return df.to_dict('records')
+
 
 if __name__ == '__main__':
     ChuvaMembro.media_membros(

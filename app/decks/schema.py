@@ -4,26 +4,27 @@ from typing import Optional
 
 
 class PatamaresDecompSchema(BaseModel):
-    inicio:datetime.datetime
-    patamar:str
-    cod_patamar:int
-    dia_semana:str
-    dia_tipico:str
-    tipo_dia:str
-    intervalo:int
-    dia:int
-    semana:int
-    mes:int
-    
+    inicio: datetime.datetime
+    patamar: str
+    cod_patamar: int
+    dia_semana: str
+    dia_tipico: str
+    tipo_dia: str
+    intervalo: int
+    dia: int
+    semana: int
+    mes: int
+
+
 class WeolSemanalSchema(BaseModel):
-    inicio_semana:datetime.date
-    final_semana:datetime.date
-    data_produto:datetime.date
-    submercado:str
-    patamar:str
-    valor:float
-    rv_atual:int
-    mes_eletrico:int
+    inicio_semana: datetime.date
+    final_semana: datetime.date
+    data_produto: datetime.date
+    submercado: str
+    patamar: str
+    valor: float
+    rv_atual: int
+    mes_eletrico: int
 
 
 class CvuMerchantSchema(BaseModel):
@@ -80,6 +81,7 @@ class CheckCvuCreateDto(BaseModel):
     tipo_cvu: Optional[str] = None
     data_atualizacao: Optional[datetime.datetime] = None
     status: Optional[str] = None
+
 
 class CheckCvuReadDto(BaseModel):
     id: int

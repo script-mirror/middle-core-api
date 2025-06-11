@@ -292,6 +292,8 @@ def get_chuva_smap_ponderada_submercado(
 @router.get("/vazao-observada-pdp", tags=['Rodadas'])
 def get_vazao_observada_pdp(
     data_inicio: datetime.date,
-    data_fim: datetime.date
+    data_fim: Optional[datetime.date] = None
 ):
-    return service.VazoesObs.get_vazao_observada_por_data_entre(data_inicio, data_fim)
+    return service.VazoesObs.get_vazao_observada_por_data_entre(
+        data_inicio, data_fim
+    )

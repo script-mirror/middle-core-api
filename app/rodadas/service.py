@@ -1834,6 +1834,8 @@ class VazoesObs:
                 "tipo_vazao",
                 "data_referente",
                 "vazao"])
+        df['data_referente'] = pd.to_datetime(
+            df['data_referente'].values).dt.date
         return df.to_dict('records')
 
 

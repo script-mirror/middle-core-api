@@ -179,3 +179,16 @@ def get_carga_pmo_historico_previsao(
         revisao = "0"
     
     return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)
+
+@router.post("/newave/sistema", tags=["Newave"])
+def post_newave_sist_energia(
+    body: List[CargaNewaveSistemaEnergiaSchema]
+):
+    return service.NewaveSistEnergia.post_newave_sist_energia(body)
+
+@router.post("/newave/cadic", tags=["Newave"])
+def post_newave_cadic(
+    body: List[CargaNewaveCadicSchema]
+):
+    return service.NewaveCadic.post_newave_cadic(body)
+

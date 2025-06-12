@@ -186,7 +186,7 @@ class WeolSemanal:
     def get_weighted_avg_table_monthly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(data_produto - datetime.timedelta(days=quantidade_produtos-1), data_produto))
         
-        df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
+        df_eol_newave = pd.DataFrame(NewaveSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
 
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
         df_eol_newave['yearMonth'] = df_eol_newave['ano'].astype(str) + '-' + df_eol_newave['mes'].astype(str)
@@ -225,7 +225,7 @@ class WeolSemanal:
     def get_weighted_avg_table_weekly_by_product_date(data_produto:datetime.date, quantidade_produtos:int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
 
-        df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
+        df_eol_newave = pd.DataFrame(NewaveSistEnergia.get_eol_by_last_data_deck_mes_ano_between(df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg({'geracaoEolica':'sum'}).reset_index()
         df_eol_newave = df_eol_newave.sort_values(by=['ano', 'mes'])
 
@@ -300,50 +300,6 @@ class Patamares:
         result.loc[result['patamar'] == 'Leve', 'patamar'] = 'leve'
         result = result.rename(columns={'inicio': 'inicioSemana'})
         return result.to_dict("records")
-    
-class NwSistEnergia:
-    tb:db.Table = __DB__.getSchema('tb_nw_sist_energia')
-    
-    @staticmethod
-    def get_last_data_deck():
-        query = db.select(
-            db.func.max(NwSistEnergia.tb.c["dt_deck"])
-        )
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=['dt_deck'])                              
-        return df.to_dict('records')
-    
-    @staticmethod
-    def get_eol_by_last_data_deck_mes_ano_between(start:datetime.date, end:datetime.date):
-        start = start.replace(day=1)
-        end = end.replace(day=1)
-        last_data_deck = NwSistEnergia.get_last_data_deck()[0]["dt_deck"]
-        query = db.select(
-            NwSistEnergia.tb.c["vl_geracao_eol"],
-            NwSistEnergia.tb.c["cd_submercado"],
-            NwSistEnergia.tb.c["vl_mes"],
-            NwSistEnergia.tb.c["vl_ano"],
-            NwSistEnergia.tb.c["dt_deck"]
-
-            
-        ).where(
-            db.and_(
-            NwSistEnergia.tb.c["dt_deck"] == last_data_deck,
-            db.cast(
-                db.func.concat(
-                    NwSistEnergia.tb.c["vl_ano"], 
-                    '-', 
-                    db.func.lpad(NwSistEnergia.tb.c["vl_mes"], 2, '0'), 
-                    '-01'
-                ).label('data'),
-                db.Date
-            ).between(start, end)
-            )
-        )
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=['geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
-        return df.to_dict('records')
-    
 
 class CvuUsinasTermicas:
     tb:db.Table = __DB__.getSchema('tb_usinas_termicas')
@@ -724,3 +680,92 @@ class CargaPmo:
                 item['status'] = 'realizado' if semana and semana <= semanas_passadas_desde_inicio else 'previsto'
         
         return dados_carga
+    
+
+    
+class NewaveSistEnergia:
+    tb:db.Table = __DB__.getSchema('tb_nw_sist_energia')
+    
+    @staticmethod
+    def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaSchema]):
+        
+        body_dict = [x.model_dump() for x in body]
+        
+        for item in body_dict:
+            # Convert dt_deck from string to date if it's a string
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+                
+        # Delete existing records for each unique dt_deck
+        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
+        for date in unique_dates:
+            NewaveSistEnergia.delete_sist_deck_by_dt_deck(date)
+        
+        query = db.insert(NewaveSistEnergia.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        
+        return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
+        
+    @staticmethod
+    def delete_sist_deck_by_dt_deck(dt_deck:datetime.date):
+        query = db.delete(NewaveSistEnergia.tb).where(
+            NewaveSistEnergia.tb.c.dt_deck == dt_deck
+        )
+        
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        
+        logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
+        return None
+       
+    
+    @staticmethod
+    def get_last_data_deck():
+        query = db.select(
+            db.func.max(NewaveSistEnergia.tb.c["dt_deck"])
+        )
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=['dt_deck'])                              
+        return df.to_dict('records')
+    
+    @staticmethod
+    def get_eol_by_last_data_deck_mes_ano_between(start:datetime.date, end:datetime.date):
+        start = start.replace(day=1)
+        end = end.replace(day=1)
+        last_data_deck = NewaveSistEnergia.get_last_data_deck()[0]["dt_deck"]
+        query = db.select(
+            NewaveSistEnergia.tb.c["vl_geracao_eol"],
+            NewaveSistEnergia.tb.c["cd_submercado"],
+            NewaveSistEnergia.tb.c["vl_mes"],
+            NewaveSistEnergia.tb.c["vl_ano"],
+            NewaveSistEnergia.tb.c["dt_deck"]
+
+            
+        ).where(
+            db.and_(
+            NewaveSistEnergia.tb.c["dt_deck"] == last_data_deck,
+            db.cast(
+                db.func.concat(
+                    NewaveSistEnergia.tb.c["vl_ano"], 
+                    '-', 
+                    db.func.lpad(NewaveSistEnergia.tb.c["vl_mes"], 2, '0'), 
+                    '-01'
+                ).label('data'),
+                db.Date
+            ).between(start, end)
+            )
+        )
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=['geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
+        return df.to_dict('records')
+    
+    
+class NewaveCadic:
+    tb:db.Table = __DB__.getSchema('tb_nw_cadic')
+    
+    def post_newave_cadic(body: List[CargaNewaveCadicSchema]):
+        
+        body_dict = [x.model_dump() for x in body]
+        query = db.insert(NewaveCadic.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        logger.info(f"{rows} linhas adicionadas na tb_nw_cadic")
+        return None

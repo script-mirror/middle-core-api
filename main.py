@@ -56,8 +56,7 @@ def get_auth_header(
 
 
 app.include_router(rodadas_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
+                   dependencies=[Depends(get_auth_header)])
 app.include_router(ons_controller, prefix="/api/v2",
                    dependencies=[Depends(auth_scheme),
                                  Depends(cognito.auth_required)])

@@ -1634,7 +1634,7 @@ class ChuvaMergeCptec:
         df = pd.DataFrame(
             result,
             columns=[
-                'id_subbacia',
+                'cd_subbacia',
                 'data_observado',
                 'chuva',
                 'subbacia_psat',
@@ -1720,7 +1720,7 @@ class ChuvaPsat:
         df = pd.DataFrame(
             result,
             columns=[
-                'id_subbacia',
+                'cd_subbacia',
                 'data_observado',
                 'chuva',
                 'subbacia_psat',

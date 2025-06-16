@@ -4,7 +4,12 @@ from typing import List, Optional
 from fastapi import APIRouter
 
 from . import service
-from .schema import DivisaoBaciasEnum, EnaAcomphSchema, GranularidadeEnum, AcomphSchema
+from .schema import (
+    DivisaoBaciasEnum,
+    EnaAcomphSchema,
+    GranularidadeEnum,
+    AcomphSchema,
+)
 from app.core.utils import cache
 
 router = APIRouter(prefix='/ons', tags=['ONS'])
@@ -108,7 +113,7 @@ def get_carga_horaria(
 
 
 @router.get('/geracao-horaria/data-entre')
-def get_geracao_horaria(
+def get_geracao_horaria_data_entre(
     inicio: datetime.date,
     fim: datetime.date
 ):
@@ -116,7 +121,7 @@ def get_geracao_horaria(
 
 
 @router.get('/carga-horaria/data-entre')
-def get_carga_horaria(
+def get_carga_horaria_data_entre(
     inicio: datetime.date,
     fim: datetime.date
 ):

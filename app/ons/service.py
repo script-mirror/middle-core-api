@@ -185,13 +185,47 @@ class AcomphConsolidado:
         return {"inserts": result.rowcount}
 
     @staticmethod
-    def delete_acomph_consolidado_by_dt_referente_between(dt_referente_inicial: datetime.date, dt_referente_final: datetime.date):
+    def delete_acomph_consolidado_by_dt_referente_between(
+        dt_referente_inicial: datetime.date,
+        dt_referente_final: datetime.date
+    ):
         query = db.delete(AcomphConsolidado.tb).where(
             AcomphConsolidado.tb.c['dt_referente'].between(
                 dt_referente_inicial, dt_referente_final)
         )
         result = __DB__.db_execute(query)
         return {"deletes": result.rowcount}
+
+    @staticmethod
+    def get_vazao_by_data_entre(
+        inicio: datetime.date,
+        fim: datetime.date = None
+    ):
+        query = db.select(
+            AcomphConsolidado.tb.c['dt_referente'],
+            AcomphConsolidado.tb.c['cd_posto'],
+            AcomphConsolidado.tb.c['vl_vaz_def_conso'],
+            AcomphConsolidado.tb.c['vl_vaz_inc_conso'],
+            AcomphConsolidado.tb.c['vl_vaz_nat_conso']
+        )
+
+        if fim is None:
+            query = query.where(
+                AcomphConsolidado.tb.c['dt_referente'] >= inicio)
+        else:
+            query = query.where(
+                AcomphConsolidado.tb.c['dt_referente'].between(inicio, fim)
+            )
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'dt_referente', 'cd_posto', 'vl_vaz_def_conso',
+                'vl_vaz_inc_conso', 'vl_vaz_nat_conso'
+            ]
+        )
+        return df.to_dict('records')
 
 
 class EnaAcomph:

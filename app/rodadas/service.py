@@ -412,13 +412,20 @@ class Chuva:
             CadastroRodadas.tb.c['dt_rodada'],
             CadastroRodadas.tb.c['hr_rodada'],
             CadastroRodadas.tb.c['dt_revisao'],
+            CadastroRodadas.tb.c['fl_preliminar'],
+            CadastroRodadas.tb.c['fl_pdp'],
+            CadastroRodadas.tb.c['fl_psat'],
+            Subbacia.tb.c['txt_nome_subbacia'],
             Chuva.tb.c['cd_subbacia'],
             Chuva.tb.c['dt_prevista'],
             Chuva.tb.c['vl_chuva']).where(
             db.and_(
                 Chuva.tb.c['id'] == id_chuva)).join(
                 CadastroRodadas.tb,
-            CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id'])
+            CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id']).join(
+                Subbacia.tb,
+                Subbacia.tb.c['cd_subbacia'] == Chuva.tb.c['cd_subbacia']
+            )
 
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(
@@ -429,9 +436,14 @@ class Chuva:
                 'dt_rodada',
                 'hr_rodada',
                 'dt_revisao',
+                'fl_preliminar',
+                'fl_pdp',
+                'fl_psat',
+                'codigo_posto_pluviometrico',
                 'id',
                 'dt_prevista',
-                'vl_chuva'])
+                'vl_chuva'
+                ])
         df['dia_semana'] = df['dt_prevista'].astype(
             'datetime64[ns]').dt.strftime('%A')
         df['dt_prevista'] = df['dt_prevista'].astype(
@@ -756,17 +768,22 @@ class Chuva:
         if no_cache:
             df = pd.DataFrame(Chuva.get_chuva_por_id(id_chuva))[
                 ["modelo", "dt_rodada", "hr_rodada", "id",
-                 "dt_prevista", "vl_chuva", "dia_semana", "semana"]
+                 "dt_prevista", "vl_chuva", "dia_semana", "semana",
+                 "fl_preliminar", "fl_pdp", "fl_psat",
+                 "codigo_posto_pluviometrico"]
             ]
         else:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id,
                                                id_chuva, atualizar=atualizar))[
                 ["modelo", "dt_rodada", "hr_rodada", "id",
-                 "dt_prevista", "vl_chuva", "dia_semana", "semana"]
+                 "dt_prevista", "vl_chuva", "dia_semana", "semana",
+                 "fl_preliminar", "fl_pdp", "fl_psat",
+                 "codigo_posto_pluviometrico"]
             ]
 
         if df.empty:
             return df
+
         if dt_inicio_previsao is not None and dt_fim_previsao is not None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime(
                 '%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime(
@@ -775,9 +792,12 @@ class Chuva:
             df = df[df['dt_prevista'] >=
                     dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
+
         if granularidade == 'subbacia':
             df = df.rename(columns={'id': 'cd_subbacia'})
             return df.to_dict('records')
+        df = df.drop(columns=["fl_preliminar", "fl_pdp", "fl_psat",
+                              "codigo_posto_pluviometrico"])
         df_subbacia = pd.DataFrame(Subbacia.get_subbacia())
         merged = df.merge(
             df_subbacia[['id', 'nome_bacia', 'nome_submercado']], on='id')
@@ -1637,12 +1657,12 @@ class ChuvaMergeCptec:
                 'cd_subbacia',
                 'data_observado',
                 'chuva',
-                'subbacia_psat',
+                'codigo_posto_pluviometrico',
                 'lat',
                 'lon',
                 'bacia'])
         df['data_observado'] = pd.to_datetime(df['data_observado'].values)
-        df = df.sort_values(by=['data_observado', 'subbacia_psat', 'bacia'])
+        df = df.sort_values(by=['data_observado', 'codigo_posto_pluviometrico', 'bacia'])
         df['data_observado'] = df['data_observado'].dt.date
         return df.to_dict('records')
 
@@ -1723,12 +1743,12 @@ class ChuvaPsat:
                 'cd_subbacia',
                 'data_observado',
                 'chuva',
-                'subbacia_psat',
+                'codigo_posto_pluviometrico',
                 'lat',
                 'lon',
                 'bacia'])
         df['data_observado'] = pd.to_datetime(df['data_observado'].values)
-        df = df.sort_values(by=['data_observado', 'subbacia_psat', 'bacia'])
+        df = df.sort_values(by=['data_observado', 'codigo_posto_pluviometrico', 'bacia'])
         df['data_observado'] = df['data_observado'].dt.date
         return df.to_dict('records')
 

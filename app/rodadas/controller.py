@@ -59,7 +59,7 @@ def get_chuva_previsao_por_id_data_entre_granularidade(
     id_chuva: Optional[int] = None,
     dt_inicio_previsao: Optional[datetime.date] = None,
     dt_fim_previsao: Optional[datetime.date] = None,
-    no_cache: Optional[bool] = False,
+    no_cache: Optional[bool] = True,
     atualizar: Optional[bool] = False
 ):
     if id_chuva:

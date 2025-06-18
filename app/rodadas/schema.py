@@ -5,6 +5,7 @@ import datetime
 
 
 class RodadaSmap(BaseModel):
+    id_chuva: int
     dt_rodada: datetime.date
     hr_rodada: int
     str_modelo: str

@@ -1066,6 +1066,7 @@ class Chuva:
             Smap.trigger_rodada_smap(
                 RodadaSmap.model_validate(
                     {
+                        'id_chuva': id_chuva,
                         'dt_rodada': datetime.datetime.strptime(
                             dt_rodada,
                             '%Y-%m-%d'),
@@ -1442,6 +1443,7 @@ class Smap:
                     rodada.dt_rodada.strftime("%Y-%m-%d"),
                 ]
                 ],
+                "id_chuva": rodada.id_chuva,
                 "prev_estendida": rodada.prev_estendida,
                 "id_dataviz_chuva": rodada.id_dataviz_chuva
             },

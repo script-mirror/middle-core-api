@@ -217,6 +217,6 @@ def get_check_cvu_by_data_atualizacao_title(
 @router.get("/historico-cvu", tags=["CVU"])
 def get_all(
         page: int = 1,
-        page_size: int = 10
+        page_size: int = 40
 ):
     return service.CheckCvu.get_all(page, page_size)

@@ -892,13 +892,13 @@ class CheckCvu:
 
     @staticmethod
     def get_all(
-        page: int = 1,
-        page_size: int = 10
+        page: int,
+        page_size: int
     ) -> dict:
         if page < 1:
             page = 1
-        if page_size < 1 or page_size > 100:
-            page_size = 10
+        if page_size < 1:
+            page_size = 1
 
         offset = (page - 1) * page_size
 

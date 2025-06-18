@@ -889,3 +889,44 @@ class CheckCvu:
                 status_code=404, detail=f"Check CVU com data de atualizacao {data_atualizacao} não encontrado")
         record_dict = dict(record._mapping)
         return CheckCvuReadDto(**record_dict)
+
+    @staticmethod
+    def get_all(
+        page: int = 1,
+        page_size: int = 10
+    ) -> dict:
+        if page < 1:
+            page = 1
+        if page_size < 1 or page_size > 100:
+            page_size = 10
+
+        offset = (page - 1) * page_size
+
+        count_query = db.select(db.func.count()).select_from(CheckCvu.tb)
+        total_records = __DB__.db_execute(count_query).scalar()
+
+        select_query = db.select(CheckCvu.tb).limit(page_size).offset(offset)
+        records = __DB__.db_execute(select_query).fetchall()
+
+        check_cvus = []
+        for record in records:
+            record_dict = dict(record._mapping)
+            check_cvus.append(CheckCvuReadDto(**record_dict).model_dump())
+
+        total_pages = (total_records + page_size - 1) // page_size
+        has_next = page < total_pages
+        has_previous = page > 1
+
+        return {
+            "data": check_cvus,
+            "pagination": {
+                "current_page": page,
+                "page_size": page_size,
+                "total_records": total_records,
+                "total_pages": total_pages,
+                "has_next": has_next,
+                "has_previous": has_previous,
+                "next_page": page + 1 if has_next else None,
+                "previous_page": page - 1 if has_previous else None
+            }
+        }

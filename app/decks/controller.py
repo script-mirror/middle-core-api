@@ -208,4 +208,15 @@ def get_check_cvu_by_data_atualizacao_title(
     data_atualizacao: datetime.datetime,
     title: str
 ):
-    return service.CheckCvu.get_by_data_atualizacao_title(data_atualizacao, title)
+    return service.CheckCvu.get_by_data_atualizacao_title(
+        data_atualizacao,
+        title
+    )
+
+
+@router.get("/historico-cvu", tags=["CVU"])
+def get_all(
+        page: int = 1,
+        page_size: int = 10
+):
+    return service.CheckCvu.get_all(page, page_size)

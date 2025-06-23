@@ -367,15 +367,12 @@ class CadastroRodadas:
         for flag in flags:
             if flag == "PRELIMINAR":
                 flag_preliminar = 1
-                dt_rodada = (pd.to_datetime(dt_rodada) +
-                             datetime.timedelta(days=1)).strftime('%Y-%m-%d')
             elif flag == "PDP":
                 flag_pdp = 1
             elif flag == "PSAT":
                 flag_psat = 1
             if flag == "GPM":
                 break
-
         rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(
             datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
         cadastro_rodada = {

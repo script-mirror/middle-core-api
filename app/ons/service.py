@@ -407,6 +407,33 @@ class CargaHoraria:
         return df_agrupado.to_dict('records')
 
 
+class Produtibilidade:
+    tb: db.Table = __DB__.getSchema('tb_produtibilidade')
+
+    @staticmethod
+    def get_all():
+        query = db.select(
+            Produtibilidade.tb.c['cd_posto'],
+            Produtibilidade.tb.c['str_posto'],
+            Produtibilidade.tb.c['vl_produtibilidade'],
+            Produtibilidade.tb.c['cd_submercado'],
+            Produtibilidade.tb.c['str_submercado'],
+            Produtibilidade.tb.c['str_sigla'],
+            Produtibilidade.tb.c['cd_bacia'],
+            Produtibilidade.tb.c['str_bacia'],
+            Produtibilidade.tb.c['cd_ree'],
+            Produtibilidade.tb.c['str_ree']
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'cd_posto', 'str_posto', 'vl_produtibilidade', 'cd_submercado',
+            'str_submercado', 'str_sigla', 'cd_bacia', 'str_bacia',
+            'cd_ree', 'str_ree'
+        ])
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return df.to_dict('records')
+
+
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

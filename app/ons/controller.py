@@ -126,3 +126,8 @@ def get_carga_horaria_data_entre(
     fim: datetime.date
 ):
     return service.CargaHoraria.get_carga_horaria_data_entre(inicio, fim)
+
+
+@router.get('/produtibilidade')
+def get_produtibilidade():
+    return service.Produtibilidade.get_all()

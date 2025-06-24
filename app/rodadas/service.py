@@ -1416,6 +1416,7 @@ class Smap:
 
     @staticmethod
     def create(body: List[SmapCreateDto]) -> CadastroRodadasReadDto:
+
         id_smap = Smap.get_last_id_smap()+1
         df = pd.DataFrame([obj.model_dump() for obj in body])
         rodada = CadastroRodadas.upsert_rodada_smap(
@@ -1856,6 +1857,38 @@ class VazoesObs:
         df['data_referente'] = pd.to_datetime(
             df['data_referente'].values).date
         return df.to_dict('records')
+
+
+class PostosPluviometricos:
+    tb: db.Table = __DB__.getSchema('postos_pluviometricos')
+
+    @staticmethod
+    def get_all():
+        query = db.select(
+            PostosPluviometricos.tb.c['id'],
+            PostosPluviometricos.tb.c['sub_bacia'],
+            PostosPluviometricos.tb.c['posto'],
+            PostosPluviometricos.tb.c['peso']
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'id',
+                'sub_bacia',
+                'posto',
+                'peso'
+            ]
+        )
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return df.to_dict('records')
+
+    @staticmethod
+    def create(postos_list: List[dict]):
+        query_insert = PostosPluviometricos.tb.insert().values(postos_list)
+        n_value = __DB__.db_execute(query_insert).rowcount
+        logger.info(f"{n_value} Linhas inseridas na tb_postos_pluviometricos")
+        return n_value
 
 
 if __name__ == '__main__':

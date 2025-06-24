@@ -12,8 +12,9 @@ from .schema import (
     ChuvaMergeCptecReq,
     RodadaSmap,
     SmapCreateDto,
-    SmapReadDto,
-    CadastroRodadasReadDto
+    CadastroRodadasReadDto,
+    PostosPluRes,
+    PostosPluReq
 )
 
 import datetime
@@ -125,7 +126,11 @@ def post_chuva_membros(
     inserir_ensemble: bool = False,
     rodar_smap: bool = False,
 ):
-    return service.ChuvaMembro.post_chuva_membro(chuva_prev, inserir_ensemble, rodar_smap)
+    return service.ChuvaMembro.post_chuva_membro(
+        chuva_prev,
+        inserir_ensemble,
+        rodar_smap
+    )
 
 
 @router.delete('/chuva/previsao', tags=['Rodadas'])
@@ -297,3 +302,25 @@ def get_vazao_observada_pdp(
     return service.VazoesObs.get_vazao_observada_por_data_entre(
         data_inicio, data_fim
     )
+
+
+@router.get(
+    '/postos-pluviometricos',
+    tags=['Rodadas'],
+    response_model=List[PostosPluRes]
+)
+def get_postos_pluviometricos():
+
+    return service.PostosPluviometricos.get_all()
+
+
+@router.post(
+    '/postos-pluviometricos',
+    tags=['Rodadas']
+)
+def create_postos_pluviometricos(
+    postos: List[PostosPluReq]
+):
+
+    postos_dict = [posto.model_dump() for posto in postos]
+    return service.PostosPluviometricos.create(postos_dict)

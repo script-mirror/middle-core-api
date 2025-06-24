@@ -107,3 +107,16 @@ class SmapReadDto(BaseModel):
     dt_prevista: datetime.date
     vl_vazao_vna: float
     vl_vazao_prevs: float
+
+
+class PostosPluReq(BaseModel):
+    sub_bacia: Optional[str] = Field(default=None, max_length=45)
+    posto: Optional[str] = Field(default=None, max_length=45)
+    peso: Optional[float] = Field(default=None, ge=0, le=1.000)
+
+
+class PostosPluRes(BaseModel):
+    id: int
+    sub_bacia: Optional[str] = Field(default=None, max_length=45)
+    posto: Optional[str] = Field(default=None, max_length=45)
+    peso: Optional[float] = Field(default=None, ge=0, le=1.000)

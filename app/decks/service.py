@@ -176,7 +176,7 @@ class WeolSemanal:
 
     @staticmethod
     def get_html_weighted_avg(df: pd.DataFrame):
-        html: str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid; } table { border-collapse: collapse; } thead, .gray { background-color: #d9d9d9; border: 1px solid; } .none{ background-color: #e6e6e6; } tbody *{ border: none; } tbody{ border: 1px solid; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
+        html: str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid #999; } table { border-collapse: collapse; } thead, .gray { background-color: #f2f2f2; border: 1px solid #ddd; } .none{ background-color: #FFF; } tbody *{ border: none; } tbody{ border: 1px solid #ddd; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
         for col in df.columns:
             html += f'<th>{col}</th>'
         html += ' </tr></thead><tbody>'
@@ -217,8 +217,8 @@ class WeolSemanal:
 
             html += '</tr>'
         html += '</tbody></table>'
-        # with open('/WX2TB/Documentos/fontes/index.html', 'w') as f:
-        #     f.write(html)
+        # with open('weol.html', 'w') as f:
+            # f.write(html)
         return {"html": html}
 
     @staticmethod
@@ -305,7 +305,97 @@ class WeolSemanal:
             x) != str else x for x in df.columns[1:]]
         return WeolSemanal.get_html_weighted_avg(df)
 
+    @staticmethod
+    def create_diferenca_table_rv(
+        df: pd.DataFrame,
+        titulo: str,
+        data_diferenca1: datetime.date = None,
+        data_diferenca2: datetime.date = None,
+    ):
+        html = f'''<style>
+            table {{ font-family: sans-serif; border-collapse: collapse; }}
+            th, td {{ padding: 8px; text-align: center; border: 1px solid #ccc; }}
+            th {{ background-color: #f2f2f2; font-weight: bold; }}
+            .positive {{ color: #155724;background-color: #d4edda;font-weight: bold;}}
+            .negative {{ color: #721c24;background-color: #f8d7da;font-weight: bold;}}
+        </style>
+        <table>
+            <thead>
+            <tr>
+                <th colspan="2">{titulo} {data_diferenca1.strftime("%d/%m/%Y")} - {data_diferenca2.strftime("%d/%m/%Y")}</th>
+            </tr>
+            </thead>
+            <thead>
+                <tr>
+                    <th>RV</th>
+                    <th>Diferença</th>
+                </tr>
+            </thead>
+            <tbody>'''
 
+        for _, row in df.iterrows():
+            rv = row['rv']
+            diferenca = row['diferenca']
+
+            if diferenca > 0:
+                css_class = 'positive'
+            elif diferenca < 0:
+                css_class = 'negative'
+            else:
+                css_class = ''
+
+            html += f'''
+                <tr>
+                    <td>{rv}</td>
+                    <td class="{css_class}">{diferenca:.2f}</td>
+                </tr>'''
+
+        html += '''
+            </tbody>
+        </table>'''
+
+        return html
+
+    @staticmethod
+    def get_weol_day_minus_one_diff(data_produto: datetime.date, days_to_subtract: int):
+        df_minuendo = pd.DataFrame(
+            WeolSemanal.get_weighted_avg_by_product_date_between(
+                data_produto, data_produto)
+        )
+        data_diferenca = data_produto-datetime.timedelta(days=days_to_subtract)
+        df_subtraendo = pd.DataFrame(
+            WeolSemanal.get_weighted_avg_by_product_date_between(
+                data_diferenca,
+                data_diferenca
+                )
+        )
+        while df_subtraendo.empty:
+            data_diferenca -= datetime.timedelta(days=1)
+            df_subtraendo = pd.DataFrame(
+                WeolSemanal.get_weighted_avg_by_product_date_between(
+                    data_diferenca,
+                    data_diferenca
+                )
+            )
+        df_minuendo.columns = ['inicioSemana', 'valores']
+        df_subtraendo.columns = ['inicioSemana', 'valores']
+        df_merged = df_minuendo.merge(df_subtraendo, on='inicioSemana', suffixes=('_df1', '_df2'))
+
+        df_merged['diferenca'] = df_merged['valores_df1'] - df_merged['valores_df2']
+
+        df_resultado = df_merged[['inicioSemana', 'diferenca']]
+        df_resultado['inicioSemana'] = pd.to_datetime(df_resultado['inicioSemana']).dt.date
+
+        df_resultado['inicioSemana'] = df_resultado['inicioSemana'].apply(
+            lambda x: f'{MONTH_DICT[ElecData(x).mesReferente]}-rv{ElecData(x).atualRevisao}' if isinstance(x, datetime.date) else x
+        )
+        df_resultado.rename(columns={'inicioSemana': 'rv'}, inplace=True)
+        
+        html = WeolSemanal.create_diferenca_table_rv(df_resultado, 'Diferença WEOL', data_produto, data_diferenca)
+        # with open('weol_diff.html', 'w') as f:
+        #    f.write(html)
+            
+        return {'html': html}
 class Patamares:
     tb: db.Table = __DB__.getSchema('tb_patamar_decomp')
 

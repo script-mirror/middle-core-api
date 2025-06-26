@@ -13,8 +13,8 @@ from typing import Optional, List
 router = APIRouter(prefix='/utils')
 
 
-@router.get('/data-eletrica',tags=['Utils'])
+@router.get('/data-eletrica', tags=['Utils'])
 def get_data_eletrica(
-    data:datetime.date
+    data: datetime.date
 ):
     return date_util.ElecData(data).to_dict()

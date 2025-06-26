@@ -9,12 +9,12 @@ from .schema import (
     ChuvaPrevisaoCriacao,
     ChuvaPrevisaoCriacaoMembro,
     ChuvaPrevisaoResposta,
-    ChuvaObsReq,
+    ChuvaMergeCptecReq,
     RodadaSmap,
     SmapCreateDto,
     SmapReadDto,
     CadastroRodadasReadDto
-    )
+)
 
 import datetime
 from typing import Optional, List
@@ -141,37 +141,71 @@ def delete_rodada_chuva_smap_por_id_rodada(
 def get_chuva_observada_por_data(
     dt_observada: datetime.date
 ):
-    return service.ChuvaObs.get_chuva_observada_por_data(dt_observada)
+    return service.ChuvaMergeCptec.get_chuva_observada_por_data(dt_observada)
 
 
-@router.get('/chuva/observada-range-datas', tags=['Rodadas'])
+@router.get('/chuva/observada/merge-cptec/data-entre', tags=['Rodadas'])
 def get_chuva_observada_por_data_entre(
-    dt_inicio: datetime.date,
-    dt_fim: datetime.date
+    data_inicio: datetime.date,
+    data_fim: Optional[datetime.date] = None
 ):
-    return service.ChuvaObs.get_chuva_observada_range_datas(dt_ini=dt_inicio,
-                                                            dt_fim=dt_fim)
+    return service.ChuvaMergeCptec.get_chuva_observada_range_datas(
+        data_inicio, data_fim
+    )
 
 
 @router.post('/chuva/observada', tags=['Rodadas'])
 def post_chuva_observada(
-    chuva_obs: List[ChuvaObsReq]
+    chuva_obs: List[ChuvaMergeCptecReq]
 ):
-    return service.ChuvaObs.post_chuva_obs(chuva_obs)
+    return service.ChuvaMergeCptec.post_chuva_obs(chuva_obs)
+
+
+@router.get('/chuva/observada/cpc', tags=['Rodadas'])
+def get_chuva_observada_cpc_por_data(
+    dt_observada: datetime.date
+):
+    return service.ChuvaObsCPC.get_chuva_observada_por_data(
+        dt_observada
+    )
+
+
+@router.post('/chuva/observada/cpc', tags=['Rodadas'])
+def post_chuva_observada_cpc(
+    chuva_obs: List[ChuvaMergeCptecReq]
+):
+    return service.ChuvaObsCPC.post_chuva_obs(chuva_obs)
+
+
+@router.get('/chuva/observada/cpc-range-datas', tags=['Rodadas'])
+def get_chuva_observada_cpc_por_data_entre(
+    dt_inicio: datetime.date,
+    dt_fim: datetime.date
+):
+    return service.ChuvaObsCPC.get_chuva_observada_range_datas(
+        dt_inicio, dt_fim)
 
 
 @router.get('/chuva/observada/psat', tags=['Rodadas'])
-def get_chuva_observada_psat_por_data(
+def get_por_data(
     dt_observada: datetime.date
 ):
-    return service.ChuvaObsPsat.get_chuva_observada_psat_por_data(dt_observada)
+    return service.ChuvaPsat.get_por_data(dt_observada)
 
 
 @router.post('/chuva/observada/psat', tags=['Rodadas'])
 def post_chuva_observada_psat(
-    chuva_obs: List[ChuvaObsReq]
+    chuva_obs: List[ChuvaMergeCptecReq]
 ):
-    return service.ChuvaObsPsat.post_chuva_obs_psat(chuva_obs)
+    return service.ChuvaPsat.post_chuva_obs_psat(chuva_obs)
+
+
+@router.get('/chuva/observada/psat/data-entre', tags=['Rodadas'])
+def get_chuva_observada_psat_por_data_entre(
+    data_inicio: datetime.date,
+    data_fim: Optional[datetime.date] = None
+):
+    return service.ChuvaPsat.get_por_data_entre(data_inicio, data_fim)
 
 
 @router.post('/smap/trigger-dag', tags=['Rodadas'])
@@ -180,11 +214,13 @@ def trigger_smap(
 ):
     return service.Smap.trigger_rodada_smap(rodada)
 
+
 @router.post('/smap', tags=['Rodadas'], response_model=CadastroRodadasReadDto)
 def post_smap(
     body: List[SmapCreateDto]
 ) -> CadastroRodadasReadDto:
     return service.Smap.create(body)
+
 
 @router.get('/smap', tags=['Rodadas'])
 def get_vazao_smap_by_id(
@@ -256,6 +292,8 @@ def get_chuva_smap_ponderada_submercado(
 @router.get("/vazao-observada-pdp", tags=['Rodadas'])
 def get_vazao_observada_pdp(
     data_inicio: datetime.date,
-    data_fim: datetime.date
+    data_fim: Optional[datetime.date] = None
 ):
-    return service.VazoesObs.get_vazao_observada_por_data_entre(data_inicio, data_fim)
+    return service.VazoesObs.get_vazao_observada_por_data_entre(
+        data_inicio, data_fim
+    )

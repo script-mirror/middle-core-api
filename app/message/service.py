@@ -9,7 +9,8 @@ from app.core.utils.auth_token import get_access_token
 
 logger = logging.getLogger(__name__)
 
-def send_message(message:str, file:str, dest:str):
+
+def send_message(message: str, file: str, dest: str):
     fields = {
         "destinatario": dest,
         "mensagem": message

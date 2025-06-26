@@ -109,7 +109,7 @@ class ElecData:
             # primeiro dia do mes eletrico
             self.primeiroDiaMes = getLastSaturday(
                 datetime.date(data_aux.year, data_aux.month, 1)
-                )
+            )
         else:
             self.primeiroDiaAno = getLastSaturday(
                 datetime.date(self.data.year, 1, 1)

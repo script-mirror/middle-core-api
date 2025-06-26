@@ -46,6 +46,7 @@ def get_acomph_by_dt_referente(
 ):
     return service.Acomph.get_acomph_by_dt_referente(data)
 
+
 @router.post('/acomph')
 def post_acomph(
     body: List[AcomphSchema]
@@ -54,17 +55,21 @@ def post_acomph(
         [item.model_dump() for item in body]
     )
 
+
 @router.get('/acomph/data-acomph')
 def get_acomphby_dt_acomph(
     data_acomph: datetime.date
 ):
     return service.Acomph.get_acomph_by_dt_acomph(data_acomph)
 
+
 @router.get('/acomph/products-available')
 def get_acomph_products_available(
     year: int,
 ):
     return service.Acomph.get_available_dt_acomph_by_year(year)
+
+
 @router.delete('/ena-acomph/datas')
 def delete_ena_acomph(datas: List[datetime.date]):
     return service.EnaAcomph.delete_ena_acomph_by_dates(datas)
@@ -87,31 +92,32 @@ def get_ena_acomph_entre(
         granularidade.name, data_inicial, data_final
     )
 
+
 @router.get('/geracao-horaria')
 def get_geracao_horaria(
-    data:datetime.date
+    data: datetime.date
 ):
     return service.GeracaoHoraria.get_geracao_horaria(data)
 
 
 @router.get('/carga-horaria')
 def get_carga_horaria(
-    data:datetime.date
+    data: datetime.date
 ):
     return service.CargaHoraria.get_carga_horaria(data)
 
 
 @router.get('/geracao-horaria/data-entre')
 def get_geracao_horaria(
-    inicio:datetime.date,
-    fim:datetime.date
+    inicio: datetime.date,
+    fim: datetime.date
 ):
     return service.GeracaoHoraria.get_geracao_horaria_data_entre(inicio, fim)
 
 
 @router.get('/carga-horaria/data-entre')
 def get_carga_horaria(
-    inicio:datetime.date,
-    fim:datetime.date
+    inicio: datetime.date,
+    fim: datetime.date
 ):
     return service.CargaHoraria.get_carga_horaria_data_entre(inicio, fim)

@@ -12,54 +12,56 @@ from app.core.database.wx_dbClass import db_mysql_master
 __DB__ = db_mysql_master('db_ons')
 
 
-
-    
 class BaciasSegmentadas:
-    tb:db.Table = __DB__.getSchema('tb_bacias_segmentadas')
+    tb: db.Table = __DB__.getSchema('tb_bacias_segmentadas')
 
     @staticmethod
     def get_bacias_segmentadas():
         query = db.select(
-          BaciasSegmentadas.tb.c['cd_bacia'],
-          BaciasSegmentadas.tb.c['str_bacia'],
-          BaciasSegmentadas.tb.c['cd_submercado']
+            BaciasSegmentadas.tb.c['cd_bacia'],
+            BaciasSegmentadas.tb.c['str_bacia'],
+            BaciasSegmentadas.tb.c['cd_submercado']
         )
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['cd_bacia','str_bacia', 'cd_submercado'])
+        df = pd.DataFrame(
+            result, columns=['cd_bacia', 'str_bacia', 'cd_submercado'])
         return df.to_dict('records')
-    
+
     @staticmethod
     def get_bacias_segmentadas_by_cd_bacia(cd_bacia):
         query = db.select(
-          BaciasSegmentadas.tb.c['cd_bacia'],
-          BaciasSegmentadas.tb.c['cd_submercado'],
+            BaciasSegmentadas.tb.c['cd_bacia'],
+            BaciasSegmentadas.tb.c['cd_submercado'],
         ).where(
             BaciasSegmentadas.tb.c['cd_bacia'] == cd_bacia
         )
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['cd_bacia','cd_submercado'])
+        df = pd.DataFrame(result, columns=['cd_bacia', 'cd_submercado'])
         return df.to_dict('records')
 
+
 class tb_bacias:
-    tb:db.Table = __DB__.getSchema('tb_bacias')
-    
+    tb: db.Table = __DB__.getSchema('tb_bacias')
+
     @staticmethod
-    def get_bacias(divisao:str):
+    def get_bacias(divisao: str):
         query = db.select(
-          tb_bacias.tb.c['id_bacia'],
-          tb_bacias.tb.c['str_bacia'],
+            tb_bacias.tb.c['id_bacia'],
+            tb_bacias.tb.c['str_bacia'],
         )
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['id','nome'])
+        df = pd.DataFrame(result, columns=['id', 'nome'])
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         if divisao == 'tb_chuva':
-            df = df[~df['nome'].isin(['AMAZONAS','PARAGUAI','PARAÍBA_DO_SUL','SÃO_FRANCISCO','TOCANTINS'])]
+            df = df[~df['nome'].isin(
+                ['AMAZONAS', 'PARAGUAI', 'PARAÍBA_DO_SUL', 'SÃO_FRANCISCO', 'TOCANTINS'])]
         return df.to_dict('records')
 
+
 class tb_submercado:
-    tb:db.Table = __DB__.getSchema('tb_submercado')
-    
+    tb: db.Table = __DB__.getSchema('tb_submercado')
+
     @staticmethod
     def get_submercados():
         query = db.select(
@@ -72,12 +74,13 @@ class tb_submercado:
         df = df.sort_values('id')
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
-        
+
 
 class Acomph:
-    tb:db.Table = __DB__.getSchema('tb_acomph')
+    tb: db.Table = __DB__.getSchema('tb_acomph')
+
     @staticmethod
-    def get_acomph_by_dt_referente(data:datetime.date):
+    def get_acomph_by_dt_referente(data: datetime.date):
         inner_query = db.select(
             Acomph.tb.c['cd_posto'],
             Acomph.tb.c['dt_referente'],
@@ -85,13 +88,14 @@ class Acomph:
             Acomph.tb.c['vl_vaz_nat_conso'],
             Acomph.tb.c['dt_acomph'],
             db.func.row_number().over(
-                partition_by=[Acomph.tb.c['cd_posto'], Acomph.tb.c['dt_referente']],
+                partition_by=[Acomph.tb.c['cd_posto'],
+                              Acomph.tb.c['dt_referente']],
                 order_by=Acomph.tb.c['dt_acomph'].desc()
             ).label('row_number')
         ).where(
             Acomph.tb.c['dt_referente'] >= data
         ).alias('_')
-        
+
         query = db.select(
             inner_query.c['cd_posto'],
             db.func.date(inner_query.c['dt_referente']),
@@ -101,14 +105,14 @@ class Acomph:
         ).where(
             inner_query.c['row_number'] == 1
         )
-        
+
         result = __DB__.db_execute(query).fetchall()
-        df = pd.DataFrame(result, columns=['cd_posto', 'dt_referente', 'vl_vaz_inc_conso', 
-                                          'vl_vaz_nat_conso', 'dt_acomph'])
+        df = pd.DataFrame(result, columns=['cd_posto', 'dt_referente', 'vl_vaz_inc_conso',
+                                           'vl_vaz_nat_conso', 'dt_acomph'])
         return df.to_dict('records')
-    
+
     @staticmethod
-    def get_acomph_by_dt_acomph(data:datetime.date):
+    def get_acomph_by_dt_acomph(data: datetime.date):
         query = db.select(
             db.func.date(Acomph.tb.c['dt_referente']),
             Acomph.tb.c['cd_posto'],
@@ -120,33 +124,35 @@ class Acomph:
             db.func.date(Acomph.tb.c['dt_acomph']) == data
         )
         result = __DB__.db_execute(query).fetchall()
-        
+
         if not result:
-            raise HTTPException(status_code=404, detail=f"Acomph da data {data} não encontrado")
-            
-        df = pd.DataFrame(result, columns=['dt_referente', 'cd_posto', 'vl_vaz_def_conso', 
-                                          'vl_vaz_inc_conso', 'vl_vaz_nat_conso', 'dt_acomph'])
+            raise HTTPException(
+                status_code=404, detail=f"Acomph da data {data} não encontrado")
+
+        df = pd.DataFrame(result, columns=['dt_referente', 'cd_posto', 'vl_vaz_def_conso',
+                                           'vl_vaz_inc_conso', 'vl_vaz_nat_conso', 'dt_acomph'])
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
 
     @staticmethod
-    def get_available_dt_acomph_by_year(year:int):
+    def get_available_dt_acomph_by_year(year: int):
         query = db.select(
             db.func.distinct(db.func.date(Acomph.tb.c['dt_acomph']))
         ).where(
             Acomph.tb.c['dt_acomph'].between(f'{year}-01-01', f'{year}-12-31')
         )
-        
+
         result = __DB__.db_execute(query).fetchall()
-        
+
         if not result:
-            raise HTTPException(status_code=404, detail=f"Não foram encontradas datas de Acomph para o ano {year}")
-            
+            raise HTTPException(
+                status_code=404, detail=f"Não foram encontradas datas de Acomph para o ano {year}")
+
         df = pd.DataFrame(result, columns=['dt_acomph'])
         return [str(x) for x in df['dt_acomph'].tolist()]
 
     @staticmethod
-    def post_acomph(body:List[dict]):
+    def post_acomph(body: List[dict]):
         df = pd.DataFrame(body)
         df.drop_duplicates(subset=['dt_referente', 'cd_posto'], inplace=True)
         df.sort_values(['dt_referente', 'cd_posto'], inplace=True)
@@ -155,58 +161,63 @@ class Acomph:
         query = db.insert(Acomph.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
         AcomphConsolidado.post_acomph_consolidado(df.to_dict('records'))
-        return {"inserts":result.rowcount}
-    
+        return {"inserts": result.rowcount}
+
     @staticmethod
-    def delete_acomph_by_dt_acomph(dt_acomph:datetime.date):
+    def delete_acomph_by_dt_acomph(dt_acomph: datetime.date):
         query = db.delete(Acomph.tb).where(
             Acomph.tb.c['dt_acomph'] == dt_acomph
         )
         result = __DB__.db_execute(query)
-        return {"deletes":result.rowcount}
+        return {"deletes": result.rowcount}
+
+
 class AcomphConsolidado:
-    tb:db.Table = __DB__.getSchema('acomph_consolidado')
-    
+    tb: db.Table = __DB__.getSchema('acomph_consolidado')
+
     @staticmethod
-    def post_acomph_consolidado(body:List[dict]):
+    def post_acomph_consolidado(body: List[dict]):
         df = pd.DataFrame(body)
-        AcomphConsolidado.delete_acomph_consolidado_by_dt_referente_between(df['dt_referente'].min(), df['dt_referente'].max())
+        AcomphConsolidado.delete_acomph_consolidado_by_dt_referente_between(
+            df['dt_referente'].min(), df['dt_referente'].max())
         query = db.insert(AcomphConsolidado.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
-        return {"inserts":result.rowcount}
-    
+        return {"inserts": result.rowcount}
+
     @staticmethod
-    def delete_acomph_consolidado_by_dt_referente_between(dt_referente_inicial:datetime.date, dt_referente_final:datetime.date):
+    def delete_acomph_consolidado_by_dt_referente_between(dt_referente_inicial: datetime.date, dt_referente_final: datetime.date):
         query = db.delete(AcomphConsolidado.tb).where(
-            AcomphConsolidado.tb.c['dt_referente'].between(dt_referente_inicial, dt_referente_final)
+            AcomphConsolidado.tb.c['dt_referente'].between(
+                dt_referente_inicial, dt_referente_final)
         )
         result = __DB__.db_execute(query)
-        return {"deletes":result.rowcount}
+        return {"deletes": result.rowcount}
+
 
 class EnaAcomph:
-    tb:db.Table = __DB__.getSchema('ena_acomph')
-    
+    tb: db.Table = __DB__.getSchema('ena_acomph')
+
     @staticmethod
-    def delete_ena_acomph_by_dates(datas:List[datetime.date]):
+    def delete_ena_acomph_by_dates(datas: List[datetime.date]):
         query = db.delete(EnaAcomph.tb).where(
             EnaAcomph.tb.c['data'].in_(datas)
         )
         result = __DB__.db_execute(query)
-        return {"deletes":result.rowcount}
+        return {"deletes": result.rowcount}
 
     @staticmethod
-    def post_ena_acomph(ena_acomph:List[dict]):
+    def post_ena_acomph(ena_acomph: List[dict]):
         df = pd.DataFrame(ena_acomph)
         df['data'] = pd.to_datetime(df['data'], format='%Y-%m-%d')
         df['data'] = df['data'].dt.date
         EnaAcomph.delete_ena_acomph_by_dates(df['data'].unique().tolist())
         query = db.insert(EnaAcomph.tb).values(ena_acomph)
         result = __DB__.db_execute(query)
-        return {"inserts":result.rowcount}
-    
+        return {"inserts": result.rowcount}
+
     @staticmethod
     def get_ena_acomph_by_granularidade_date_between(
-        granularidade:str, data_inicial:datetime.date, data_final:datetime.date
+        granularidade: str, data_inicial: datetime.date, data_final: datetime.date
     ):
         query = db.select(
             EnaAcomph.tb.c['data'],
@@ -222,7 +233,8 @@ class EnaAcomph:
 
 
 class VeBacias:
-    tb:db.Table = __DB__.getSchema('tb_ve_bacias')
+    tb: db.Table = __DB__.getSchema('tb_ve_bacias')
+
     @staticmethod
     def get_ve_bacias(dt_inicio_semana: datetime.date):
         query = db.select(
@@ -239,16 +251,17 @@ class VeBacias:
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=[
             'cd_bacia', 'vl_mes', 'dt_inicio_semana', 'cd_revisao', 'mlt'
-            ])
+        ])
         return df.to_dict('records')
 
 
 class TipoGeracao:
-    tb:db.Table = __DB__.getSchema('tb_tipo_geracao')
+    tb: db.Table = __DB__.getSchema('tb_tipo_geracao')
+
 
 class GeracaoHoraria:
-    tb:db.Table = __DB__.getSchema('tb_geracao_horaria')
-    
+    tb: db.Table = __DB__.getSchema('tb_geracao_horaria')
+
     @staticmethod
     def get_geracao_horaria(dt_update: datetime.date):
         query = db.select(
@@ -257,56 +270,59 @@ class GeracaoHoraria:
             GeracaoHoraria.tb.c['vl_carga'],
             TipoGeracao.tb.c['str_geracao'],
         ).join(
-        TipoGeracao.tb, GeracaoHoraria.tb.c['cd_geracao'] == TipoGeracao.tb.c['cd_geracao']
+            TipoGeracao.tb, GeracaoHoraria.tb.c['cd_geracao'] == TipoGeracao.tb.c['cd_geracao']
         ).where(
             GeracaoHoraria.tb.c['dt_update'] == f"{dt_update} 00:00:00"
         ).order_by(
             TipoGeracao.tb.c['str_geracao'],
             GeracaoHoraria.tb.c['dt_referente']
-            )
+        )
 
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=[
-            'submercado','dt_referente','vl_carga','tipo_geracao'
-            ])
+            'submercado', 'dt_referente', 'vl_carga', 'tipo_geracao'
+        ])
         df['dt_referente'] = pd.to_datetime(df['dt_referente'])
         df['hora'] = df['dt_referente'].dt.floor('h')
-        df_agrupado = df.groupby(['submercado', 'tipo_geracao', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df.groupby(['submercado', 'tipo_geracao', 'hora'])[
+            'vl_carga'].mean().reset_index()
         df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
 
         return df_agrupado.to_dict('records')
-    
+
     @staticmethod
-    def get_geracao_horaria_data_entre(inicio: datetime.date, fim:datetime.date):
+    def get_geracao_horaria_data_entre(inicio: datetime.date, fim: datetime.date):
         query = db.select(
             GeracaoHoraria.tb.c['str_submercado'],
             GeracaoHoraria.tb.c['dt_referente'],
             GeracaoHoraria.tb.c['vl_carga'],
             TipoGeracao.tb.c['str_geracao'],
         ).join(
-        TipoGeracao.tb, GeracaoHoraria.tb.c['cd_geracao'] == TipoGeracao.tb.c['cd_geracao']
+            TipoGeracao.tb, GeracaoHoraria.tb.c['cd_geracao'] == TipoGeracao.tb.c['cd_geracao']
         ).where(
-            GeracaoHoraria.tb.c['dt_update'].between(f"{inicio} 00:00:00", f"{fim} 00:00:00") 
+            GeracaoHoraria.tb.c['dt_update'].between(
+                f"{inicio} 00:00:00", f"{fim} 00:00:00")
         ).order_by(
             TipoGeracao.tb.c['str_geracao'],
             GeracaoHoraria.tb.c['dt_referente']
-            )
+        )
 
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=[
-            'submercado','dt_referente','vl_carga','tipo_geracao'
-            ])
+            'submercado', 'dt_referente', 'vl_carga', 'tipo_geracao'
+        ])
         df['dt_referente'] = pd.to_datetime(df['dt_referente'])
         df['hora'] = df['dt_referente'].dt.floor('h')
-        df_agrupado = df.groupby(['submercado', 'tipo_geracao', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df.groupby(['submercado', 'tipo_geracao', 'hora'])[
+            'vl_carga'].mean().reset_index()
         df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
 
         return df_agrupado.to_dict('records')
 
 
 class CargaHoraria:
-    tb:db.Table = __DB__.getSchema('tb_carga_horaria')
-    
+    tb: db.Table = __DB__.getSchema('tb_carga_horaria')
+
     @staticmethod
     def get_carga_horaria(dt_update: datetime.date):
         query = db.select(
@@ -317,42 +333,46 @@ class CargaHoraria:
             CargaHoraria.tb.c['dt_update'] == f"{dt_update} 00:00:00"
         ).order_by(
             CargaHoraria.tb.c['dt_referente']
-            )
+        )
 
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=[
-            'submercado','dt_referente','vl_carga'
-            ])
+            'submercado', 'dt_referente', 'vl_carga'
+        ])
         df['dt_referente'] = pd.to_datetime(df['dt_referente'])
         df['hora'] = df['dt_referente'].dt.floor('h')
-        df_agrupado = df.groupby(['submercado', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df.groupby(['submercado', 'hora'])[
+            'vl_carga'].mean().reset_index()
         df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
 
         return df_agrupado.to_dict('records')
-    
+
     @staticmethod
-    def get_carga_horaria_data_entre(inicio: datetime.date, fim:datetime.date):
+    def get_carga_horaria_data_entre(inicio: datetime.date, fim: datetime.date):
         query = db.select(
             CargaHoraria.tb.c['str_submercado'],
             CargaHoraria.tb.c['dt_referente'],
             CargaHoraria.tb.c['vl_carga'],
         ).where(
-            CargaHoraria.tb.c['dt_update'].between(f"{inicio} 00:00:00", f"{fim} 00:00:00") 
+            CargaHoraria.tb.c['dt_update'].between(
+                f"{inicio} 00:00:00", f"{fim} 00:00:00")
         ).order_by(
             CargaHoraria.tb.c['dt_referente']
-            )
+        )
 
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=[
-            'submercado','dt_referente','vl_carga'
-            ])
+            'submercado', 'dt_referente', 'vl_carga'
+        ])
         df['dt_referente'] = pd.to_datetime(df['dt_referente'])
         df['hora'] = df['dt_referente'].dt.floor('h')
-        df_agrupado = df.groupby(['submercado', 'hora'])['vl_carga'].mean().reset_index()
+        df_agrupado = df.groupby(['submercado', 'hora'])[
+            'vl_carga'].mean().reset_index()
         df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
 
         return df_agrupado.to_dict('records')
-    
+
+
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

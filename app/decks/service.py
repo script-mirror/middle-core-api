@@ -391,7 +391,7 @@ class WeolSemanal:
         )
         df_resultado.rename(columns={'inicioSemana': 'rv'}, inplace=True)
         
-        html = WeolSemanal.create_diferenca_table_rv(df_resultado, 'Diferença WEOL', data_produto, data_diferenca)
+        html = WeolSemanal.create_diferenca_table_rv(df_resultado, 'Diferença WEOL', data_produto+datetime.timedelta(days-1), data_diferenca+datetime.timedelta(days-1))
         # with open('weol_diff.html', 'w') as f:
         #    f.write(html)
             

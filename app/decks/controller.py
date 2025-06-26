@@ -72,14 +72,24 @@ def get_weol_by_product_date_start_week_year_month_rv(
     return service.Patamares.get_horas_por_patamar_por_inicio_semana_data(inicioSemana, fimSemana)
 
 
-@router.get("/patamares/weighted-average", tags=["Decomp"])
+@router.get("/weol/weighted-average", tags=["Decomp"])
 def get_weighted_avg_by_product_date(
     dataProduto: datetime.date,
 ):
     return service.WeolSemanal.get_weighted_avg_by_product_date(dataProduto)
 
 
-@router.get("/patamares/weighted-average/month/table", tags=["Decomp"])
+@router.get("/weol/diff-table", tags=["Decomp"])
+def get_weol_day_minus_one_diff(
+    dataProduto: datetime.date,
+    dias_para_subtrair: int = 1
+):
+    return service.WeolSemanal.get_weol_day_minus_one_diff(
+        dataProduto, dias_para_subtrair
+    )
+
+
+@router.get("/weol/weighted-average/month/table", tags=["Decomp"])
 def get_weighted_avg_table_monthly_by_product_date(
     dataProduto: datetime.date,
     quantidadeProdutos: int
@@ -87,7 +97,7 @@ def get_weighted_avg_table_monthly_by_product_date(
     return service.WeolSemanal.get_weighted_avg_table_monthly_by_product_date(dataProduto, quantidadeProdutos)
 
 
-@router.get("/patamares/weighted-average/week/table", tags=["Decomp"])
+@router.get("/weol/weighted-average/week/table", tags=["Decomp"])
 def get_weighted_avg_table_weekly_by_product_date(
     dataProduto: datetime.date,
     quantidadeProdutos: int
@@ -101,7 +111,7 @@ def get_usinas_cvu():
 
 
 @router.get("/cvu", tags=["CVU"])
-def get_usinas_cvu(
+def get_cvu_by_params_deck(
     ano_mes_referencia: Optional[datetime.date] = None,
     dt_atualizacao: Optional[datetime.datetime] = None,
     fonte: Optional[str] = None,
@@ -252,4 +262,15 @@ def get_check_cvu_by_data_atualizacao_title(
     data_atualizacao: datetime.datetime,
     title: str
 ):
-    return service.CheckCvu.get_by_data_atualizacao_title(data_atualizacao, title)
+    return service.CheckCvu.get_by_data_atualizacao_title(
+        data_atualizacao,
+        title
+    )
+
+
+@router.get("/historico-cvu", tags=["CVU"])
+def get_all(
+        page: int = 1,
+        page_size: int = 40
+):
+    return service.CheckCvu.get_all(page, page_size)

@@ -1459,6 +1459,18 @@ class db_mysql_master():
                                     db.Column('updated_at', db.DateTime, default=db.func.current_timestamp(),
                                               onupdate=db.func.current_timestamp())
                                     )
+        elif table_name.lower() == 'postos_pluviometricos':
+            table_schema = db.Table('postos_pluviometricos', self.meta,
+                                    db.Column('id', db.Integer,
+                                              primary_key=True, autoincrement=True),
+                                    db.Column('sub_bacia', db.String(45),
+                                              nullable=True),
+                                    db.Column('posto', db.String(45),
+                                              nullable=True),
+                                    db.Column('peso', db.DECIMAL(4, 3),
+                                              nullable=True)
+                                    )
+
         return table_schema
 
 

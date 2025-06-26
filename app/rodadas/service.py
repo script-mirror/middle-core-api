@@ -367,15 +367,12 @@ class CadastroRodadas:
         for flag in flags:
             if flag == "PRELIMINAR":
                 flag_preliminar = 1
-                dt_rodada = (pd.to_datetime(dt_rodada) +
-                             datetime.timedelta(days=1)).strftime('%Y-%m-%d')
             elif flag == "PDP":
                 flag_pdp = 1
             elif flag == "PSAT":
                 flag_psat = 1
             if flag == "GPM":
                 break
-
         rodada = pd.DataFrame(CadastroRodadas.get_rodadas_por_dt_hr_nome(
             datetime.datetime.strptime(f"{dt_rodada}T{hr_rodada}", "%Y-%m-%dT%H"), str_modelo))
         cadastro_rodada = {
@@ -412,13 +409,20 @@ class Chuva:
             CadastroRodadas.tb.c['dt_rodada'],
             CadastroRodadas.tb.c['hr_rodada'],
             CadastroRodadas.tb.c['dt_revisao'],
+            CadastroRodadas.tb.c['fl_preliminar'],
+            CadastroRodadas.tb.c['fl_pdp'],
+            CadastroRodadas.tb.c['fl_psat'],
+            Subbacia.tb.c['txt_nome_subbacia'],
             Chuva.tb.c['cd_subbacia'],
             Chuva.tb.c['dt_prevista'],
             Chuva.tb.c['vl_chuva']).where(
             db.and_(
                 Chuva.tb.c['id'] == id_chuva)).join(
                 CadastroRodadas.tb,
-            CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id'])
+            CadastroRodadas.tb.c['id_chuva'] == Chuva.tb.c['id']).join(
+                Subbacia.tb,
+                Subbacia.tb.c['cd_subbacia'] == Chuva.tb.c['cd_subbacia']
+            )
 
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(
@@ -429,9 +433,14 @@ class Chuva:
                 'dt_rodada',
                 'hr_rodada',
                 'dt_revisao',
+                'fl_preliminar',
+                'fl_pdp',
+                'fl_psat',
+                'codigo_posto_pluviometrico',
                 'id',
                 'dt_prevista',
-                'vl_chuva'])
+                'vl_chuva'
+                ])
         df['dia_semana'] = df['dt_prevista'].astype(
             'datetime64[ns]').dt.strftime('%A')
         df['dt_prevista'] = df['dt_prevista'].astype(
@@ -756,17 +765,22 @@ class Chuva:
         if no_cache:
             df = pd.DataFrame(Chuva.get_chuva_por_id(id_chuva))[
                 ["modelo", "dt_rodada", "hr_rodada", "id",
-                 "dt_prevista", "vl_chuva", "dia_semana", "semana"]
+                 "dt_prevista", "vl_chuva", "dia_semana", "semana",
+                 "fl_preliminar", "fl_pdp", "fl_psat",
+                 "codigo_posto_pluviometrico"]
             ]
         else:
             df = pd.DataFrame(cache.get_cached(Chuva.get_chuva_por_id,
                                                id_chuva, atualizar=atualizar))[
                 ["modelo", "dt_rodada", "hr_rodada", "id",
-                 "dt_prevista", "vl_chuva", "dia_semana", "semana"]
+                 "dt_prevista", "vl_chuva", "dia_semana", "semana",
+                 "fl_preliminar", "fl_pdp", "fl_psat",
+                 "codigo_posto_pluviometrico"]
             ]
 
         if df.empty:
             return df
+
         if dt_inicio_previsao is not None and dt_fim_previsao is not None:
             df = df[(df['dt_prevista'] >= dt_inicio_previsao.strftime(
                 '%Y-%m-%d')) & (df['dt_prevista'] <= dt_fim_previsao.strftime(
@@ -775,9 +789,12 @@ class Chuva:
             df = df[df['dt_prevista'] >=
                     dt_inicio_previsao.strftime('%Y-%m-%d')]
         df = df.sort_values(['dt_prevista', 'id'])
+
         if granularidade == 'subbacia':
             df = df.rename(columns={'id': 'cd_subbacia'})
             return df.to_dict('records')
+        df = df.drop(columns=["fl_preliminar", "fl_pdp", "fl_psat",
+                              "codigo_posto_pluviometrico"])
         df_subbacia = pd.DataFrame(Subbacia.get_subbacia())
         merged = df.merge(
             df_subbacia[['id', 'nome_bacia', 'nome_submercado']], on='id')
@@ -1046,6 +1063,7 @@ class Chuva:
             Smap.trigger_rodada_smap(
                 RodadaSmap.model_validate(
                     {
+                        'id_chuva': id_chuva,
                         'dt_rodada': datetime.datetime.strptime(
                             dt_rodada,
                             '%Y-%m-%d'),
@@ -1398,6 +1416,7 @@ class Smap:
 
     @staticmethod
     def create(body: List[SmapCreateDto]) -> CadastroRodadasReadDto:
+
         id_smap = Smap.get_last_id_smap()+1
         df = pd.DataFrame([obj.model_dump() for obj in body])
         rodada = CadastroRodadas.upsert_rodada_smap(
@@ -1422,6 +1441,7 @@ class Smap:
                     rodada.dt_rodada.strftime("%Y-%m-%d"),
                 ]
                 ],
+                "id_chuva": rodada.id_chuva,
                 "prev_estendida": rodada.prev_estendida,
                 "id_dataviz_chuva": rodada.id_dataviz_chuva
             },
@@ -1637,12 +1657,12 @@ class ChuvaMergeCptec:
                 'cd_subbacia',
                 'data_observado',
                 'chuva',
-                'subbacia_psat',
+                'codigo_posto_pluviometrico',
                 'lat',
                 'lon',
                 'bacia'])
         df['data_observado'] = pd.to_datetime(df['data_observado'].values)
-        df = df.sort_values(by=['data_observado', 'subbacia_psat', 'bacia'])
+        df = df.sort_values(by=['data_observado', 'codigo_posto_pluviometrico', 'bacia'])
         df['data_observado'] = df['data_observado'].dt.date
         return df.to_dict('records')
 
@@ -1723,12 +1743,12 @@ class ChuvaPsat:
                 'cd_subbacia',
                 'data_observado',
                 'chuva',
-                'subbacia_psat',
+                'codigo_posto_pluviometrico',
                 'lat',
                 'lon',
                 'bacia'])
         df['data_observado'] = pd.to_datetime(df['data_observado'].values)
-        df = df.sort_values(by=['data_observado', 'subbacia_psat', 'bacia'])
+        df = df.sort_values(by=['data_observado', 'codigo_posto_pluviometrico', 'bacia'])
         df['data_observado'] = df['data_observado'].dt.date
         return df.to_dict('records')
 
@@ -1837,6 +1857,38 @@ class VazoesObs:
         df['data_referente'] = pd.to_datetime(
             df['data_referente'].values).date
         return df.to_dict('records')
+
+
+class PostosPluviometricos:
+    tb: db.Table = __DB__.getSchema('postos_pluviometricos')
+
+    @staticmethod
+    def get_all():
+        query = db.select(
+            PostosPluviometricos.tb.c['id'],
+            PostosPluviometricos.tb.c['sub_bacia'],
+            PostosPluviometricos.tb.c['posto'],
+            PostosPluviometricos.tb.c['peso']
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'id',
+                'sub_bacia',
+                'posto',
+                'peso'
+            ]
+        )
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return df.to_dict('records')
+
+    @staticmethod
+    def create(postos_list: List[dict]):
+        query_insert = PostosPluviometricos.tb.insert().values(postos_list)
+        n_value = __DB__.db_execute(query_insert).rowcount
+        logger.info(f"{n_value} Linhas inseridas na tb_postos_pluviometricos")
+        return n_value
 
 
 if __name__ == '__main__':

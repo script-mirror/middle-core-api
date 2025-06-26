@@ -185,13 +185,47 @@ class AcomphConsolidado:
         return {"inserts": result.rowcount}
 
     @staticmethod
-    def delete_acomph_consolidado_by_dt_referente_between(dt_referente_inicial: datetime.date, dt_referente_final: datetime.date):
+    def delete_acomph_consolidado_by_dt_referente_between(
+        dt_referente_inicial: datetime.date,
+        dt_referente_final: datetime.date
+    ):
         query = db.delete(AcomphConsolidado.tb).where(
             AcomphConsolidado.tb.c['dt_referente'].between(
                 dt_referente_inicial, dt_referente_final)
         )
         result = __DB__.db_execute(query)
         return {"deletes": result.rowcount}
+
+    @staticmethod
+    def get_vazao_by_data_entre(
+        inicio: datetime.date,
+        fim: datetime.date = None
+    ):
+        query = db.select(
+            AcomphConsolidado.tb.c['dt_referente'],
+            AcomphConsolidado.tb.c['cd_posto'],
+            AcomphConsolidado.tb.c['vl_vaz_def_conso'],
+            AcomphConsolidado.tb.c['vl_vaz_inc_conso'],
+            AcomphConsolidado.tb.c['vl_vaz_nat_conso']
+        )
+
+        if fim is None:
+            query = query.where(
+                AcomphConsolidado.tb.c['dt_referente'] >= inicio)
+        else:
+            query = query.where(
+                AcomphConsolidado.tb.c['dt_referente'].between(inicio, fim)
+            )
+
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(
+            result,
+            columns=[
+                'dt_referente', 'cd_posto', 'vl_vaz_def_conso',
+                'vl_vaz_inc_conso', 'vl_vaz_nat_conso'
+            ]
+        )
+        return df.to_dict('records')
 
 
 class EnaAcomph:
@@ -371,6 +405,33 @@ class CargaHoraria:
         df_agrupado = df_agrupado.rename(columns={'hora': 'dt_referente'})
 
         return df_agrupado.to_dict('records')
+
+
+class Produtibilidade:
+    tb: db.Table = __DB__.getSchema('tb_produtibilidade')
+
+    @staticmethod
+    def get_all():
+        query = db.select(
+            Produtibilidade.tb.c['cd_posto'],
+            Produtibilidade.tb.c['str_posto'],
+            Produtibilidade.tb.c['vl_produtibilidade'],
+            Produtibilidade.tb.c['cd_submercado'],
+            Produtibilidade.tb.c['str_submercado'],
+            Produtibilidade.tb.c['str_sigla'],
+            Produtibilidade.tb.c['cd_bacia'],
+            Produtibilidade.tb.c['str_bacia'],
+            Produtibilidade.tb.c['cd_ree'],
+            Produtibilidade.tb.c['str_ree']
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'cd_posto', 'str_posto', 'vl_produtibilidade', 'cd_submercado',
+            'str_submercado', 'str_sigla', 'cd_bacia', 'str_bacia',
+            'cd_ree', 'str_ree'
+        ])
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
+        return df.to_dict('records')
 
 
 if __name__ == "__main__":

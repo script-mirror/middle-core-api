@@ -581,7 +581,8 @@ class db_mysql_master():
                                     db.Column('vl_geracao_eol_mmgd', db.Float),
                                     db.Column('vl_geracao_ufv_mmgd', db.Float),
                                     db.Column('dt_deck', db.DateTime),
-
+                                    db.Column('fonte', db.String(100)),
+                                    extend_existing=True
                                     )
 
         elif table_name.lower() == 'tb_nw_cadic':
@@ -598,6 +599,7 @@ class db_mysql_master():
                                     db.Column('vl_boa_vista', db.Float),
                                     db.Column('vl_mmgd_n', db.Float),
                                     db.Column('dt_deck', db.DateTime),
+                                    db.Column('fonte', db.String(100)),
                                     )
 
         elif table_name.lower() == 'tb_postos_completo':

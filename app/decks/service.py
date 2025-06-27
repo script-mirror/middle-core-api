@@ -199,7 +199,6 @@ class WeolSemanal:
         html: str = f'''<style> 
             body {{ font-family: sans-serif; }} 
             th, td {{ padding: 4px; text-align: center; border: 0.5px solid #999; }}
-            td {{ font-size: 12px; }}
             table {{ border-collapse: collapse; }} 
             thead, .gray {{ background-color: #f2f2f2; border: 1px solid #ddd; }} 
             .none{{ background-color: #FFF; }} 

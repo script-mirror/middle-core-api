@@ -176,12 +176,42 @@ class WeolSemanal:
 
     @staticmethod
     def get_html_weighted_avg(df: pd.DataFrame):
-        html: str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid #999; } table { border-collapse: collapse; } thead, .gray { background-color: #f2f2f2; border: 1px solid #ddd; } .none{ background-color: #FFF; } tbody *{ border: none; } tbody{ border: 1px solid #ddd; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
+        # Array de 40 cores do verde ao vermelho
+        performance_colors = [
+            "#00FF00", "#0AFF00", "#14FF00", "#1EFF00", "#28FF00", "#32FF00",
+            "#3CFF00", "#46FF00", "#50FF00", "#5AFF00", "#64FF00", "#6EFF00",
+            "#78FF00", "#82FF00", "#8CFF00", "#96FF00", "#A0FF00", "#AAFF00",
+            "#B4FF00", "#BEFF00", "#C8FF00", "#D2FF00", "#DCFF00", "#E6FF00",
+            "#F0FF00", "#FAFF00", "#FFFF00", "#FFFA00", "#FFF000", "#FFE600",
+            "#FFDC00", "#FFD200", "#FFC800", "#FFBE00", "#FFB400", "#FFAA00",
+            "#FFA000", "#FF9600", "#FF8C00", "#FF8200", "#FF7800", "#FF6E00",
+            "#FF6400", "#FF5A00", "#FF5000", "#FF4600", "#FF3C00", "#FF3200",
+            "#FF2800", "#FF1E00", "#FF1400", "#FF0A00", "#FF0000"
+        ]
+        
+        # Gerar classes CSS dinamicamente
+        css_classes = ""
+        for i, color in enumerate(performance_colors):
+            css_classes += f".n{i}{{background-color: {color};}}"
+        
+        html: str = f'''<style> 
+            body {{ font-family: sans-serif; }} 
+            th, td {{ padding: 4px; text-align: center; border: 0.5px solid #999; }}
+            td {{ font-size: 12px; }}
+            table {{ border-collapse: collapse; }} 
+            thead, .gray {{ background-color: #f2f2f2; border: 1px solid #ddd; }} 
+            .none{{ background-color: #FFF; }} 
+            tbody *{{ border: none; }}
+            tbody{{ border: 1px solid #ddd; }} 
+            {css_classes}
+        </style><table> <thead> <tr>'''
+        
         for col in df.columns:
             html += f'<th>{col}</th>'
         html += ' </tr></thead><tbody>'
 
         eolica_newave = df[df['Origem'] == 'Eolica Newave']
+        neutral_index = len(performance_colors) // 2  # Índice do meio (amarelo neutro)
 
         for i, row in df.iterrows():
             html += '<tr>'
@@ -193,32 +223,22 @@ class WeolSemanal:
                         html += f'<td class="none"></td>'
                         continue
                     elif row['Origem'] == 'Eolica Newave':
-                        html += f'<td class="n3">{int(col)}</td>'
+                        html += f'<td class="n{neutral_index}">{int(col)}</td>'
                         continue
-                    percent_diff: float = col / eolica_newave.iloc[0].iloc[j]
-                    if percent_diff >= 1.3:
-                        # Acima de 30% da Eólica Newave
-                        html += f'<td class="n1">{int(col)}</td>'
-                    elif percent_diff >= 1.1:
-                        # Entre 10% e 30%
-                        html += f'<td class="n2">{int(col)}</td>'
-                    elif percent_diff >= 0.9:
-                        # Entre 10% acima e 10% abaixo
-                        html += f'<td class="n3">{int(col)}</td>'
-                    elif percent_diff >= 0.8:
-                        # Entre 10% e 20% abaixo
-                        html += f'<td class="n4">{int(col)}</td>'
-                    elif percent_diff >= 0.6:
-                        # Entre 20% e 40% abaixo
-                        html += f'<td class="n5">{int(col)}</td>'
-                    else:
-                        # Menor que 40% da Eólica Newave
-                        html += f'<td class="n6">{int(col)}</td>'
+                    
+                    percent_diff: float = col - eolica_newave.iloc[0].iloc[j]
+                    
+                    color_offset = int(percent_diff / 250)
+                    color_index = neutral_index - color_offset
+                    
+                    color_index = max(0, min(len(performance_colors) - 1, color_index))
+                    
+                    html += f'<td class="n{color_index}">{int(col)}</td>'
 
             html += '</tr>'
         html += '</tbody></table>'
         # with open('weol.html', 'w') as f:
-            # f.write(html)
+        #     f.write(html)
         return {"html": html}
 
     @staticmethod
@@ -273,7 +293,6 @@ class WeolSemanal:
     def get_weighted_avg_table_weekly_by_product_date(data_produto: datetime.date, quantidade_produtos: int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(
             data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
-
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(
             df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg(
@@ -483,7 +502,6 @@ class NwSistEnergia:
 
         ).where(
             db.and_(
-                NwSistEnergia.tb.c["dt_deck"] == last_data_deck,
                 db.cast(
                     db.func.concat(
                         NwSistEnergia.tb.c["vl_ano"],
@@ -498,6 +516,8 @@ class NwSistEnergia:
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
                           'geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
+        df = df.sort_values('dataDeck')
+        df = df.drop_duplicates(subset=['codigoSubmercado', 'mes', 'ano'], keep='last')
         return df.to_dict('records')
 
 

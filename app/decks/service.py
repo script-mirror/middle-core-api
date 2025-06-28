@@ -383,20 +383,17 @@ class WeolSemanal:
                 data_produto, data_produto)
         )
         data_diferenca = data_produto-datetime.timedelta(days=days_to_subtract)
-        df_subtraendo = pd.DataFrame(
-            WeolSemanal.get_weighted_avg_by_product_date_between(
-                data_diferenca,
-                data_diferenca
-                )
-        )
+        df_subtraendo = pd.DataFrame()
         while df_subtraendo.empty:
-            data_diferenca -= datetime.timedelta(days=1)
-            df_subtraendo = pd.DataFrame(
-                WeolSemanal.get_weighted_avg_by_product_date_between(
-                    data_diferenca,
-                    data_diferenca
+            try:
+                df_subtraendo = pd.DataFrame(
+                    WeolSemanal.get_weighted_avg_by_product_date_between(
+                        data_diferenca,
+                        data_diferenca
+                    )
                 )
-            )
+            except HTTPException:
+                data_diferenca -= datetime.timedelta(days=1)
         df_minuendo.columns = ['inicioSemana', 'valores']
         df_subtraendo.columns = ['inicioSemana', 'valores']
         df_merged = df_minuendo.merge(df_subtraendo, on='inicioSemana', suffixes=('_df1', '_df2'))

@@ -246,9 +246,14 @@ class WeolSemanal:
     def get_weighted_avg_table_monthly_by_product_date(data_produto: datetime.date, quantidade_produtos: int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(
             data_produto - datetime.timedelta(days=quantidade_produtos-1), data_produto))
-
+        
+        eol_nw_inicio  = ElecData(df['inicioSemana'][0])
+        eol_nw_inicio = datetime.date(eol_nw_inicio.anoReferente, eol_nw_inicio.mesReferente, 1)
+        eol_nw_fim = ElecData(df['inicioSemana'][len(df['inicioSemana'])-1])
+        eol_nw_fim = datetime.date(eol_nw_fim.anoReferente, eol_nw_fim.mesReferente, 1)
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(
-            df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
+            eol_nw_inicio, eol_nw_fim
+            ))
 
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg(
             {'geracaoEolica': 'sum'}).reset_index()
@@ -257,16 +262,15 @@ class WeolSemanal:
         columns_rename = [MONTH_DICT[int(
             row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
 
-        df['ano'] = [row.year if type(
-            row) != str else row for row in df['inicioSemana']]
-        df['mes'] = [row.month if type(
-            row) != str else row for row in df['inicioSemana']]
+        df['ano'] = [ElecData(row).anoReferente if type(
+            row) is not str else row for row in df['inicioSemana']]
+        df['mes'] = [ElecData(row).mesReferente if type(
+            row) is not str else row for row in df['inicioSemana']]
 
         df_eol_newave = df_eol_newave.sort_values(by='yearMonth')
         df_eol_newave.drop(columns=['mes', 'ano'], inplace=True)
 
-        df['yearMonth'] = df['inicioSemana'].apply(
-            lambda x: f'{x.year}-{x.month}' if type(x) != str else x)
+        df['yearMonth'] = df['yearMonth'] = df['ano'].astype(str) + '-' + df['mes'].astype(str)
 
         df.drop(columns=['inicioSemana'], inplace=True)
         df = df.groupby('yearMonth').mean()
@@ -294,16 +298,23 @@ class WeolSemanal:
     def get_weighted_avg_table_weekly_by_product_date(data_produto: datetime.date, quantidade_produtos: int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(
             data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
+
+        eol_nw_inicio = ElecData(df['inicioSemana'][0])
+        eol_nw_inicio = datetime.date(eol_nw_inicio.anoReferente, eol_nw_inicio.mesReferente, 1)
+        eol_nw_fim = ElecData(df['inicioSemana'][len(df['inicioSemana'])-1])
+        eol_nw_fim = datetime.date(eol_nw_fim.anoReferente, eol_nw_fim.mesReferente, 1)
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(
-            df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
+            eol_nw_inicio, eol_nw_fim
+            ))
+
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg(
             {'geracaoEolica': 'sum'}).reset_index()
         df_eol_newave = df_eol_newave.sort_values(by=['ano', 'mes'])
 
-        df['ano'] = [ElecData(row).inicioSemana.year if type(
-            row) != str else row for row in df['inicioSemana']]
+        df['ano'] = [ElecData(row).anoReferente if type(
+            row) is not str else row for row in df['inicioSemana']]
         df['mes'] = [ElecData(row).mesReferente if type(
-            row) != str else row for row in df['inicioSemana']]
+            row) is not str else row for row in df['inicioSemana']]
 
         df = pd.merge(df_eol_newave, df, on=['ano', 'mes'], how='left')
         df.drop(columns=['mes', 'ano'], inplace=True)
@@ -518,8 +529,6 @@ class NwSistEnergia:
         df = df.drop_duplicates(subset=['codigoSubmercado', 'mes', 'ano'], keep='last')
         return df.to_dict('records')
 
-    tb:db.Table = __DB__.getSchema('tb_nw_sist_energia')
-    
     @staticmethod
     def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaSchema]):
         

@@ -245,9 +245,11 @@ class IndicesSST:
         df_valores = pd.DataFrame(lista_dicts)
 
         dt_observada = df_valores['dt_observada'].iloc[0] if 'dt_observada' in df_valores.columns else None
+        str_indice = df_valores['str_indice'].iloc[0] if 'str_indice' in df_valores.columns else None
         # Remove cadastro anterior (se existir)
         query_delete = sa.delete(IndicesSST.tb_indices_diarios_sst).where(
             IndicesSST.tb_indices_diarios_sst.c.dt_observada == dt_observada,
+            IndicesSST.tb_indices_diarios_sst.c.str_indice == str_indice
         )
         __DB__.db_execute(query_delete)
 

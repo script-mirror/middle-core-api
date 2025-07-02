@@ -271,7 +271,8 @@ class IndicesSST:
         """
         query = sa.select(
             IndicesSST.tb_indices_diarios_sst.c.dt_observada,
-            IndicesSST.tb_indices_diarios_sst.c.vl_indice
+            IndicesSST.tb_indices_diarios_sst.c.vl_indice,
+            IndicesSST.tb_indices_diarios_sst.c.str_indice,
         )
 
         if dt_inicio:

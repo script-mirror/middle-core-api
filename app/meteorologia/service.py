@@ -282,7 +282,7 @@ class IndicesSST:
 
         results = __DB__.db_execute(query).fetchall()
         df_results = pd.DataFrame(results, columns=[
-            'dt_observada', 'vl_indice'
+            'dt_observada', 'vl_indice', 'str_indice'
         ])
 
         return df_results.to_dict('records')

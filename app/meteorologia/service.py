@@ -221,3 +221,68 @@ class VentoPrevistoWEOL:
         ])
 
         return df_results.to_dict('records')
+
+class IndicesSST:
+
+    tb_indices_diarios_sst = __DB__.getSchema('tb_indices_diarios_sst')
+
+    @staticmethod
+    def insert_indices_sst(valores) -> Dict[str, Any]:
+        """
+        Insere os dados de índices de temperatura da superfície do mar (SST).
+        """
+        if not valores:
+            return {'message': 'Nenhum valor fornecido para inserção.'}
+
+        # Converte objetos em dicionários
+        try:
+            # Caso valores sejam instâncias de uma classe
+            lista_dicts = [v.__dict__ for v in valores]
+        except AttributeError:
+            return {'message': 'Os itens em "valores" devem ser objetos com atributos acessíveis por __dict__.'}
+
+        # Converte para DataFrame
+        df_valores = pd.DataFrame(lista_dicts)
+
+        dt_observada = df_valores['dt_observada'].iloc[0] if 'dt_observada' in df_valores.columns else None
+        str_indice = df_valores['str_indice'].iloc[0] if 'str_indice' in df_valores.columns else None
+        # Remove cadastro anterior (se existir)
+        query_delete = sa.delete(IndicesSST.tb_indices_diarios_sst).where(
+            IndicesSST.tb_indices_diarios_sst.c.dt_observada == dt_observada,
+            IndicesSST.tb_indices_diarios_sst.c.str_indice == str_indice
+        )
+        __DB__.db_execute(query_delete)
+
+        # (Opcional) Valida e converte dt_observada
+        df_valores['dt_observada'] = pd.to_datetime(df_valores['dt_observada'], errors='coerce')
+        if df_valores['dt_observada'].isnull().any():
+            return {'message': 'Uma ou mais datas são inválidas.'}
+
+        # Insere os valores na tabela
+        query_insert = IndicesSST.tb_indices_diarios_sst.insert().values(df_valores.to_dict(orient='records'))
+        __DB__.db_execute(query_insert)
+
+        return {'message': f'{len(df_valores)} registros inseridos com sucesso.'}
+    
+    @staticmethod
+    def get_indices_sst(dt_inicio: str = None, dt_fim: str = None) -> List[Dict[str, Any]]:
+        """
+        Obtém os dados de índices de temperatura da superfície do mar (SST) em um intervalo de datas.
+        """
+        query = sa.select(
+            IndicesSST.tb_indices_diarios_sst.c.dt_observada,
+            IndicesSST.tb_indices_diarios_sst.c.vl_indice,
+            IndicesSST.tb_indices_diarios_sst.c.str_indice,
+        )
+
+        if dt_inicio:
+            query = query.where(IndicesSST.tb_indices_diarios_sst.c.dt_observada >= dt_inicio)
+        if dt_fim:
+            query = query.where(IndicesSST.tb_indices_diarios_sst.c.dt_observada <= dt_fim)
+
+        results = __DB__.db_execute(query).fetchall()
+        df_results = pd.DataFrame(results, columns=[
+            'dt_observada', 'vl_indice', 'str_indice'
+        ])
+
+        return df_results.to_dict('records')

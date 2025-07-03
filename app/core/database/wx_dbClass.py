@@ -1507,6 +1507,15 @@ class db_mysql_master():
                                               nullable=True)
                                     )
 
+        elif table_name.lower() == 'tb_indices_diarios_sst':
+            table_schema = db.Table('tb_indices_diarios_sst', self.meta,
+                db.Column('dt_observada', db.Date),
+                db.Column('vl_indice', db.Float),
+                db.Column('str_indice', db.String(255)),
+            extend_existing=True
+            )
+
+
         return table_schema
 
 

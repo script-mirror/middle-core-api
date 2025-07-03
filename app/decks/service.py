@@ -1034,7 +1034,7 @@ class Cvu:
             df_estrutural['ano_horizonte'] = ordem_anos_repetidos
 
             df_cvu = pd.concat([df_cvu, df_conjuntural, df_estrutural])
-
+        df_cvu = df_cvu.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df_cvu.to_dict('records')
 
 

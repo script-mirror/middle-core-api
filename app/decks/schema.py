@@ -34,6 +34,14 @@ class CvuMerchantSchema(BaseModel):
     mes_referencia: str
     dt_atualizacao: str
     fonte: str
+    empreendimento: Optional[str] = None
+    despacho: Optional[str] = None
+    recuperacao_custo_fixo: Optional[str] = None
+    data_inicio: Optional[datetime.date] = None
+    data_fim: Optional[datetime.date] = None
+    tipo_combustivel: Optional[str] = None
+    origem_da_cotacao: Optional[str] = None
+    mes_referencia_cotacao: Optional[str] = None
 
 
 class CvuSchema(BaseModel):
@@ -44,7 +52,16 @@ class CvuSchema(BaseModel):
     ano_horizonte: int
     dt_atualizacao: str
     fonte: str
-
+    agente_vendedor: Optional[str] = None
+    tipo_combustivel: Optional[str] = None
+    custo_combustivel: Optional[float] = None
+    codigo_parcela_usina: Optional[str] = None
+    inicio_suprimento: Optional[datetime.date] = None
+    termino_suprimento: Optional[datetime.date] = None
+    sigla_parcela: Optional[str] = None
+    leilao: Optional[str] = None
+    cnpj_agente_vendedor: Optional[str] = None
+    produto: Optional[str] = None
 
 class CargaSemanalDecompSchema(BaseModel):
     data_produto: datetime.date

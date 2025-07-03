@@ -29,8 +29,8 @@ class WeolSemanalSchema(BaseModel):
 
 class CvuMerchantSchema(BaseModel):
     cd_usina: int
-    vl_cvu_cf: float
-    vl_cvu_scf: float
+    vl_cvu_cf: Optional[float] = None
+    vl_cvu_scf: Optional[float] = None
     mes_referencia: str
     dt_atualizacao: str
     fonte: str
@@ -46,7 +46,7 @@ class CvuMerchantSchema(BaseModel):
 
 class CvuSchema(BaseModel):
     cd_usina: int
-    vl_cvu: float
+    vl_cvu: Optional[float] = None
     tipo_cvu: str
     mes_referencia: str
     ano_horizonte: int

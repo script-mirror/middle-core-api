@@ -1,40 +1,63 @@
 from pydantic import BaseModel, Field
+from typing import Optional
 from enum import Enum
 import datetime
 
+
 class RodadaSmap(BaseModel):
+    id_chuva: int
     dt_rodada: datetime.date
     hr_rodada: int
     str_modelo: str
     id_dataviz_chuva: str = Field(default="")
     prev_estendida: bool = Field(default=False)
-    
+
+
+class CadastroRodadasReadDto(BaseModel):
+    id: int
+    str_modelo: str
+    dt_rodada: datetime.date
+    hr_rodada: int
+    fl_preliminar: Optional[bool] = Field(default=None)
+    fl_pdp: Optional[bool] = Field(default=None)
+    fl_psat: Optional[bool] = Field(default=None)
+    id_chuva: int
+    id_previvaz: Optional[int] = Field(default=None)
+    id_prospec: Optional[int] = Field(default=None)
+    id_smap: Optional[int] = Field(default=None)
+
+
 class RodadaCriacao(BaseModel):
     dt_rodada: datetime.date
     hr_rodada: int
     str_modelo: str
     fl_estudo: bool
-    
+
+
 class PesquisaPrevisaoChuva(BaseModel):
     id: int
     dt_inicio: datetime.date
     dt_fim: datetime.date
-    
+
+
 class MembrosModeloSchema(BaseModel):
     id: int
     dt_hr_rodada: datetime.datetime
-    nome:str
-    id_rodada:int
+    nome: str
+    id_rodada: int
 
-class ChuvaObsReq(BaseModel):
-    cd_subbacia:int
-    dt_observado:datetime.date
-    vl_chuva:float
+
+class ChuvaMergeCptecReq(BaseModel):
+    cd_subbacia: int
+    dt_observado: datetime.date
+    vl_chuva: float
+
 
 class GranularidadeEnum(str, Enum):
     subbacia = 'subbacia'
     bacia = 'bacia'
     submercado = 'submercado'
+
 
 class TipoRodadaEnum(str, Enum):
     modelo = 'modelo'
@@ -42,21 +65,23 @@ class TipoRodadaEnum(str, Enum):
 
 
 class ChuvaPrevisaoCriacao(BaseModel):
-    cd_subbacia:int
+    cd_subbacia: int
     dt_prevista: datetime.date
     vl_chuva: float
     modelo: str
     dt_rodada: datetime.datetime
-    
+
+
 class ChuvaPrevisaoCriacaoMembro(BaseModel):
-    cd_subbacia:int = Field(default=1)
+    cd_subbacia: int = Field(default=1)
     dt_prevista: datetime.date = Field(default=datetime.date.today)
     vl_chuva: float = Field(default=0.0)
     modelo: str = Field(default='TESTE')
     membro: str = Field(default='1')
     dt_hr_rodada: datetime.datetime = Field(default=datetime.datetime.now())
     peso: float = Field(default=1.0)
-    
+
+
 class ChuvaPrevisaoResposta(BaseModel):
     modelo: str
     dt_rodada: datetime.date
@@ -66,3 +91,32 @@ class ChuvaPrevisaoResposta(BaseModel):
     vl_chuva: float
     dia_semana: str
     semana: int
+
+
+class SmapCreateDto(BaseModel):
+    cd_posto: int
+    dt_prevista: datetime.date
+    vl_vazao_vna: float
+    vl_vazao_prevs: float
+    cenario: str
+
+
+class SmapReadDto(BaseModel):
+    id: int
+    cd_posto: int
+    dt_prevista: datetime.date
+    vl_vazao_vna: float
+    vl_vazao_prevs: float
+
+
+class PostosPluReq(BaseModel):
+    sub_bacia: Optional[str] = Field(default=None, max_length=45)
+    posto: Optional[str] = Field(default=None, max_length=45)
+    peso: Optional[float] = Field(default=None, ge=0, le=1.000)
+
+
+class PostosPluRes(BaseModel):
+    id: int
+    sub_bacia: Optional[str] = Field(default=None, max_length=45)
+    posto: Optional[str] = Field(default=None, max_length=45)
+    peso: Optional[float] = Field(default=None, ge=0, le=1.000)

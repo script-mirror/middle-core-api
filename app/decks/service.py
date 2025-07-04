@@ -165,15 +165,15 @@ class WeolSemanal:
                     if percent_diff >= 1.3:
                         html += f'<td class="n1">{int(col)}</td>'  # Acima de 30% da Eólica Newave
                     elif percent_diff >= 1.1:
-                        html += f'<td class="n2">{int(col)}</td>'  # Entre 10% e 30%
+                        html += f'<td class="n2'>{int(col)}</td>'  # Entre 10% e 30%
                     elif percent_diff >= 0.9:
-                        html += f'<td class="n3">{int(col)}</td>'  # Entre 10% acima e 10% abaixo
+                        html += f'<td class="n3'>{int(col)}</td>'  # Entre 10% acima e 10% abaixo
                     elif percent_diff >= 0.8:
-                        html += f'<td class="n4">{int(col)}</td>'  # Entre 10% e 20% abaixo
+                        html += f'<td class="n4'>{int(col)}</td>'  # Entre 10% e 20% abaixo
                     elif percent_diff >= 0.6:
-                        html += f'<td class="n5">{int(col)}</td>'  # Entre 20% e 40% abaixo
+                        html += f'<td class="n5'>{int(col)}</td>'  # Entre 20% e 40% abaixo
                     else:
-                        html += f'<td class="n6">{int(col)}</td>'  # Menor que 40% da Eólica Newave
+                        html += f'<td class="n6'>{int(col)}</td>'  # Menor que 40% da Eólica Newave
                         
             html += '</tr>'
         html += '</tbody></table>'
@@ -597,16 +597,12 @@ class CargaPmo:
     def get_most_recent_data():
         """
         Obtem os dados mais recentes de carga PMO.
-        Busca os 2 períodos mais recentes que já começaram (periodicidade_inicial <= hoje),
+        Busca os 2 períodos mais recentes (periodicidade_inicial),
         filtrando duplicatas por subsistema+dt_inicio e mantendo apenas registros com carga > 0.
         """
-        today = datetime.date.today()
-        
-        # Step 1: Get the top 2 most recent periods that have already started
+        # Step 1: Get the top 2 most recent periods (no date restriction)
         query_periodos = db.select(
             CargaPmo.tb.c.periodicidade_inicial.distinct()
-        ).where(
-            CargaPmo.tb.c.periodicidade_inicial <= today
         ).order_by(
             CargaPmo.tb.c.periodicidade_inicial.desc()
         ).limit(2)
@@ -653,6 +649,8 @@ class CargaPmo:
         ], ascending=[False, True, True])
         
         df_final['semana'] = df_final['semana'].fillna(0).astype(int)
+        print(f"Dados de carga PMO encontrados: {len(df_final)} registros")
+        print(df_final.to_string())
         return df_final.to_dict('records')
     
     @staticmethod

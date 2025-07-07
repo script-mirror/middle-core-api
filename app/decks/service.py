@@ -999,24 +999,16 @@ class Cvu:
         df_cvu_merchant = pd.DataFrame(rows)
 
         if not df_cvu_merchant.empty:
-            answer = CvuUsinasTermicas.get_usinas_termicas()
-            df_usinas = pd.DataFrame(answer)
+            df_cvu_merchant['vl_cvu_cf'] = df_cvu_merchant['vl_cvu_cf'].fillna(df_cvu_merchant['vl_cvu_scf'])
 
-            decisao_custo = df_usinas[['cd_usina', 'flag_custo_fixo']].copy()
-            cds_cf = decisao_custo[decisao_custo['flag_custo_fixo']
-                                   == 1]['cd_usina'].unique()
-            cds_scf = decisao_custo[decisao_custo['flag_custo_fixo']
-                                    == 0]['cd_usina'].unique()
+            df_cvu_merchant['vl_cvu'] = np.where(
+                df_cvu_merchant['recuperacao_custo_fixo'].str.lower() == 'não',
+                df_cvu_merchant['vl_cvu_cf'],
+                df_cvu_merchant['vl_cvu_scf']
+            )
 
-            df_merchant_cf = df_cvu_merchant[df_cvu_merchant['cd_usina'].isin(
-                cds_cf)].copy()
-            df_merchant_scf = df_cvu_merchant[df_cvu_merchant['cd_usina'].isin(
-                cds_scf)].copy()
-
-            df_aux = df_merchant_cf.drop(columns=['vl_cvu_scf']).rename(
-                columns={'vl_cvu_cf': 'vl_cvu'})
-            df_cvu_merchant_completo = pd.concat([df_aux, df_merchant_scf.drop(
-                columns=['vl_cvu_cf']).rename(columns={'vl_cvu_scf': 'vl_cvu'})])
+            df_cvu_merchant_completo = df_cvu_merchant.drop(
+                columns=['vl_cvu_cf', 'vl_cvu_scf'])
 
             ano_inicial = int(
                 df_cvu_merchant['mes_referencia'].unique()[0][:4])

@@ -1197,7 +1197,7 @@ class CargaPmo:
             CargaPmo.tb.c.periodicidade_inicial.distinct()
         ).order_by(
             CargaPmo.tb.c.periodicidade_inicial.desc()
-        ).limit(2)
+        ).limit(3)
 
         periodos_result = __DB__.db_execute(query_periodos).fetchall()
 

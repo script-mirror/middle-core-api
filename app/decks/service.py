@@ -1179,7 +1179,7 @@ class CargaPmo:
     def get_most_recent_data():
         """
         Obtem os dados mais recentes de carga PMO.
-        Busca os 2 períodos mais recentes que já começaram (periodicidade_inicial <= hoje),
+        Busca os 2 períodos mais recentes (periodicidade_inicial),
         filtrando duplicatas por subsistema+dt_inicio e mantendo apenas registros com carga > 0.
         """
         today = datetime.date.today()
@@ -1187,11 +1187,9 @@ class CargaPmo:
         # Step 1: Get the top 2 most recent periods that have already started
         query_periodos = db.select(
             CargaPmo.tb.c.periodicidade_inicial.distinct()
-        ).where(
-            CargaPmo.tb.c.periodicidade_inicial <= today
         ).order_by(
             CargaPmo.tb.c.periodicidade_inicial.desc()
-        ).limit(2)
+        ).limit(3)
 
         periodos_result = __DB__.db_execute(query_periodos).fetchall()
 
@@ -1238,6 +1236,8 @@ class CargaPmo:
         ], ascending=[False, True, True])
 
         df_final['semana'] = df_final['semana'].fillna(0).astype(int)
+        print(f"Dados de carga PMO encontrados: {len(df_final)} registros")
+        print(df_final.to_string())
         return df_final.to_dict('records')
 
     @staticmethod

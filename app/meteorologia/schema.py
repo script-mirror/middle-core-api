@@ -33,3 +33,11 @@ class IndiceSST(BaseModel):
 
 class IndicesSSTPOSTRequest(BaseModel):
     valores: List[IndiceSST]
+
+class EstacoesMeteorologicas(BaseModel):
+    cd_estacao: str
+    dt_coleta: str
+    vl_chuva: float
+
+class EstacoesMeteorologicasPostRequest(EstacoesMeteorologicas):
+    pass

@@ -222,6 +222,7 @@ class VentoPrevistoWEOL:
 
         return df_results.to_dict('records')
 
+
 class IndicesSST:
 
     tb_indices_diarios_sst = __DB__.getSchema('tb_indices_diarios_sst')
@@ -286,3 +287,26 @@ class IndicesSST:
         ])
 
         return df_results.to_dict('records')
+
+
+class EstacoesMeteorologicas:
+
+    tb_estacoes = __DB__.getSchema('tb_inmet_dados_estacoes')
+
+    @staticmethod
+    def insert_dados_estacao(dados_estacao: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Insere uma nova estação meteorológica.
+        """
+        if not dados_estacao:
+            return {'message': 'Nenhum dado fornecido para inserção.'}
+
+        # Converte o dicionário em DataFrame
+        df_estacao = pd.DataFrame([dados_estacao])
+
+        # Insere os dados na tabela
+        query_insert = EstacoesMeteorologicas.tb_estacoes.insert().values(df_estacao.to_dict(orient='records'))
+        __DB__.db_execute(query_insert)
+
+        return {'message': 'Estação inserida com sucesso.'}
+

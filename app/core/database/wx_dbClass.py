@@ -665,6 +665,7 @@ class db_mysql_master():
                                     db.Column('cd_estacao', db.VARCHAR(4)),
                                     db.Column('dt_coleta', db.DateTime),
                                     db.Column('vl_chuva', db.Float),
+                                    extend_existing=True
                                     )
 
         elif table_name.lower() == 'tb_prev_ena_submercado':

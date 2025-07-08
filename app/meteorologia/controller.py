@@ -118,3 +118,17 @@ def post_indices_diarios_sst(request: IndicesSSTPOSTRequest):
     }
 
 ##############################################################################################################################################################
+
+@router.post('/estacoes-meteorologicas', tags=['Meteorologia'])
+def post_estacoes_chuva(request: List[EstacoesMeteorologicasPostRequest]):
+    """
+    Cria cadastro dos dados de chuva das estações.
+    """
+
+    service.EstacoesMeteorologicas.insert_dados_estacao(request)
+
+    return {
+        "message": "Cadastro de estações de chuva criado com sucesso.",
+    }
+
+##############################################################################################################################################################

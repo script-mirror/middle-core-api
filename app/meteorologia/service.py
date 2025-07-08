@@ -294,7 +294,7 @@ class EstacoesMeteorologicas:
     tb_estacoes = __DB__.getSchema('tb_inmet_dados_estacoes')
 
     @staticmethod
-    def insert_dados_estacao(dados_estacao: Dict[str, Any]) -> Dict[str, Any]:
+    def insert_dados_estacao(dados_estacao) -> Dict[str, Any]:
         """
         Insere uma nova estação meteorológica.
         """
@@ -302,11 +302,12 @@ class EstacoesMeteorologicas:
             return {'message': 'Nenhum dado fornecido para inserção.'}
 
         # Converte o dicionário em DataFrame
-        df_estacao = pd.DataFrame([dados_estacao])
+        lista_dicts = [v.__dict__ for v in dados_estacao]
+        df_estacao = pd.DataFrame(lista_dicts)
 
         # Insere os dados na tabela
         query_insert = EstacoesMeteorologicas.tb_estacoes.insert().values(df_estacao.to_dict(orient='records'))
         __DB__.db_execute(query_insert)
 
-        return {'message': 'Estação inserida com sucesso.'}
+        return {'message': f'{len(df_estacao)} Estações inseridas com sucesso.'}
 

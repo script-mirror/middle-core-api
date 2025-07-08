@@ -650,7 +650,7 @@ class db_mysql_master():
         # db_meteorologia
         elif table_name.lower() == 'tb_inmet_estacoes':
             table_schema = db.Table('tb_inmet_estacoes', self.meta,
-                                    db.Column('cd_estacao', db.VARCHAR(4)),
+                                    db.Column('cd_estacao', db.VARCHAR(50)),
                                     db.Column('str_nome', db.VARCHAR(50)),
                                     db.Column('str_estado', db.VARCHAR(2)),
                                     db.Column('vl_lat', db.Float),
@@ -662,7 +662,7 @@ class db_mysql_master():
 
         elif table_name.lower() == 'tb_inmet_dados_estacoes':
             table_schema = db.Table('tb_inmet_dados_estacoes', self.meta,
-                                    db.Column('cd_estacao', db.VARCHAR(4)),
+                                    db.Column('cd_estacao', db.VARCHAR(50)),
                                     db.Column('dt_coleta', db.DateTime),
                                     db.Column('vl_chuva', db.Float),
                                     extend_existing=True

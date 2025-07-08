@@ -53,9 +53,6 @@ jobs:
             
             git config --local --unset credential.helper
             
-            echo "Stopping existing containers..."
-            sudo docker-compose down || true
-            
             echo "Building and starting containers..."
             sudo docker-compose build --no-cache
             sudo docker-compose up -d

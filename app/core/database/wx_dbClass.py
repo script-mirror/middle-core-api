@@ -657,6 +657,7 @@ class db_mysql_master():
                                     db.Column('vl_lon', db.Float),
                                     db.Column('str_bacia', db.VARCHAR(50)),
                                     db.Column('str_fonte', db.VARCHAR(50)),
+                                    extend_existing=True
 
                                     )
 

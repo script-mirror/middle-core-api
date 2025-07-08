@@ -292,6 +292,7 @@ class IndicesSST:
 class EstacoesMeteorologicas:
 
     tb_estacoes = __DB__.getSchema('tb_inmet_dados_estacoes')
+    tb_info_estacoes = __DB__.getSchema('tb_inmet_estacoes')
 
     @staticmethod
     def insert_dados_estacao(dados_estacao) -> Dict[str, Any]:
@@ -310,4 +311,22 @@ class EstacoesMeteorologicas:
         __DB__.db_execute(query_insert)
 
         return {'message': f'{len(df_estacao)} Estações inseridas com sucesso.'}
+
+    @staticmethod
+    def get_infos_estacao():
+
+        query = sa.select(
+            EstacoesMeteorologicas.tb_info_estacoes.c.cd_estacao,
+            EstacoesMeteorologicas.tb_info_estacoes.c.str_nome,
+            EstacoesMeteorologicas.tb_info_estacoes.c.str_estado,
+            EstacoesMeteorologicas.tb_info_estacoes.c.str_fonte,
+            EstacoesMeteorologicas.tb_info_estacoes.c.str_bacia,
+        )
+
+        results = __DB__.db_execute(query).fetchall()
+        df_results = pd.DataFrame(results, columns=[
+            'cd_estacao', 'str_nome', 'str_estado', 'str_fonte', 'str_bacia'
+        ])
+
+        return df_results.to_dict('records')
 

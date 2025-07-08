@@ -132,3 +132,10 @@ def post_estacoes_chuva(request: List[EstacoesMeteorologicasPostRequest]):
     }
 
 ##############################################################################################################################################################
+
+@router.get('/infos-estacoes-meteorologicas', tags=['Meteorologia'])
+def get_infos_estacoes_meteorologicas():
+    """
+    Obtém informações das estações meteorológicas.
+    """
+    return service.EstacoesMeteorologicas.get_infos_estacao()

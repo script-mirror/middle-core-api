@@ -44,7 +44,7 @@ jobs:
             
             echo "Starting deployment..."
             
-            cd /WX2TB/Documentos/fontes/PMO/raizen-power-trading-api-middle || exit 1
+            cd /projetos/raizen-power-trading-api-middle || exit 1
             
             git config --local credential.helper '!f() { echo "username=${{ secrets.GIT_USERNAME }}"; echo "password=${{ secrets.GIT_TOKEN }}"; }; f'
             

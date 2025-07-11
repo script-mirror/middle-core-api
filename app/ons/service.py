@@ -434,6 +434,67 @@ class Produtibilidade:
         return df.to_dict('records')
 
 
+class CargaIpdo:
+    tb: db.Table = __DB__.getSchema('tb_carga_ipdo')
+
+    @staticmethod
+    def get_acompanhamento_ipdo(dtref: str):
+        """
+        Obtém acompanhamento IPDO (carga) por data de referência.
+        """
+        dtref = datetime.datetime.strptime(dtref, "%Y%m%d")
+        # Calcula data inicial (sábado anterior)
+        if dtref.weekday() == 5:
+            data_inicial = dtref
+        else:
+            while dtref.weekday() != 5:
+                dtref += datetime.timedelta(days=1)
+            data_inicial = dtref - datetime.timedelta(weeks=1)
+            while data_inicial.weekday() != 5:
+                data_inicial += datetime.timedelta(days=1)
+
+        lista_datas = []
+        data_atual = data_inicial
+        data_final = datetime.datetime.today()
+        while data_atual <= data_final:
+            lista_datas.append(data_atual.strftime("%Y-%m-%d"))
+            data_atual += datetime.timedelta(days=1)
+
+        dataFormatada = [datetime.datetime.strptime(date, '%Y-%m-%d').date() for date in lista_datas]
+
+        query = db.select(
+            CargaIpdo.tb.c.dt_referente,
+            CargaIpdo.tb.c.carga_se,
+            CargaIpdo.tb.c.carga_s,
+            CargaIpdo.tb.c.carga_ne,
+            CargaIpdo.tb.c.carga_n
+        ).where(
+            CargaIpdo.tb.c.dt_referente.in_(dataFormatada)
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=['dt_referente', 'carga_se', 'carga_s', 'carga_ne', 'carga_n'])
+        df = df.sort_values('dt_referente')
+        df['dt_referente'] = pd.to_datetime(df['dt_referente']).dt.strftime('%Y%m%d')
+
+        dicionario_carga_ipdo = {'SE': {}, 'S': {}, 'NE': {}, 'N': {}}
+        for _, row in df.iterrows():
+            data = row['dt_referente']
+            dicionario_carga_ipdo['SE'][data] = row['carga_se']
+            dicionario_carga_ipdo['S'][data] = row['carga_s']
+            dicionario_carga_ipdo['NE'][data] = row['carga_ne']
+            dicionario_carga_ipdo['N'][data] = row['carga_n']
+
+        carga_ipdo_dataFormatada = {}
+        for chave, valor in dicionario_carga_ipdo.items():
+            chaves_formatadas = {}
+            for data, carga in valor.items():
+                chaves_formatadas[data] = carga
+            carga_ipdo_dataFormatada[chave] = chaves_formatadas
+
+        ipdo_Verificado = {'ipdo_verificado': carga_ipdo_dataFormatada}
+        return ipdo_Verificado
+
+
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

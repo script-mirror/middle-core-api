@@ -1522,3 +1522,86 @@ class CheckCvu:
                 "previous_page": page - 1 if has_previous else None
             }
         }
+
+class DessemPrevisao:
+    tb_ds_carga: db.Table = __DB__.getSchema('tb_ds_carga')
+    tb_submercado: db.Table = __DB__.getSchema('tb_submercado')
+
+    @staticmethod
+    def get_previsao_dessem():
+        """
+        Pega previsão IPDO:
+        - deck mais recente completo
+        - se faltarem registros de hoje, busca somente hoje no deck anterior
+        Agrega por dia e sigla, e retorna dict aninhado.
+        """
+        hoje = datetime.date.today()
+
+        max_deck_subquery = db.select(
+            db.func.max(DessemPrevisao.tb_ds_carga.c.id_deck)
+        ).scalar_subquery()
+
+        prev_deck_subquery = db.select(
+            db.func.max(DessemPrevisao.tb_ds_carga.c.id_deck)
+        ).where(
+            DessemPrevisao.tb_ds_carga.c.id_deck < max_deck_subquery
+        ).scalar_subquery()
+
+        query_max = db.select(
+            DessemPrevisao.tb_submercado.c.str_sigla.label('sigla'),
+            DessemPrevisao.tb_ds_carga.c.dataHora,
+            DessemPrevisao.tb_ds_carga.c.vl_carga
+        ).select_from(
+            DessemPrevisao.tb_ds_carga.join(
+                DessemPrevisao.tb_submercado,
+                DessemPrevisao.tb_ds_carga.c.cd_submercado == DessemPrevisao.tb_submercado.c.cd_submercado
+            )
+        ).where(
+            DessemPrevisao.tb_ds_carga.c.id_deck == max_deck_subquery
+        )
+
+        rows_max = __DB__.db_execute(query_max).fetchall()
+        df_max = pd.DataFrame(rows_max, columns=['sigla', 'dataHora', 'vl_carga'])
+        
+        if df_max.empty:
+            return {}
+
+        df_max['day'] = pd.to_datetime(df_max['dataHora']).dt.date.astype(str)
+
+        existe_hoje = (df_max['day'] == str(hoje)).any()
+
+        if not existe_hoje:
+            query_prev = db.select(
+                DessemPrevisao.tb_submercado.c.str_sigla.label('sigla'),
+                DessemPrevisao.tb_ds_carga.c.dataHora,
+                DessemPrevisao.tb_ds_carga.c.vl_carga
+            ).select_from(
+                DessemPrevisao.tb_ds_carga.join(
+                    DessemPrevisao.tb_submercado,
+                    DessemPrevisao.tb_ds_carga.c.cd_submercado == DessemPrevisao.tb_submercado.c.cd_submercado
+                )
+            ).where(
+                db.and_(
+                    DessemPrevisao.tb_ds_carga.c.id_deck == prev_deck_subquery,
+                    db.func.date(DessemPrevisao.tb_ds_carga.c.dataHora) == hoje
+                )
+            )
+
+            rows_prev = __DB__.db_execute(query_prev).fetchall()
+            df_prev = pd.DataFrame(rows_prev, columns=['sigla', 'dataHora', 'vl_carga'])
+            
+            if not df_prev.empty:
+                df_prev['day'] = pd.to_datetime(df_prev['dataHora']).dt.date.astype(str)
+                df_max = pd.concat([df_max, df_prev], ignore_index=True)
+
+        daily_avg = (
+            df_max
+            .groupby(['sigla', 'day'], as_index=False)
+            .agg(avg_vl_carga=('vl_carga', 'mean'))
+        )
+
+        nested = {}
+        for sigla, group in daily_avg.groupby('sigla'):
+            nested[sigla] = group[['day', 'avg_vl_carga']].to_dict('records')
+
+        return nested

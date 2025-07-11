@@ -274,3 +274,14 @@ def get_all(
         page_size: int = 40
 ):
     return service.CheckCvu.get_all(page, page_size)
+
+
+@router.get("/dessem/previsao", tags=["Dessem"])
+def get_previsao_dessem():
+    """
+    Obtém a previsão DESSEM (IPDO):
+    - Deck mais recente completo
+    - Se faltarem registros de hoje, busca somente hoje no deck anterior
+    - Agrega por dia e sigla, retornando dict aninhado
+    """
+    return service.DessemPrevisao.get_previsao_dessem()

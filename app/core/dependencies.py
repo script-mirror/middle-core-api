@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     }
 
 
-settings = Settings()
+cognito_settings = Settings()
 
 
 class CognitoTokenSemUsername(CognitoToken):
@@ -30,7 +30,7 @@ class CognitoTokenSemUsername(CognitoToken):
 
 
 cognito = CognitoAuth(
-    settings=CognitoSettings.from_global_settings(settings),
+    settings=CognitoSettings.from_global_settings(cognito_settings),
     userpool_name="us",
     custom_model=CognitoTokenSemUsername,
 )

@@ -1468,11 +1468,11 @@ class CheckCvu:
         return CheckCvu.get_by_id(check_cvu_id)
 
     @staticmethod
-    def get_by_data_atualizacao_title(data_atualizacao: datetime.datetime, title: str) -> CheckCvuReadDto:
+    def get_by_data_atualizacao_tipo_cvu(data_atualizacao: datetime.datetime, tipo_cvu: str) -> CheckCvuReadDto:
         select_query = db.select(
             CheckCvu.tb
         ).where(db.and_(
-                CheckCvu.tb.c['tipo_cvu'] == title,
+                CheckCvu.tb.c['tipo_cvu'] == tipo_cvu,
                 CheckCvu.tb.c['data_atualizacao'] == data_atualizacao))
         record = __DB__.db_execute(select_query).fetchone()
 

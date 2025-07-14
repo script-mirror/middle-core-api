@@ -258,13 +258,13 @@ def update_check_cvu_status(
 
 
 @router.get("/check-cvu", tags=["CVU"])
-def get_check_cvu_by_data_atualizacao_title(
+def get_check_cvu_by_data_atualizacao_tipo_cvu(
     data_atualizacao: datetime.datetime,
-    title: str
+    tipo_cvu: str
 ):
-    return service.CheckCvu.get_by_data_atualizacao_title(
+    return service.CheckCvu.get_by_data_atualizacao_tipo_cvu(
         data_atualizacao,
-        title
+        tipo_cvu
     )
 
 

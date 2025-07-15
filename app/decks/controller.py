@@ -260,7 +260,7 @@ def update_check_cvu_status(
 @router.get("/check-cvu", tags=["CVU"])
 def get_check_cvu_by_data_atualizacao_tipo_cvu(
     data_atualizacao: datetime.datetime,
-    tipo_cvu: str
+    tipo_cvu: TipoCvuEnum
 ):
     return service.CheckCvu.get_by_data_atualizacao_tipo_cvu(
         data_atualizacao,

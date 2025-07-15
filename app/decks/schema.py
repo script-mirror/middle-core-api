@@ -1,6 +1,14 @@
 from pydantic import BaseModel
 import datetime
 from typing import Optional
+from enum import Enum
+
+
+class TipoCvuEnum(str, Enum):
+    custo_variavel_unitario_conjuntural = "conjuntural"
+    custo_variavel_unitario_estrutural = "estrutural"
+    custo_variavel_unitario_conjuntural_revisado = "conjuntural_revisado"
+    custo_variavel_unitario_merchant = "merchant"
 
 
 class PatamaresDecompSchema(BaseModel):
@@ -63,6 +71,7 @@ class CvuSchema(BaseModel):
     cnpj_agente_vendedor: Optional[str] = None
     produto: Optional[str] = None
 
+
 class CargaSemanalDecompSchema(BaseModel):
     data_produto: datetime.date
     semana_operativa: datetime.date
@@ -92,8 +101,8 @@ class CargaPmoSchema(BaseModel):
     tipo: str
     periodicidade_inicial: datetime.datetime
     periodicidade_final: datetime.datetime
-    
-    
+
+
 class CargaNewaveSistemaEnergiaSchema(BaseModel):
     cd_submercado: int
     vl_ano: int
@@ -109,7 +118,7 @@ class CargaNewaveSistemaEnergiaSchema(BaseModel):
     vl_geracao_ufv_mmgd: float
     dt_deck: datetime.datetime
     fonte: str
-    
+
 
 class CargaNewaveCadicSchema(BaseModel):
     vl_ano: int
@@ -123,18 +132,17 @@ class CargaNewaveCadicSchema(BaseModel):
     vl_mmgd_n: float
     dt_deck: datetime.datetime
     fonte: str
-        
-  
+
 
 class CheckCvuCreateDto(BaseModel):
-    tipo_cvu: Optional[str] = None
+    tipo_cvu: Optional[TipoCvuEnum] = None
     data_atualizacao: Optional[datetime.datetime] = None
     status: Optional[str] = None
 
 
 class CheckCvuReadDto(BaseModel):
     id: int
-    tipo_cvu: Optional[str] = None
+    tipo_cvu: Optional[TipoCvuEnum] = None
     data_atualizacao: Optional[datetime.datetime] = None
     status: Optional[str] = None
     created_at: Optional[datetime.datetime] = None

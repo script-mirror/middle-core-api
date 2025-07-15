@@ -22,6 +22,7 @@ from .schema import (
     CargaNewaveCadicSchema,
     CheckCvuCreateDto,
     CheckCvuReadDto,
+    TipoCvuEnum,
 )
 
 logger = logging.getLogger(__name__)
@@ -1270,7 +1271,6 @@ class CargaPmo:
                    'semana', 'dt_inicio', 'tipo', 'created_at', 'updated_at']
         df = pd.DataFrame(result, columns=columns)
 
-        # Adiciona coluna de status (realizado/previsto)
         df['status'] = df.apply(
             lambda row: 'realizado' if row['dt_inicio'] < dt_referencia else 'previsto',
             axis=1
@@ -1468,11 +1468,11 @@ class CheckCvu:
         return CheckCvu.get_by_id(check_cvu_id)
 
     @staticmethod
-    def get_by_data_atualizacao_tipo_cvu(data_atualizacao: datetime.datetime, tipo_cvu: str) -> CheckCvuReadDto:
+    def get_by_data_atualizacao_tipo_cvu(data_atualizacao: datetime.datetime, tipo_cvu: TipoCvuEnum) -> CheckCvuReadDto:
         select_query = db.select(
             CheckCvu.tb
         ).where(db.and_(
-                CheckCvu.tb.c['tipo_cvu'] == tipo_cvu,
+                CheckCvu.tb.c['tipo_cvu'] == tipo_cvu.value,
                 CheckCvu.tb.c['data_atualizacao'] == data_atualizacao))
         record = __DB__.db_execute(select_query).fetchone()
 
@@ -1497,7 +1497,7 @@ class CheckCvu:
         count_query = db.select(db.func.count()).select_from(CheckCvu.tb)
         total_records = __DB__.db_execute(count_query).scalar()
 
-        select_query = db.select(CheckCvu.tb).limit(page_size).offset(offset)
+        select_query = db.select(CheckCvu.tb).order_by(CheckCvu.tb.c.id.desc()).limit(page_size).offset(offset)
         records = __DB__.db_execute(select_query).fetchall()
 
         check_cvus = []

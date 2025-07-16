@@ -107,7 +107,27 @@ class CargaNewaveCadicSchema(BaseModel):
     dt_deck: datetime.datetime
     fonte: str
         
-  
+class NewavePatamarCargaUsinaSchema(BaseModel):
+    dt_referente: Optional[datetime.date] = None
+    patamar: Optional[str] = None
+    submercado: Optional[str] = None
+    pu_demanda_med: Optional[float] = None
+    duracao_mensal: Optional[float] = None
+    indice_bloco: Optional[str] = None
+    pu_montante_med: Optional[float] = None
+    dt_deck: Optional[datetime.datetime] = None
+    fonte: Optional[str] = None
+
+
+class NewavePatamarIntercambioSchema(BaseModel):
+    dt_referente: Optional[datetime.date] = None
+    patamar: Optional[str] = None
+    submercado_de: Optional[str] = None
+    submercado_para: Optional[str] = None
+    pu_intercambio_med: Optional[float] = None
+    duracao_mensal: Optional[float] = None
+    dt_deck: Optional[datetime.datetime] = None
+    fonte: Optional[str] = None
 
 class CheckCvuCreateDto(BaseModel):
     tipo_cvu: Optional[str] = None

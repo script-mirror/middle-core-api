@@ -22,6 +22,8 @@ from .schema import (
     CargaNewaveCadicSchema,
     CheckCvuCreateDto,
     CheckCvuReadDto,
+    NewavePatamarCargaUsinaSchema,
+    NewavePatamarIntercambioSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -1391,7 +1393,105 @@ class NewaveCadic:
         return decks_data
     
     
+class NewavePatamarCargaUsina:
+    tb: db.Table = __DB__.getSchema('tb_nw_patamar_carga_usina')
 
+    @staticmethod
+    def post_newave_patamar_carga_usina(body: List[NewavePatamarCargaUsinaSchema]):
+        body_dict = [x.model_dump() for x in body]
+
+        for item in body_dict:
+            # Convert dt_deck from string to date if it's a string
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+
+        # Delete existing records for each unique dt_deck
+        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
+        for date in unique_dates:
+            NewavePatamarCargaUsina.delete_patamar_carga_by_dt_deck(date)
+
+        query = db.insert(NewavePatamarCargaUsina.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+
+        return {"message": f"{rows} registros de patamar de carga de usina inseridos com sucesso"}
+
+    @staticmethod
+    def delete_patamar_carga_by_dt_deck(dt_deck: datetime.date):
+        query = db.delete(NewavePatamarCargaUsina.tb).where(
+            NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck
+        )
+
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+
+        logger.info(f"{rows} linhas deletadas da tb_nw_patamar_carga_usina")
+        return None
+    
+    @staticmethod
+    def get_patamar_carga_by_dt_deck(dt_deck: datetime.date):
+        query = db.select(NewavePatamarCargaUsina.tb).where(
+            NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck
+        )
+
+        result = __DB__.db_execute(query).fetchall()
+
+        if not result:
+            raise HTTPException(
+                status_code=404, detail=f"Patamar de carga de usina para a data {dt_deck} não encontrado"
+            )
+
+        df = pd.DataFrame(result, columns=NewavePatamarCargaUsina.tb.columns.keys())
+        return df.to_dict('records')
+    
+    
+class NewavePatamarIntercambio:
+    tb: db.Table = __DB__.getSchema('tb_nw_patamar_intercambio')
+
+    @staticmethod
+    def post_newave_patamar_intercambio(body: List[NewavePatamarIntercambioSchema]):
+        body_dict = [x.model_dump() for x in body]
+
+        for item in body_dict:
+            # Convert dt_deck from string to date if it's a string
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+
+        # Delete existing records for each unique dt_deck
+        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
+        for date in unique_dates:
+            NewavePatamarIntercambio.delete_patamar_intercambio_by_dt_deck(date)
+
+        query = db.insert(NewavePatamarIntercambio.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+
+        return {"message": f"{rows} registros de patamar de intercâmbio inseridos com sucesso"}
+
+    @staticmethod
+    def delete_patamar_intercambio_by_dt_deck(dt_deck: datetime.date):
+        query = db.delete(NewavePatamarIntercambio.tb).where(
+            NewavePatamarIntercambio.tb.c.dt_deck == dt_deck
+        )
+
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+
+        logger.info(f"{rows} linhas deletadas da tb_nw_patamar_intercambio")
+        return None
+    
+    @staticmethod
+    def get_patamar_intercambio_by_dt_deck(dt_deck: datetime.date):
+        query = db.select(NewavePatamarIntercambio.tb).where(
+            NewavePatamarIntercambio.tb.c.dt_deck == dt_deck
+        )
+
+        result = __DB__.db_execute(query).fetchall()
+
+        if not result:
+            raise HTTPException(
+                status_code=404, detail=f"Patamar de intercâmbio para a data {dt_deck} não encontrado"
+            )
+
+        df = pd.DataFrame(result, columns=NewavePatamarIntercambio.tb.columns.keys())
+        return df.to_dict('records')
+    
 
 class CheckCvu:
     tb: db.Table = __DB__.getSchema('check_cvu')

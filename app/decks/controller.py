@@ -235,6 +235,35 @@ def get_sist_mmgd_base_deck_values():
     return service.NewaveCadic.get_sist_mmgd_base_deck_values()
 
 
+@router.post("/newave/patamar/carga_usinas", tags=["Newave"])
+def post_newave_patamar_carga_usinas():
+    return service.NewavePatamarCargaUsina.post_newave_patamar_carga_usinas()
+
+@router.get("/newave/patamar/carga_usinas", tags=["Newave"])
+def get_newave_patamar_carga_usinas():
+    return service.NewavePatamarCargaUsina.get_patamar_carga_by_dt_deck()
+
+@router.delete("/newave/patamar/carga_usinas", tags=["Newave"])
+def delete_newave_patamar_carga_usinas():
+    return service.NewavePatamarCargaUsina.delete_patamar_carga_by_dt_deck()
+
+
+@router.post("/newave/patamar/intercambio", tags=["Newave"])
+def post_newave_patamar_intercambio():
+    return service.NewavePatamarIntercambio.post_newave_patamar_intercambio()
+
+@router.get("/newave/patamar/intercambio", tags=["Newave"])
+def get_newave_patamar_intercambio():
+    return service.NewavePatamarIntercambio.get_patamar_carga_by_dt_deck()
+
+@router.delete("/newave/patamar/intercambio", tags=["Newave"])
+def delete_newave_patamar_intercambio():
+    return service.NewavePatamarIntercambio.delete_patamar_carga_by_dt_deck()
+
+
+
+
+
 @router.post("/check-cvu", tags=["CVU"])
 def post_check_cvu(
     body: CheckCvuCreateDto

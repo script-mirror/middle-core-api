@@ -1265,8 +1265,6 @@ class db_mysql_master():
                                         100), nullable=True),
                                     db.Column("str_tipo", db.String(
                                         100), nullable=True),
-                                    db.Column("flag_custo_fixo",
-                                              db.Integer, nullable=False),
                                     extend_existing=True
                                     )
         elif table_name.lower() == 'tb_cvu':

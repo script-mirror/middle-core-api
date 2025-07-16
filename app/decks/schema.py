@@ -55,11 +55,11 @@ class CvuMerchantSchema(BaseModel):
 class CvuSchema(BaseModel):
     cd_usina: int
     vl_cvu: Optional[float] = None
-    tipo_cvu: str
-    mes_referencia: str
-    ano_horizonte: int
-    dt_atualizacao: str
-    fonte: str
+    tipo_cvu: Optional[str] = None
+    mes_referencia: Optional[str] = None
+    ano_horizonte: Optional[int] = None
+    dt_atualizacao: Optional[str] = None
+    fonte: Optional[str] = None
     agente_vendedor: Optional[str] = None
     tipo_combustivel: Optional[str] = None
     custo_combustivel: Optional[float] = None

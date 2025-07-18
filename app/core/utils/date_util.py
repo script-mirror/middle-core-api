@@ -81,7 +81,7 @@ def getPesoSemanas(primeiroDiaMes):
 class ElecData:
 
     # Entrar apenas com data referente ao sabado (semanas eletricas)
-    def __init__(self, data):
+    def __init__(self, data: datetime.date | datetime.datetime):
 
         if type(data) is type(datetime.datetime):
             data = data.date()

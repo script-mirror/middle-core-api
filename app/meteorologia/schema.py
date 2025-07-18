@@ -25,3 +25,19 @@ class VentoPrevistoRequest(BaseModel):
     hr_rodada: int
     modelo: str
     valores: List[ValorVento]
+
+class IndiceSST(BaseModel):
+    dt_observada: str
+    vl_indice: float
+    str_indice: str
+
+class IndicesSSTPOSTRequest(BaseModel):
+    valores: List[IndiceSST]
+
+class EstacoesMeteorologicas(BaseModel):
+    cd_estacao: str
+    dt_coleta: str
+    vl_chuva: float
+
+class EstacoesMeteorologicasPostRequest(EstacoesMeteorologicas):
+    pass

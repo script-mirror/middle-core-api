@@ -76,7 +76,6 @@ def get_vento_previsto(
 
 ##############################################################################################################################################################
 
-
 @router.get('/vento-previsto-rodadas', tags=['Meteorologia'])
 def get_vento_previsto_rodadas(
     modelo: Optional[str] = None,
@@ -91,3 +90,52 @@ def get_vento_previsto_rodadas(
         dt_rodada=dt_rodada,
         hr_rodada=hr_rodada,
     )
+
+##############################################################################################################################################################
+
+@router.get('/indices-diarios-sst', tags=['Meteorologia'])
+def get_indices_diarios_sst(
+    dt_inicio: Optional[datetime.date] = None,
+    dt_fim: Optional[datetime.date] = None,
+):
+    """
+    Obtém os índices diários de SST para um intervalo de datas.
+    """
+    return service.IndicesSST.get_indices_sst(dt_inicio=dt_inicio, dt_fim=dt_fim)
+
+##############################################################################################################################################################
+
+@router.post('/indices-diarios-sst', tags=['Meteorologia'])
+def post_indices_diarios_sst(request: IndicesSSTPOSTRequest):
+    """
+    Cria cadastro de índices diários de SST.
+    """
+
+    service.IndicesSST.insert_indices_sst(request.valores)
+
+    return {
+        "message": "Cadastro de índice diário de SST criado com sucesso.",
+    }
+
+##############################################################################################################################################################
+
+@router.post('/estacoes-meteorologicas', tags=['Meteorologia'])
+def post_estacoes_chuva(request: List[EstacoesMeteorologicasPostRequest]):
+    """
+    Cria cadastro dos dados de chuva das estações.
+    """
+
+    service.EstacoesMeteorologicas.insert_dados_estacao(request)
+
+    return {
+        "message": "Cadastro de estações de chuva criado com sucesso.",
+    }
+
+##############################################################################################################################################################
+
+@router.get('/infos-estacoes-meteorologicas', tags=['Meteorologia'])
+def get_infos_estacoes_meteorologicas():
+    """
+    Obtém informações das estações meteorológicas.
+    """
+    return service.EstacoesMeteorologicas.get_infos_estacao()

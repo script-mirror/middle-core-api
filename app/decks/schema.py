@@ -1,6 +1,26 @@
 from pydantic import BaseModel
 import datetime
 from typing import Optional
+from enum import Enum
+
+
+class TipoCvuEnum(str, Enum):
+    custo_variavel_unitario_conjuntural = "conjuntural"
+    custo_variavel_unitario_estrutural = "estrutural"
+    custo_variavel_unitario_conjuntural_revisado = "conjuntural_revisado"
+    custo_variavel_unitario_merchant = "merchant"
+
+
+class IndiceBlocoEnum(str, Enum):
+    CARGA = "CARGA"
+    PCH = "PCH"
+    PCT = "PCT"
+    EOL = "EOL"
+    UFV = "UFV"
+    PCH_MMGD = "PCH_MMGD"
+    PCT_MMGD = "PCT_MMGD"
+    EOL_MMGD = "EOL_MMGD"
+    UFV_MMGD = "UFV_MMGD"
 
 
 class PatamaresDecompSchema(BaseModel):
@@ -29,21 +49,39 @@ class WeolSemanalSchema(BaseModel):
 
 class CvuMerchantSchema(BaseModel):
     cd_usina: int
-    vl_cvu_cf: float
-    vl_cvu_scf: float
+    vl_cvu_cf: Optional[float] = None
+    vl_cvu_scf: Optional[float] = None
     mes_referencia: str
     dt_atualizacao: str
     fonte: str
+    empreendimento: Optional[str] = None
+    despacho: Optional[str] = None
+    recuperacao_custo_fixo: Optional[str] = None
+    data_inicio: Optional[datetime.date] = None
+    data_fim: Optional[datetime.date] = None
+    tipo_combustivel: Optional[str] = None
+    origem_da_cotacao: Optional[str] = None
+    mes_referencia_cotacao: Optional[str] = None
 
 
 class CvuSchema(BaseModel):
     cd_usina: int
-    vl_cvu: float
-    tipo_cvu: str
-    mes_referencia: str
-    ano_horizonte: int
-    dt_atualizacao: str
-    fonte: str
+    vl_cvu: Optional[float] = None
+    tipo_cvu: Optional[str] = None
+    mes_referencia: Optional[str] = None
+    ano_horizonte: Optional[int] = None
+    dt_atualizacao: Optional[str] = None
+    fonte: Optional[str] = None
+    agente_vendedor: Optional[str] = None
+    tipo_combustivel: Optional[str] = None
+    custo_combustivel: Optional[float] = None
+    codigo_parcela_usina: Optional[str] = None
+    inicio_suprimento: Optional[datetime.date] = None
+    termino_suprimento: Optional[datetime.date] = None
+    sigla_parcela: Optional[str] = None
+    leilao: Optional[str] = None
+    cnpj_agente_vendedor: Optional[str] = None
+    produto: Optional[str] = None
 
 
 class CargaSemanalDecompSchema(BaseModel):
@@ -75,8 +113,8 @@ class CargaPmoSchema(BaseModel):
     tipo: str
     periodicidade_inicial: datetime.datetime
     periodicidade_final: datetime.datetime
-    
-    
+
+
 class CargaNewaveSistemaEnergiaSchema(BaseModel):
     cd_submercado: int
     vl_ano: int
@@ -92,7 +130,7 @@ class CargaNewaveSistemaEnergiaSchema(BaseModel):
     vl_geracao_ufv_mmgd: float
     dt_deck: datetime.datetime
     fonte: str
-    
+
 
 class CargaNewaveCadicSchema(BaseModel):
     vl_ano: int
@@ -111,11 +149,10 @@ class NewavePatamarCargaUsinaSchema(BaseModel):
     dt_referente: Optional[datetime.date] = None
     patamar: Optional[str] = None
     submercado: Optional[str] = None
-    pu_demanda_med: Optional[float] = None
+    valor_pu: Optional[float] = None
     duracao_mensal: Optional[float] = None
-    indice_bloco: Optional[str] = None
-    pu_montante_med: Optional[float] = None
-    dt_deck: Optional[datetime.datetime] = None
+    indice_bloco: Optional[IndiceBlocoEnum] = None
+    dt_deck: Optional[datetime.date] = None
     fonte: Optional[str] = None
 
 
@@ -126,18 +163,18 @@ class NewavePatamarIntercambioSchema(BaseModel):
     submercado_para: Optional[str] = None
     pu_intercambio_med: Optional[float] = None
     duracao_mensal: Optional[float] = None
-    dt_deck: Optional[datetime.datetime] = None
+    dt_deck: Optional[datetime.date] = None
     fonte: Optional[str] = None
 
 class CheckCvuCreateDto(BaseModel):
-    tipo_cvu: Optional[str] = None
+    tipo_cvu: Optional[TipoCvuEnum] = None
     data_atualizacao: Optional[datetime.datetime] = None
     status: Optional[str] = None
 
 
 class CheckCvuReadDto(BaseModel):
     id: int
-    tipo_cvu: Optional[str] = None
+    tipo_cvu: Optional[TipoCvuEnum] = None
     data_atualizacao: Optional[datetime.datetime] = None
     status: Optional[str] = None
     created_at: Optional[datetime.datetime] = None

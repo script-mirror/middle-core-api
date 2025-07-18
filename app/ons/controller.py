@@ -131,3 +131,13 @@ def get_carga_horaria_data_entre(
 @router.get('/produtibilidade')
 def get_produtibilidade():
     return service.Produtibilidade.get_all()
+
+
+@router.get('/acompanhamento-ipdo')
+def get_acompanhamento_ipdo(
+    dtref: str
+):
+    """
+    Obtém acompanhamento IPDO (carga) por data de referência.
+    """
+    return service.CargaIpdo.get_acompanhamento_ipdo(dtref)

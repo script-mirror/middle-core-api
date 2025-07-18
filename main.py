@@ -1,6 +1,5 @@
 import uvicorn
-from typing import Annotated
-from fastapi import FastAPI, Depends, Header, Request
+from fastapi import FastAPI, Depends
 from app.core.utils.cache import cache
 from app.core.config import settings
 from app.core.dependencies import cognito
@@ -18,7 +17,6 @@ from app import (
     pluvia_controller,
     utils_controller
 )
-from app.message import service
 auth_scheme = HTTPBearer()
 
 
@@ -43,20 +41,7 @@ app.add_middleware(
 )
 
 
-def get_auth_header(
-    authorization: Annotated[list[str] | None, Header()] = None,
-    request: Request = None
-):
-    if authorization is None:
-        service.send_message(
-            f'Endpoint {request.url.path} sem token de autenticacao',
-            None,
-            "Debug"
-        )
-
-
-app.include_router(rodadas_controller, prefix="/api/v2",
-                   dependencies=[Depends(get_auth_header)])
+app.include_router(rodadas_controller, prefix="/api/v2",)
 app.include_router(ons_controller, prefix="/api/v2",
                    dependencies=[Depends(auth_scheme),
                                  Depends(cognito.auth_required)])

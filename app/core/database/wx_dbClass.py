@@ -582,6 +582,7 @@ class db_mysql_master():
                                     db.Column('vl_geracao_ufv_mmgd', db.Float),
                                     db.Column('dt_deck', db.DateTime),
                                     db.Column('fonte', db.String(100)),
+                                    extend_existing=True
                                     )
 
         elif table_name.lower() == 'tb_nw_cadic':
@@ -649,21 +650,23 @@ class db_mysql_master():
         # db_meteorologia
         elif table_name.lower() == 'tb_inmet_estacoes':
             table_schema = db.Table('tb_inmet_estacoes', self.meta,
-                                    db.Column('cd_estacao', db.VARCHAR(4)),
+                                    db.Column('cd_estacao', db.VARCHAR(50)),
                                     db.Column('str_nome', db.VARCHAR(50)),
                                     db.Column('str_estado', db.VARCHAR(2)),
                                     db.Column('vl_lat', db.Float),
                                     db.Column('vl_lon', db.Float),
                                     db.Column('str_bacia', db.VARCHAR(50)),
                                     db.Column('str_fonte', db.VARCHAR(50)),
+                                    extend_existing=True
 
                                     )
 
         elif table_name.lower() == 'tb_inmet_dados_estacoes':
             table_schema = db.Table('tb_inmet_dados_estacoes', self.meta,
-                                    db.Column('cd_estacao', db.VARCHAR(4)),
+                                    db.Column('cd_estacao', db.VARCHAR(50)),
                                     db.Column('dt_coleta', db.DateTime),
                                     db.Column('vl_chuva', db.Float),
+                                    extend_existing=True
                                     )
 
         elif table_name.lower() == 'tb_prev_ena_submercado':
@@ -1262,8 +1265,6 @@ class db_mysql_master():
                                         100), nullable=True),
                                     db.Column("str_tipo", db.String(
                                         100), nullable=True),
-                                    db.Column("flag_custo_fixo",
-                                              db.Integer, nullable=False),
                                     extend_existing=True
                                     )
         elif table_name.lower() == 'tb_cvu':
@@ -1271,17 +1272,37 @@ class db_mysql_master():
                                     db.Column("cd_usina", db.Integer, db.ForeignKey(
                                         'db_decks.tb_usinas_termicas.cd_usina'), primary_key=True, nullable=False),
                                     db.Column("vl_cvu", db.Float,
-                                              nullable=False),
+                                            nullable=False),
                                     db.Column("tipo_cvu", db.String(100),
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
                                     db.Column("mes_referencia", db.String(100),
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
                                     db.Column("ano_horizonte", db.Integer,
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
                                     db.Column("dt_atualizacao", db.Date,
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
                                     db.Column("fonte", db.String(100),
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
+                                    db.Column("agente_vendedor", db.String(50),
+                                            nullable=True),
+                                    db.Column("tipo_combustivel", db.String(50),
+                                            nullable=True),
+                                    db.Column("custo_combustivel", db.Numeric(15, 2),
+                                            nullable=True),
+                                    db.Column("codigo_parcela_usina", db.String(50),
+                                            nullable=True),
+                                    db.Column("inicio_suprimento", db.Date,
+                                            nullable=True),
+                                    db.Column("termino_suprimento", db.Date,
+                                            nullable=True),
+                                    db.Column("sigla_parcela", db.String(50),
+                                            nullable=True),
+                                    db.Column("leilao", db.String(100),
+                                            nullable=True),
+                                    db.Column("cnpj_agente_vendedor", db.String(30),
+                                            nullable=True),
+                                    db.Column("produto", db.String(100),
+                                            nullable=True),
                                     extend_existing=True
                                     )
 
@@ -1290,17 +1311,32 @@ class db_mysql_master():
                                     db.Column("cd_usina", db.Integer, db.ForeignKey(
                                         'db_decks.tb_usinas_termicas.cd_usina'), primary_key=True, nullable=False),
                                     db.Column("vl_cvu_cf", db.Float,
-                                              nullable=False),
+                                            nullable=False),
                                     db.Column("vl_cvu_scf", db.Float,
-                                              nullable=False),
+                                            nullable=False),
                                     db.Column("mes_referencia", db.String(100),
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
                                     db.Column("dt_atualizacao", db.Date,
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
                                     db.Column("fonte", db.String(100),
-                                              primary_key=True, nullable=False),
+                                            primary_key=True, nullable=False),
+                                    db.Column("empreendimento", db.String(80),
+                                            nullable=True),
+                                    db.Column("despacho", db.String(100),
+                                            nullable=True),
+                                    db.Column("recuperacao_custo_fixo", db.String(20),
+                                            nullable=True),
+                                    db.Column("data_inicio", db.Date,
+                                            nullable=True),
+                                    db.Column("data_fim", db.Date,
+                                            nullable=True),
+                                    db.Column("tipo_combustivel", db.String(100),
+                                            nullable=True),
+                                    db.Column("origem_da_cotacao", db.String(100),
+                                            nullable=True),
+                                    db.Column("mes_referencia_cotacao", db.String(10),
+                                            nullable=True),
                                     extend_existing=True
-
                                     )
 
         elif table_name.lower() == 'tb_re_limites':
@@ -1470,6 +1506,43 @@ class db_mysql_master():
                                     db.Column('peso', db.DECIMAL(4, 3),
                                               nullable=True)
                                     )
+
+        elif table_name.lower() == 'tb_indices_diarios_sst':
+            table_schema = db.Table('tb_indices_diarios_sst', self.meta,
+                db.Column('dt_observada', db.Date),
+                db.Column('vl_indice', db.Float),
+                db.Column('str_indice', db.String(255)),
+            extend_existing=True
+            )
+            
+        elif table_name.lower() == 'newave_patamar_carga_usina':
+            table_schema = db.Table('newave_patamar_carga_usina', self.meta,
+                                    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                                    db.Column('dt_referente', db.Date, nullable=True),
+                                    db.Column('patamar', db.String(6), nullable=True),
+                                    db.Column('submercado', db.String(2), nullable=True),
+                                    db.Column('valor_pu', db.Numeric(5, 4), nullable=True),
+                                    db.Column('duracao_mensal', db.Numeric(5, 4), nullable=True),
+                                    db.Column('indice_bloco', db.String(8), nullable=True),
+                                    db.Column('dt_deck', db.Date, nullable=True),
+                                    db.Column('fonte', db.String(4), nullable=True),
+                                    extend_existing=True
+                                    )
+            
+        elif table_name.lower() == 'newave_patamar_intercambio':
+            table_schema = db.Table('newave_patamar_intercambio', self.meta,
+                                    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                                    db.Column('dt_referente', db.Date, nullable=True),
+                                    db.Column('patamar', db.String(6), nullable=True),
+                                    db.Column('submercado_de', db.String(2), nullable=True),
+                                    db.Column('submercado_para', db.String(2), nullable=True),
+                                    db.Column('pu_intercambio_med', db.Numeric(5, 4), nullable=True),
+                                    db.Column('duracao_mensal', db.Numeric(5, 4), nullable=True),
+                                    db.Column('dt_deck', db.Date, nullable=True),
+                                    db.Column('fonte', db.String(4), nullable=True),
+                                    extend_existing=True
+                                    )
+
 
         return table_schema
 

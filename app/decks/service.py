@@ -22,6 +22,8 @@ from .schema import (
     CargaNewaveCadicSchema,
     CheckCvuCreateDto,
     CheckCvuReadDto,
+    TipoCvuEnum,
+    IndiceBlocoEnum,
     NewavePatamarCargaUsinaSchema,
     NewavePatamarIntercambioSchema,
 )
@@ -180,12 +182,41 @@ class WeolSemanal:
 
     @staticmethod
     def get_html_weighted_avg(df: pd.DataFrame):
-        html: str = '''<style> body { font-family: sans-serif; } th, td { padding: 4px; text-align: center; border: 0.5px solid #999; } table { border-collapse: collapse; } thead, .gray { background-color: #f2f2f2; border: 1px solid #ddd; } .none{ background-color: #FFF; } tbody *{ border: none; } tbody{ border: 1px solid #ddd; } .n1{background-color: #63be7b;} .n2{background-color: #aad380;} .n3{background-color: #efe784;} .n4{background-color: #fcbc7b;} .n5{background-color: #fba777;} .n6{background-color: #f8696b;}</style><table> <thead> <tr>'''
+        # Array de 40 cores do verde ao vermelho
+        performance_colors = [
+            "#00FF00", "#0AFF00", "#14FF00", "#1EFF00", "#28FF00", "#32FF00",
+            "#3CFF00", "#46FF00", "#50FF00", "#5AFF00", "#64FF00", "#6EFF00",
+            "#78FF00", "#82FF00", "#8CFF00", "#96FF00", "#A0FF00", "#AAFF00",
+            "#B4FF00", "#BEFF00", "#C8FF00", "#D2FF00", "#DCFF00", "#E6FF00",
+            "#F0FF00", "#FAFF00", "#FFFF00", "#FFFA00", "#FFF000", "#FFE600",
+            "#FFDC00", "#FFD200", "#FFC800", "#FFBE00", "#FFB400", "#FFAA00",
+            "#FFA000", "#FF9600", "#FF8C00", "#FF8200", "#FF7800", "#FF6E00",
+            "#FF6400", "#FF5A00", "#FF5000", "#FF4600", "#FF3C00", "#FF3200",
+            "#FF2800", "#FF1E00", "#FF1400", "#FF0A00", "#FF0000"
+        ]
+        
+        # Gerar classes CSS dinamicamente
+        css_classes = ""
+        for i, color in enumerate(performance_colors):
+            css_classes += f".n{i}{{background-color: {color};}}"
+        
+        html: str = f'''<style> 
+            body {{ font-family: sans-serif; }} 
+            th, td {{ padding: 4px; text-align: center; border: 0.5px solid #999; }}
+            table {{ border-collapse: collapse; }} 
+            thead, .gray {{ background-color: #f2f2f2; border: 1px solid #ddd; }} 
+            .none{{ background-color: #FFF; }} 
+            tbody *{{ border: none; }}
+            tbody{{ border: 1px solid #ddd; }} 
+            {css_classes}
+        </style><table> <thead> <tr>'''
+        
         for col in df.columns:
             html += f'<th>{col}</th>'
         html += ' </tr></thead><tbody>'
 
         eolica_newave = df[df['Origem'] == 'Eolica Newave']
+        neutral_index = len(performance_colors) // 2  # Índice do meio (amarelo neutro)
 
         for i, row in df.iterrows():
             html += '<tr>'
@@ -197,41 +228,36 @@ class WeolSemanal:
                         html += f'<td class="none"></td>'
                         continue
                     elif row['Origem'] == 'Eolica Newave':
-                        html += f'<td class="n3">{int(col)}</td>'
+                        html += f'<td class="n{neutral_index}">{int(col)}</td>'
                         continue
-                    percent_diff: float = col / eolica_newave.iloc[0].iloc[j]
-                    if percent_diff >= 1.3:
-                        # Acima de 30% da Eólica Newave
-                        html += f'<td class="n1">{int(col)}</td>'
-                    elif percent_diff >= 1.1:
-                        # Entre 10% e 30%
-                        html += f'<td class="n2">{int(col)}</td>'
-                    elif percent_diff >= 0.9:
-                        # Entre 10% acima e 10% abaixo
-                        html += f'<td class="n3">{int(col)}</td>'
-                    elif percent_diff >= 0.8:
-                        # Entre 10% e 20% abaixo
-                        html += f'<td class="n4">{int(col)}</td>'
-                    elif percent_diff >= 0.6:
-                        # Entre 20% e 40% abaixo
-                        html += f'<td class="n5">{int(col)}</td>'
-                    else:
-                        # Menor que 40% da Eólica Newave
-                        html += f'<td class="n6">{int(col)}</td>'
+                    
+                    percent_diff: float = col - eolica_newave.iloc[0].iloc[j]
+                    
+                    color_offset = int(percent_diff / 250)
+                    color_index = neutral_index - color_offset
+                    
+                    color_index = max(0, min(len(performance_colors) - 1, color_index))
+                    
+                    html += f'<td class="n{color_index}">{int(col)}</td>'
 
             html += '</tr>'
         html += '</tbody></table>'
         # with open('weol.html', 'w') as f:
-            # f.write(html)
+        #     f.write(html)
         return {"html": html}
 
     @staticmethod
     def get_weighted_avg_table_monthly_by_product_date(data_produto: datetime.date, quantidade_produtos: int):
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(
             data_produto - datetime.timedelta(days=quantidade_produtos-1), data_produto))
-
+        
+        eol_nw_inicio  = ElecData(df['inicioSemana'][0])
+        eol_nw_inicio = datetime.date(eol_nw_inicio.anoReferente, eol_nw_inicio.mesReferente, 1)
+        eol_nw_fim = ElecData(df['inicioSemana'][len(df['inicioSemana'])-1])
+        eol_nw_fim = datetime.date(eol_nw_fim.anoReferente, eol_nw_fim.mesReferente, 1)
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(
-            df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
+            eol_nw_inicio, eol_nw_fim
+            ))
 
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg(
             {'geracaoEolica': 'sum'}).reset_index()
@@ -240,16 +266,15 @@ class WeolSemanal:
         columns_rename = [MONTH_DICT[int(
             row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
 
-        df['ano'] = [row.year if type(
-            row) != str else row for row in df['inicioSemana']]
-        df['mes'] = [row.month if type(
-            row) != str else row for row in df['inicioSemana']]
+        df['ano'] = [ElecData(row).anoReferente if type(
+            row) is not str else row for row in df['inicioSemana']]
+        df['mes'] = [ElecData(row).mesReferente if type(
+            row) is not str else row for row in df['inicioSemana']]
 
         df_eol_newave = df_eol_newave.sort_values(by='yearMonth')
         df_eol_newave.drop(columns=['mes', 'ano'], inplace=True)
 
-        df['yearMonth'] = df['inicioSemana'].apply(
-            lambda x: f'{x.year}-{x.month}' if type(x) != str else x)
+        df['yearMonth'] = df['yearMonth'] = df['ano'].astype(str) + '-' + df['mes'].astype(str)
 
         df.drop(columns=['inicioSemana'], inplace=True)
         df = df.groupby('yearMonth').mean()
@@ -278,16 +303,22 @@ class WeolSemanal:
         df = pd.DataFrame(WeolSemanal.get_weighted_avg_by_product_date_between(
             data_produto - datetime.timedelta(days=quantidade_produtos), data_produto))
 
+        eol_nw_inicio = ElecData(df['inicioSemana'][0])
+        eol_nw_inicio = datetime.date(eol_nw_inicio.anoReferente, eol_nw_inicio.mesReferente, 1)
+        eol_nw_fim = ElecData(df['inicioSemana'][len(df['inicioSemana'])-1])
+        eol_nw_fim = datetime.date(eol_nw_fim.anoReferente, eol_nw_fim.mesReferente, 1)
         df_eol_newave = pd.DataFrame(NwSistEnergia.get_eol_by_last_data_deck_mes_ano_between(
-            df['inicioSemana'][0], df['inicioSemana'][len(df['inicioSemana'])-1]))
+            eol_nw_inicio, eol_nw_fim
+            ))
+
         df_eol_newave = df_eol_newave.groupby(['mes', 'ano']).agg(
             {'geracaoEolica': 'sum'}).reset_index()
         df_eol_newave = df_eol_newave.sort_values(by=['ano', 'mes'])
 
-        df['ano'] = [ElecData(row).inicioSemana.year if type(
-            row) != str else row for row in df['inicioSemana']]
+        df['ano'] = [ElecData(row).anoReferente if type(
+            row) is not str else row for row in df['inicioSemana']]
         df['mes'] = [ElecData(row).mesReferente if type(
-            row) != str else row for row in df['inicioSemana']]
+            row) is not str else row for row in df['inicioSemana']]
 
         df = pd.merge(df_eol_newave, df, on=['ano', 'mes'], how='left')
         df.drop(columns=['mes', 'ano'], inplace=True)
@@ -367,20 +398,17 @@ class WeolSemanal:
                 data_produto, data_produto)
         )
         data_diferenca = data_produto-datetime.timedelta(days=days_to_subtract)
-        df_subtraendo = pd.DataFrame(
-            WeolSemanal.get_weighted_avg_by_product_date_between(
-                data_diferenca,
-                data_diferenca
-                )
-        )
+        df_subtraendo = pd.DataFrame()
         while df_subtraendo.empty:
-            data_diferenca -= datetime.timedelta(days=1)
-            df_subtraendo = pd.DataFrame(
-                WeolSemanal.get_weighted_avg_by_product_date_between(
-                    data_diferenca,
-                    data_diferenca
+            try:
+                df_subtraendo = pd.DataFrame(
+                    WeolSemanal.get_weighted_avg_by_product_date_between(
+                        data_diferenca,
+                        data_diferenca
+                    )
                 )
-            )
+            except HTTPException:
+                data_diferenca -= datetime.timedelta(days=1)
         df_minuendo.columns = ['inicioSemana', 'valores']
         df_subtraendo.columns = ['inicioSemana', 'valores']
         df_merged = df_minuendo.merge(df_subtraendo, on='inicioSemana', suffixes=('_df1', '_df2'))
@@ -458,6 +486,434 @@ class Patamares:
         result.loc[result['patamar'] == 'Leve', 'patamar'] = 'leve'
         result = result.rename(columns={'inicio': 'inicioSemana'})
         return result.to_dict("records")
+
+
+class NwSistEnergia:
+    tb: db.Table = __DB__.getSchema('tb_nw_sist_energia')
+
+    @staticmethod
+    def get_last_data_deck():
+        query = db.select(
+            db.func.max(NwSistEnergia.tb.c["dt_deck"])
+        )
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=['dt_deck'])
+        return df.to_dict('records')
+
+    @staticmethod
+    def get_eol_by_last_data_deck_mes_ano_between(start: datetime.date, end: datetime.date):
+        start = start.replace(day=1)
+        end = end.replace(day=1)
+        last_data_deck = NwSistEnergia.get_last_data_deck()[0]["dt_deck"]
+        query = db.select(
+            NwSistEnergia.tb.c["vl_geracao_eol"],
+            NwSistEnergia.tb.c["cd_submercado"],
+            NwSistEnergia.tb.c["vl_mes"],
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["dt_deck"]
+
+
+        ).where(
+            db.and_(
+                db.cast(
+                    db.func.concat(
+                        NwSistEnergia.tb.c["vl_ano"],
+                        '-',
+                        db.func.lpad(NwSistEnergia.tb.c["vl_mes"], 2, '0'),
+                        '-01'
+                    ).label('data'),
+                    db.Date
+                ).between(start, end)
+            )
+        )
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+                          'geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
+        df = df.sort_values('dataDeck')
+        df = df.drop_duplicates(subset=['codigoSubmercado', 'mes', 'ano'], keep='last')
+        return df.to_dict('records')
+
+    @staticmethod
+    def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaSchema]):
+        
+        body_dict = [x.model_dump() for x in body]
+        
+        for item in body_dict:
+            # Convert dt_deck from string to date if it's a string
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+                
+        # Delete existing records for each unique dt_deck
+        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
+        for date in unique_dates:
+            NwSistEnergia.delete_sist_deck_by_dt_deck(date)
+        
+        query = db.insert(NwSistEnergia.tb).values(body_dict)
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        
+        return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
+        
+    @staticmethod
+    def delete_sist_deck_by_dt_deck(dt_deck:datetime.date):
+        
+        query = db.delete(NwSistEnergia.tb).where(
+            NwSistEnergia.tb.c.dt_deck == dt_deck
+        )
+        
+        rows = __DB__.db_execute(query, commit=prod).rowcount
+        
+        logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
+        return None
+    
+    
+    @staticmethod
+    def get_sist_unsi_deck_values():
+        """
+        Obtém os valores de geração dos dois decks mais recentes, agrupados por deck,
+        mês e ano, sem agrupamento por submercado.
+
+        Returns:
+            Lista com informações dos dois decks mais recentes, contendo dados
+            de geração, organizados por mês e ano.
+        """
+        subquery = db.select(
+            NwSistEnergia.tb.c["dt_deck"]
+        ).distinct().order_by(
+            NwSistEnergia.tb.c["dt_deck"].desc()
+        ).limit(2).alias('latest_decks')
+
+        query = db.select(
+            NwSistEnergia.tb.c["dt_deck"],
+            NwSistEnergia.tb.c["vl_mes"],
+            NwSistEnergia.tb.c["vl_ano"],
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_pch"]).label("vl_geracao_pch"),
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_pct"]).label("vl_geracao_pct"),
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_eol"]).label("vl_geracao_eol"),
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_ufv"]).label("vl_geracao_ufv")
+        ).where(
+            NwSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+        ).group_by(
+            NwSistEnergia.tb.c["dt_deck"],
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["vl_mes"]
+        ).order_by(
+            NwSistEnergia.tb.c["dt_deck"].desc(),
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["vl_mes"]
+        )
+
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+            'dt_deck', 'vl_mes', 'vl_ano', 'PCH', 'PCT', 'EOL', 'UFV'
+        ])
+
+        if df.empty:
+            return []
+
+        decks_data = []
+        for dt_deck, deck_group in df.groupby('dt_deck'):
+            deck_info = {
+                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "data": []
+            }
+
+            for (ano, mes), month_group in deck_group.groupby(['vl_ano', 'vl_mes']):
+                row = month_group.iloc[0]
+
+                total_geracao = float(row['PCH']) + float(row['PCT']) + float(row['EOL']) + float(row['UFV'])
+            
+                data = {
+                    "vl_mes": int(mes),
+                    "vl_ano": int(ano),
+                    "vl_deck_unsi": total_geracao
+                }
+
+                deck_info["data"].append(data)
+
+            decks_data.append(deck_info)
+
+        return decks_data
+    
+    @staticmethod
+    def get_sist_mmgd_expansao_deck_values():
+        
+        subquery = db.select(
+            NwSistEnergia.tb.c["dt_deck"]
+        ).distinct().order_by(
+            NwSistEnergia.tb.c["dt_deck"].desc()
+        ).limit(2).alias('latest_decks')
+
+        query = db.select(
+            NwSistEnergia.tb.c["dt_deck"],
+            NwSistEnergia.tb.c["vl_mes"],
+            NwSistEnergia.tb.c["vl_ano"],
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_pch_mmgd"]).label("vl_geracao_pch_mmgd"),
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_pct_mmgd"]).label("vl_geracao_pct_mmgd"),
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_eol_mmgd"]).label("vl_geracao_eol_mmgd"),
+            db.func.sum(NwSistEnergia.tb.c["vl_geracao_ufv_mmgd"]).label("vl_geracao_uf_mmgd")
+        ).where(
+            NwSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+        ).group_by(
+            NwSistEnergia.tb.c["dt_deck"],
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["vl_mes"]
+        ).order_by(
+            NwSistEnergia.tb.c["dt_deck"].desc(),
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["vl_mes"]
+        )
+
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+            'dt_deck', 'vl_mes', 'vl_ano', 'PCH_MMGD', 'PCT_MMGD', 'EOL_MMGD', 'UFV_MMGD'
+        ])
+        
+        if df.empty:
+            return []
+
+        decks_data = []
+        for dt_deck, deck_group in df.groupby('dt_deck'):
+            deck_info = {
+                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "data": []
+            }
+
+            for (ano, mes), month_group in deck_group.groupby(['vl_ano', 'vl_mes']):
+                row = month_group.iloc[0]
+
+                total_geracao = float(row['PCH_MMGD']) + float(row['PCT_MMGD']) + float(row['EOL_MMGD']) + float(row['UFV_MMGD'])
+
+                data = {
+                    "vl_mes": int(mes),
+                    "vl_ano": int(ano),
+                    "vl_deck_mmgd_exp": total_geracao
+                }
+
+                deck_info["data"].append(data)
+
+            decks_data.append(deck_info)
+        
+        return decks_data
+    
+    @staticmethod
+    def get_sist_carga_global_deck_values():
+        
+        # Get MMGD total values
+        mmgd_base_values = NewaveCadic.get_sist_mmgd_base_deck_values()
+        
+        subquery = db.select(
+            NwSistEnergia.tb.c["dt_deck"]
+        ).distinct().order_by(
+            NwSistEnergia.tb.c["dt_deck"].desc()
+        ).limit(2).alias('latest_decks')
+
+        query = db.select(
+            NwSistEnergia.tb.c["dt_deck"],
+            NwSistEnergia.tb.c["vl_mes"],
+            NwSistEnergia.tb.c["vl_ano"],
+            db.func.sum(NwSistEnergia.tb.c["vl_energia_total"]).label("vl_energia_total")
+        ).where(
+            NwSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+        ).group_by(
+            NwSistEnergia.tb.c["dt_deck"],
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["vl_mes"]
+        ).order_by(
+            NwSistEnergia.tb.c["dt_deck"].desc(),
+            NwSistEnergia.tb.c["vl_ano"],
+            NwSistEnergia.tb.c["vl_mes"]
+        )
+        
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+            'dt_deck', 'vl_mes', 'vl_ano', 'vl_deck_energia_total'
+        ])
+        
+        if df.empty:
+            return []
+        
+        # Criando um dicionário para relacionar os valores de MMGD total com energia total
+        mmgd_dict = {}
+        for deck in mmgd_base_values:
+            dt_deck = deck.get('dt_deck')
+            mmgd_dict[dt_deck] = {}
+            
+            for item in deck.get('data', []):
+                ano = item.get('vl_ano')
+                mes = item.get('vl_mes')
+                
+                if ano not in mmgd_dict[dt_deck]:
+                    mmgd_dict[dt_deck][ano] = {}
+                    
+                mmgd_dict[dt_deck][ano][mes] = item.get('vl_deck_mmgd_base', 0)
+        
+        # Adicionar coluna de MMGD total baseado no dicionário
+        df['vl_deck_mmgd_base'] = df.apply(
+            lambda row: mmgd_dict.get(
+                row['dt_deck'].strftime('%Y-%m-%d') if isinstance(row['dt_deck'], datetime.date) else str(row['dt_deck']), 
+                {}
+            ).get(
+                row['vl_ano'], 
+                {}
+            ).get(
+                row['vl_mes'], 
+                0
+            ),
+            axis=1
+        )
+        
+        # Calculando a carga global (soma da energia total e MMGD total)
+        df['vl_deck_carga_global'] = df['vl_deck_energia_total'] + df['vl_deck_mmgd_base']
+        
+        # Formatando o resultado final
+        decks_data = []
+        for dt_deck, deck_group in df.groupby('dt_deck'):
+            deck_info = {
+                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "data": []
+            }
+            
+            for _, row in deck_group.iterrows():
+                data = {
+                    "vl_mes": int(row['vl_mes']),
+                    "vl_ano": int(row['vl_ano']),
+                    "vl_deck_carga_global": float(row['vl_deck_carga_global'])
+                }
+                deck_info["data"].append(data)
+            
+            decks_data.append(deck_info)
+        
+        return decks_data
+    
+    @staticmethod
+    def get_sist_carga_liquida_deck_values():
+        """
+        Calcula os valores de Carga Líquida (diferença entre Carga Global, MMGD Total e Usinas não simuladas)
+        para os dois decks mais recentes.
+        
+        Returns:
+            Lista com informações dos dois decks mais recentes, contendo dados
+            de Carga Líquida, organizados por mês e ano.
+        """
+        # Obter dados de Carga Global, MMGD Total e UNSI
+        carga_global_values = NwSistEnergia.get_sist_carga_global_deck_values()
+        mmgd_total_values = NwSistEnergia.get_sist_mmgd_total_deck_values()
+        unsi_values = NwSistEnergia.get_sist_unsi_deck_values()
+        
+        if not carga_global_values or not mmgd_total_values or not unsi_values:
+            return []
+            
+        carga_liquida_values = []
+        
+        for deck_global in carga_global_values:
+            dt_deck = deck_global.get('dt_deck')
+            
+            # Encontrar os decks correspondentes para MMGD e UNSI
+            deck_mmgd = None
+            deck_unsi = None
+            
+            for deck in mmgd_total_values:
+                if deck.get('dt_deck') == dt_deck:
+                    deck_mmgd = deck
+                    break
+                    
+            for deck in unsi_values:
+                if deck.get('dt_deck') == dt_deck:
+                    deck_unsi = deck
+                    break
+            
+            if deck_mmgd and deck_unsi:
+                # Criar dicionários para facilitar o acesso aos valores por (ano, mes)
+                mmgd_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_mmgd_total', 0) 
+                           for item in deck_mmgd.get('data', [])}
+                           
+                unsi_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_unsi', 0) 
+                           for item in deck_unsi.get('data', [])}
+                
+                deck_liquida = {
+                    "dt_deck": dt_deck,
+                    "data": []
+                }
+                
+                for item_global in deck_global.get('data', []):
+                    ano = item_global.get('vl_ano')
+                    mes = item_global.get('vl_mes')
+                    valor_global = item_global.get('vl_deck_carga_global', 0)
+                    
+                    # Obter valores correspondentes de MMGD e UNSI
+                    valor_mmgd = mmgd_dict.get((ano, mes), 0)
+                    valor_unsi = unsi_dict.get((ano, mes), 0)
+                    
+                    # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI
+                    carga_liquida = valor_global - valor_mmgd - valor_unsi
+                    
+                    item_liquida = {
+                        "vl_ano": ano,
+                        "vl_mes": mes,
+                        "vl_deck_carga_liquida": int(round(carga_liquida))
+                    }
+                    
+                    deck_liquida['data'].append(item_liquida)
+                
+                carga_liquida_values.append(deck_liquida)
+        
+        return carga_liquida_values
+    
+    @staticmethod
+    def get_sist_mmgd_total_deck_values():
+        """
+        Calcula os valores totais de MMGD (soma de MMGD base e MMGD expansão)
+        para os dois decks mais recentes.
+        
+        Returns:
+            Lista com informações dos decks, contendo dados agregados de MMGD total
+            (MMGD base + MMGD expansão), organizados por mês e ano.
+        """
+        # Obter dados do MMGD base e expansão
+        from . import service  # Importação local para evitar referência circular
+        mmgd_base_values = service.NewaveCadic.get_sist_mmgd_base_deck_values()
+        mmgd_exp_values = NwSistEnergia.get_sist_mmgd_expansao_deck_values()
+        
+        if not mmgd_base_values or not mmgd_exp_values:
+            return []
+            
+        mmgd_total_values = []
+        
+        for deck_base in mmgd_base_values:
+            dt_deck_base = deck_base.get('dt_deck')
+            
+            deck_exp = None
+            for deck in mmgd_exp_values:
+                if deck.get('dt_deck') == dt_deck_base:
+                    deck_exp = deck
+                    break
+            
+            if deck_exp:
+                exp_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_mmgd_exp', 0) 
+                           for item in deck_exp.get('data', [])}
+                
+                deck_total = {
+                    "dt_deck": dt_deck_base,
+                    "data": []
+                }
+                
+                for item_base in deck_base.get('data', []):
+                    ano = item_base.get('vl_ano')
+                    mes = item_base.get('vl_mes')
+                    valor_base = item_base.get('vl_deck_mmgd_base', 0)
+                    valor_exp = exp_dict.get((ano, mes), 0)
+                    
+                    item_total = {
+                        "vl_ano": ano,
+                        "vl_mes": mes,
+                        "vl_deck_mmgd_total": int(round(valor_base + valor_exp))
+                    }
+                    
+                    deck_total['data'].append(item_total)
+                
+                mmgd_total_values.append(deck_total)
+        
+        return mmgd_total_values
 
 class CvuUsinasTermicas:
     tb: db.Table = __DB__.getSchema('tb_usinas_termicas')
@@ -547,24 +1003,16 @@ class Cvu:
         df_cvu_merchant = pd.DataFrame(rows)
 
         if not df_cvu_merchant.empty:
-            answer = CvuUsinasTermicas.get_usinas_termicas()
-            df_usinas = pd.DataFrame(answer)
+            df_cvu_merchant['vl_cvu_cf'] = df_cvu_merchant['vl_cvu_cf'].fillna(df_cvu_merchant['vl_cvu_scf'])
 
-            decisao_custo = df_usinas[['cd_usina', 'flag_custo_fixo']].copy()
-            cds_cf = decisao_custo[decisao_custo['flag_custo_fixo']
-                                   == 1]['cd_usina'].unique()
-            cds_scf = decisao_custo[decisao_custo['flag_custo_fixo']
-                                    == 0]['cd_usina'].unique()
+            df_cvu_merchant['vl_cvu'] = np.where(
+                df_cvu_merchant['recuperacao_custo_fixo'].str.lower() == 'não',
+                df_cvu_merchant['vl_cvu_cf'],
+                df_cvu_merchant['vl_cvu_scf']
+            )
 
-            df_merchant_cf = df_cvu_merchant[df_cvu_merchant['cd_usina'].isin(
-                cds_cf)].copy()
-            df_merchant_scf = df_cvu_merchant[df_cvu_merchant['cd_usina'].isin(
-                cds_scf)].copy()
-
-            df_aux = df_merchant_cf.drop(columns=['vl_cvu_scf']).rename(
-                columns={'vl_cvu_cf': 'vl_cvu'})
-            df_cvu_merchant_completo = pd.concat([df_aux, df_merchant_scf.drop(
-                columns=['vl_cvu_cf']).rename(columns={'vl_cvu_scf': 'vl_cvu'})])
+            df_cvu_merchant_completo = df_cvu_merchant.drop(
+                columns=['vl_cvu_cf', 'vl_cvu_scf'])
 
             ano_inicial = int(
                 df_cvu_merchant['mes_referencia'].unique()[0][:4])
@@ -582,7 +1030,7 @@ class Cvu:
             df_estrutural['ano_horizonte'] = ordem_anos_repetidos
 
             df_cvu = pd.concat([df_cvu, df_conjuntural, df_estrutural])
-
+        df_cvu = df_cvu.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df_cvu.to_dict('records')
 
 
@@ -735,7 +1183,7 @@ class CargaPmo:
     def get_most_recent_data():
         """
         Obtem os dados mais recentes de carga PMO.
-        Busca os 2 períodos mais recentes que já começaram (periodicidade_inicial <= hoje),
+        Busca os 2 períodos mais recentes (periodicidade_inicial),
         filtrando duplicatas por subsistema+dt_inicio e mantendo apenas registros com carga > 0.
         """
         today = datetime.date.today()
@@ -743,11 +1191,9 @@ class CargaPmo:
         # Step 1: Get the top 2 most recent periods that have already started
         query_periodos = db.select(
             CargaPmo.tb.c.periodicidade_inicial.distinct()
-        ).where(
-            CargaPmo.tb.c.periodicidade_inicial <= today
         ).order_by(
             CargaPmo.tb.c.periodicidade_inicial.desc()
-        ).limit(2)
+        ).limit(3)
 
         periodos_result = __DB__.db_execute(query_periodos).fetchall()
 
@@ -794,6 +1240,8 @@ class CargaPmo:
         ], ascending=[False, True, True])
 
         df_final['semana'] = df_final['semana'].fillna(0).astype(int)
+        print(f"Dados de carga PMO encontrados: {len(df_final)} registros")
+        print(df_final.to_string())
         return df_final.to_dict('records')
 
     @staticmethod
@@ -826,7 +1274,6 @@ class CargaPmo:
                    'semana', 'dt_inicio', 'tipo', 'created_at', 'updated_at']
         df = pd.DataFrame(result, columns=columns)
 
-        # Adiciona coluna de status (realizado/previsto)
         df['status'] = df.apply(
             lambda row: 'realizado' if row['dt_inicio'] < dt_referencia else 'previsto',
             axis=1
@@ -870,432 +1317,7 @@ class CargaPmo:
         return dados_carga
     
 
-    
-class NewaveSistEnergia:
-    tb:db.Table = __DB__.getSchema('tb_nw_sist_energia')
-    
-    @staticmethod
-    def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaSchema]):
-        
-        body_dict = [x.model_dump() for x in body]
-        
-        for item in body_dict:
-            # Convert dt_deck from string to date if it's a string
-            if isinstance(item['dt_deck'], str):
-                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
-                
-        # Delete existing records for each unique dt_deck
-        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
-        for date in unique_dates:
-            NewaveSistEnergia.delete_sist_deck_by_dt_deck(date)
-        
-        query = db.insert(NewaveSistEnergia.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
-        
-        return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
-        
-    @staticmethod
-    def delete_sist_deck_by_dt_deck(dt_deck:datetime.date):
-        
-        query = db.delete(NewaveSistEnergia.tb).where(
-            NewaveSistEnergia.tb.c.dt_deck == dt_deck
-        )
-        
-        rows = __DB__.db_execute(query, commit=prod).rowcount
-        
-        logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
-        return None
-    
-    @staticmethod
-    def get_last_data_deck():
-        query = db.select(
-            db.func.max(NewaveSistEnergia.tb.c["dt_deck"])
-        )
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=['dt_deck'])                              
-        return df.to_dict('records')
-    
-    @staticmethod
-    def get_eol_by_last_data_deck_mes_ano_between(start:datetime.date, end:datetime.date):
-        start = start.replace(day=1)
-        end = end.replace(day=1)
-        last_data_deck = NewaveSistEnergia.get_last_data_deck()[0]["dt_deck"]
-        query = db.select(
-            NewaveSistEnergia.tb.c["vl_geracao_eol"],
-            NewaveSistEnergia.tb.c["cd_submercado"],
-            NewaveSistEnergia.tb.c["vl_mes"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["dt_deck"]
 
-            
-        ).where(
-            db.and_(
-            NewaveSistEnergia.tb.c["dt_deck"] == last_data_deck,
-            db.cast(
-                db.func.concat(
-                    NewaveSistEnergia.tb.c["vl_ano"], 
-                    '-', 
-                    db.func.lpad(NewaveSistEnergia.tb.c["vl_mes"], 2, '0'), 
-                    '-01'
-                ).label('data'),
-                db.Date
-            ).between(start, end)
-            )
-        )
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=['geracaoEolica', 'codigoSubmercado', 'mes', 'ano', 'dataDeck'])
-        return df.to_dict('records')
-    
-    @staticmethod
-    def get_sist_unsi_deck_values():
-        """
-        Obtém os valores de geração dos dois decks mais recentes, agrupados por deck,
-        mês e ano, sem agrupamento por submercado.
-
-        Returns:
-            Lista com informações dos dois decks mais recentes, contendo dados
-            de geração, organizados por mês e ano.
-        """
-        subquery = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"]
-        ).distinct().order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
-
-        query = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"],
-            NewaveSistEnergia.tb.c["vl_mes"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch"]).label("vl_geracao_pch"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct"]).label("vl_geracao_pct"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol"]).label("vl_geracao_eol"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv"]).label("vl_geracao_ufv")
-        ).where(
-            NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
-        ).group_by(
-            NewaveSistEnergia.tb.c["dt_deck"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["vl_mes"]
-        ).order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc(),
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["vl_mes"]
-        )
-
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'PCH', 'PCT', 'EOL', 'UFV'
-        ])
-
-        if df.empty:
-            return []
-
-        decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
-            deck_info = {
-                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
-                "data": []
-            }
-
-            for (ano, mes), month_group in deck_group.groupby(['vl_ano', 'vl_mes']):
-                row = month_group.iloc[0]
-
-                total_geracao = float(row['PCH']) + float(row['PCT']) + float(row['EOL']) + float(row['UFV'])
-            
-                data = {
-                    "vl_mes": int(mes),
-                    "vl_ano": int(ano),
-                    "vl_deck_unsi": total_geracao
-                }
-
-                deck_info["data"].append(data)
-
-            decks_data.append(deck_info)
-
-        return decks_data
-    
-    @staticmethod
-    def get_sist_mmgd_expansao_deck_values():
-        
-        subquery = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"]
-        ).distinct().order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
-
-        query = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"],
-            NewaveSistEnergia.tb.c["vl_mes"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch_mmgd"]).label("vl_geracao_pch_mmgd"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct_mmgd"]).label("vl_geracao_pct_mmgd"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol_mmgd"]).label("vl_geracao_eol_mmgd"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv_mmgd"]).label("vl_geracao_uf_mmgd")
-        ).where(
-            NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
-        ).group_by(
-            NewaveSistEnergia.tb.c["dt_deck"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["vl_mes"]
-        ).order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc(),
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["vl_mes"]
-        )
-
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'PCH_MMGD', 'PCT_MMGD', 'EOL_MMGD', 'UFV_MMGD'
-        ])
-        
-        if df.empty:
-            return []
-
-        decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
-            deck_info = {
-                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
-                "data": []
-            }
-
-            for (ano, mes), month_group in deck_group.groupby(['vl_ano', 'vl_mes']):
-                row = month_group.iloc[0]
-
-                total_geracao = float(row['PCH_MMGD']) + float(row['PCT_MMGD']) + float(row['EOL_MMGD']) + float(row['UFV_MMGD'])
-
-                data = {
-                    "vl_mes": int(mes),
-                    "vl_ano": int(ano),
-                    "vl_deck_mmgd_exp": total_geracao
-                }
-
-                deck_info["data"].append(data)
-
-            decks_data.append(deck_info)
-        
-        return decks_data
-    
-    @staticmethod
-    def get_sist_carga_global_deck_values():
-        
-        # Get MMGD total values
-        mmgd_base_values = NewaveCadic.get_sist_mmgd_base_deck_values()
-        
-        subquery = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"]
-        ).distinct().order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
-
-        query = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"],
-            NewaveSistEnergia.tb.c["vl_mes"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            db.func.sum(NewaveSistEnergia.tb.c["vl_energia_total"]).label("vl_energia_total")
-        ).where(
-            NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
-        ).group_by(
-            NewaveSistEnergia.tb.c["dt_deck"],
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["vl_mes"]
-        ).order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc(),
-            NewaveSistEnergia.tb.c["vl_ano"],
-            NewaveSistEnergia.tb.c["vl_mes"]
-        )
-        
-        result = __DB__.db_execute(query)
-        df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'vl_deck_energia_total'
-        ])
-        
-        if df.empty:
-            return []
-        
-        # Criando um dicionário para relacionar os valores de MMGD total com energia total
-        mmgd_dict = {}
-        for deck in mmgd_base_values:
-            dt_deck = deck.get('dt_deck')
-            mmgd_dict[dt_deck] = {}
-            
-            for item in deck.get('data', []):
-                ano = item.get('vl_ano')
-                mes = item.get('vl_mes')
-                
-                if ano not in mmgd_dict[dt_deck]:
-                    mmgd_dict[dt_deck][ano] = {}
-                    
-                mmgd_dict[dt_deck][ano][mes] = item.get('vl_deck_mmgd_base', 0)
-        
-        # Adicionar coluna de MMGD total baseado no dicionário
-        df['vl_deck_mmgd_base'] = df.apply(
-            lambda row: mmgd_dict.get(
-                row['dt_deck'].strftime('%Y-%m-%d') if isinstance(row['dt_deck'], datetime.date) else str(row['dt_deck']), 
-                {}
-            ).get(
-                row['vl_ano'], 
-                {}
-            ).get(
-                row['vl_mes'], 
-                0
-            ),
-            axis=1
-        )
-        
-        # Calculando a carga global (soma da energia total e MMGD total)
-        df['vl_deck_carga_global'] = df['vl_deck_energia_total'] + df['vl_deck_mmgd_base']
-        
-        # Formatando o resultado final
-        decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
-            deck_info = {
-                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
-                "data": []
-            }
-            
-            for _, row in deck_group.iterrows():
-                data = {
-                    "vl_mes": int(row['vl_mes']),
-                    "vl_ano": int(row['vl_ano']),
-                    "vl_deck_carga_global": float(row['vl_deck_carga_global'])
-                }
-                deck_info["data"].append(data)
-            
-            decks_data.append(deck_info)
-        
-        return decks_data
-    
-    @staticmethod
-    def get_sist_carga_liquida_deck_values():
-        """
-        Calcula os valores de Carga Líquida (diferença entre Carga Global, MMGD Total e Usinas não simuladas)
-        para os dois decks mais recentes.
-        
-        Returns:
-            Lista com informações dos dois decks mais recentes, contendo dados
-            de Carga Líquida, organizados por mês e ano.
-        """
-        # Obter dados de Carga Global, MMGD Total e UNSI
-        carga_global_values = NewaveSistEnergia.get_sist_carga_global_deck_values()
-        mmgd_total_values = NewaveSistEnergia.get_sist_mmgd_total_deck_values()
-        unsi_values = NewaveSistEnergia.get_sist_unsi_deck_values()
-        
-        if not carga_global_values or not mmgd_total_values or not unsi_values:
-            return []
-            
-        carga_liquida_values = []
-        
-        for deck_global in carga_global_values:
-            dt_deck = deck_global.get('dt_deck')
-            
-            # Encontrar os decks correspondentes para MMGD e UNSI
-            deck_mmgd = None
-            deck_unsi = None
-            
-            for deck in mmgd_total_values:
-                if deck.get('dt_deck') == dt_deck:
-                    deck_mmgd = deck
-                    break
-                    
-            for deck in unsi_values:
-                if deck.get('dt_deck') == dt_deck:
-                    deck_unsi = deck
-                    break
-            
-            if deck_mmgd and deck_unsi:
-                # Criar dicionários para facilitar o acesso aos valores por (ano, mes)
-                mmgd_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_mmgd_total', 0) 
-                           for item in deck_mmgd.get('data', [])}
-                           
-                unsi_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_unsi', 0) 
-                           for item in deck_unsi.get('data', [])}
-                
-                deck_liquida = {
-                    "dt_deck": dt_deck,
-                    "data": []
-                }
-                
-                for item_global in deck_global.get('data', []):
-                    ano = item_global.get('vl_ano')
-                    mes = item_global.get('vl_mes')
-                    valor_global = item_global.get('vl_deck_carga_global', 0)
-                    
-                    # Obter valores correspondentes de MMGD e UNSI
-                    valor_mmgd = mmgd_dict.get((ano, mes), 0)
-                    valor_unsi = unsi_dict.get((ano, mes), 0)
-                    
-                    # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI
-                    carga_liquida = valor_global - valor_mmgd - valor_unsi
-                    
-                    item_liquida = {
-                        "vl_ano": ano,
-                        "vl_mes": mes,
-                        "vl_deck_carga_liquida": int(round(carga_liquida))
-                    }
-                    
-                    deck_liquida['data'].append(item_liquida)
-                
-                carga_liquida_values.append(deck_liquida)
-        
-        return carga_liquida_values
-    
-    @staticmethod
-    def get_sist_mmgd_total_deck_values():
-        """
-        Calcula os valores totais de MMGD (soma de MMGD base e MMGD expansão)
-        para os dois decks mais recentes.
-        
-        Returns:
-            Lista com informações dos decks, contendo dados agregados de MMGD total
-            (MMGD base + MMGD expansão), organizados por mês e ano.
-        """
-        # Obter dados do MMGD base e expansão
-        from . import service  # Importação local para evitar referência circular
-        mmgd_base_values = service.NewaveCadic.get_sist_mmgd_base_deck_values()
-        mmgd_exp_values = NewaveSistEnergia.get_sist_mmgd_expansao_deck_values()
-        
-        if not mmgd_base_values or not mmgd_exp_values:
-            return []
-            
-        mmgd_total_values = []
-        
-        for deck_base in mmgd_base_values:
-            dt_deck_base = deck_base.get('dt_deck')
-            
-            deck_exp = None
-            for deck in mmgd_exp_values:
-                if deck.get('dt_deck') == dt_deck_base:
-                    deck_exp = deck
-                    break
-            
-            if deck_exp:
-                exp_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_mmgd_exp', 0) 
-                           for item in deck_exp.get('data', [])}
-                
-                deck_total = {
-                    "dt_deck": dt_deck_base,
-                    "data": []
-                }
-                
-                for item_base in deck_base.get('data', []):
-                    ano = item_base.get('vl_ano')
-                    mes = item_base.get('vl_mes')
-                    valor_base = item_base.get('vl_deck_mmgd_base', 0)
-                    valor_exp = exp_dict.get((ano, mes), 0)
-                    
-                    item_total = {
-                        "vl_ano": ano,
-                        "vl_mes": mes,
-                        "vl_deck_mmgd_total": int(round(valor_base + valor_exp))
-                    }
-                    
-                    deck_total['data'].append(item_total)
-                
-                mmgd_total_values.append(deck_total)
-        
-        return mmgd_total_values
-    
-    
 class NewaveCadic:
     tb:db.Table = __DB__.getSchema('tb_nw_cadic')
     
@@ -1394,86 +1416,153 @@ class NewaveCadic:
     
     
 class NewavePatamarCargaUsina:
-    tb: db.Table = __DB__.getSchema('tb_nw_patamar_carga_usina')
+    tb: db.Table = __DB__.getSchema('newave_patamar_carga_usina')
 
     @staticmethod
     def post_newave_patamar_carga_usina(body: List[NewavePatamarCargaUsinaSchema]):
         body_dict = [x.model_dump() for x in body]
 
-        for item in body_dict:
-            # Convert dt_deck from string to date if it's a string
-            if isinstance(item['dt_deck'], str):
-                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+        df = pd.DataFrame(body_dict)
+        
+        if df.empty:
+            return {"message": "0 registros de patamar de carga de usina inseridos com sucesso"}
+        
+        df['dt_deck'] = pd.to_datetime(df['dt_deck']).dt.date
+        df['dt_referente'] = pd.to_datetime(df['dt_referente']).dt.date
 
-        # Delete existing records for each unique dt_deck
-        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
-        for date in unique_dates:
-            NewavePatamarCargaUsina.delete_patamar_carga_by_dt_deck(date)
+        dt_corte = datetime.datetime.today().replace(day=1).date()
+        
+        df_filtrado = df[df['dt_referente'] >= dt_corte].copy()
 
-        query = db.insert(NewavePatamarCargaUsina.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        # Regra 2: Para cada dt_referente que está chegando, 
+        # deletar do banco registros existentes com a mesma dt_referente mas dt_deck diferentes
+        dt_referentes_novos = df_filtrado['dt_referente'].unique()
+        dt_deck_novo = df_filtrado['dt_deck'].iloc[0]  
+
+        for dt_ref in dt_referentes_novos:
+            NewavePatamarCargaUsina.delete_patamar_carga_by_dt_referente_and_different_deck(dt_ref, dt_deck_novo)
+
+        # Converter DataFrame de volta para lista de dicionários
+        filtered_body_dict = df_filtrado.to_dict('records')
+
+        if filtered_body_dict:
+            query = db.insert(NewavePatamarCargaUsina.tb).values(filtered_body_dict)
+            rows = __DB__.db_execute(query, commit=prod).rowcount
+        else:
+            rows = 0
 
         return {"message": f"{rows} registros de patamar de carga de usina inseridos com sucesso"}
 
     @staticmethod
-    def delete_patamar_carga_by_dt_deck(dt_deck: datetime.date):
+    def delete_patamar_carga_by_dt_referente_and_different_deck(dt_referente: datetime.date, dt_deck_novo: datetime.date):
+        """
+        Deleta registros que tenham a mesma dt_referente mas dt_deck diferente do novo.
+        Isso garante que sempre mantemos a versão mais recente para cada dt_referente.
+        """
         query = db.delete(NewavePatamarCargaUsina.tb).where(
-            NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck
+            db.and_(
+                NewavePatamarCargaUsina.tb.c.dt_referente == dt_referente,
+                NewavePatamarCargaUsina.tb.c.dt_deck != dt_deck_novo
+            )
         )
 
         rows = __DB__.db_execute(query, commit=prod).rowcount
-
-        logger.info(f"{rows} linhas deletadas da tb_nw_patamar_carga_usina")
+        logger.info(f"{rows} linhas deletadas da newave_patamar_carga_usina para dt_referente {dt_referente} com dt_deck diferente de {dt_deck_novo}")
         return None
+  
     
     @staticmethod
-    def get_patamar_carga_by_dt_deck(dt_deck: datetime.date):
+    def get_patamar_carga_by_dt_referente(dt_inicial: datetime.date, dt_final: datetime.date, indice_bloco: Optional[IndiceBlocoEnum] = None):
+        """
+        Obtém os patamares de carga de usina para um intervalo de datas e, opcionalmente, um índice de bloco específico.
+        
+        Args:
+            dt_inicial: Data inicial do intervalo
+            dt_final: Data final do intervalo
+            indice_bloco: Índice de bloco opcional para filtrar os resultados (PCH, PCT, EOL, UFV, PCH_MMGD, PCT_MMGD, EOL_MMGD, UFV_MMGD)
+        
+        Returns:
+            Lista de patamares de carga como dicionários
+        """
+        conditions = [
+            NewavePatamarCargaUsina.tb.c.dt_referente >= dt_inicial,
+            NewavePatamarCargaUsina.tb.c.dt_referente <= dt_final
+        ]
+        
+        if indice_bloco is not None:
+            conditions.append(NewavePatamarCargaUsina.tb.c.indice_bloco == indice_bloco.value)
+        
         query = db.select(NewavePatamarCargaUsina.tb).where(
-            NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck
+            db.and_(*conditions)
         )
 
         result = __DB__.db_execute(query).fetchall()
 
         if not result:
-            raise HTTPException(
-                status_code=404, detail=f"Patamar de carga de usina para a data {dt_deck} não encontrado"
-            )
+            if indice_bloco is not None:
+                detail_msg = f"Patamar de carga de usina não encontrado para o intervalo {dt_inicial} a {dt_final} e índice de bloco {indice_bloco.value}"
+            else:
+                detail_msg = f"Patamar de carga de usina não encontrado para o intervalo {dt_inicial} a {dt_final}"
+            
+            raise HTTPException(status_code=404, detail=detail_msg)
 
         df = pd.DataFrame(result, columns=NewavePatamarCargaUsina.tb.columns.keys())
         return df.to_dict('records')
     
     
 class NewavePatamarIntercambio:
-    tb: db.Table = __DB__.getSchema('tb_nw_patamar_intercambio')
+    tb: db.Table = __DB__.getSchema('newave_patamar_intercambio')
 
     @staticmethod
     def post_newave_patamar_intercambio(body: List[NewavePatamarIntercambioSchema]):
         body_dict = [x.model_dump() for x in body]
 
-        for item in body_dict:
-            # Convert dt_deck from string to date if it's a string
-            if isinstance(item['dt_deck'], str):
-                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+        df = pd.DataFrame(body_dict)
+        
+        if df.empty:
+            return {"message": "0 registros de patamar de carga de usina inseridos com sucesso"}
+        
+        df['dt_deck'] = pd.to_datetime(df['dt_deck']).dt.date
+        df['dt_referente'] = pd.to_datetime(df['dt_referente']).dt.date
 
-        # Delete existing records for each unique dt_deck
-        unique_dates = list(set([x['dt_deck'] for x in body_dict]))
-        for date in unique_dates:
-            NewavePatamarIntercambio.delete_patamar_intercambio_by_dt_deck(date)
+        dt_corte = datetime.datetime.today().replace(day=1).date()
+        
+        df_filtrado = df[df['dt_referente'] >= dt_corte].copy()
 
-        query = db.insert(NewavePatamarIntercambio.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        # Regra 2: Para cada dt_referente que está chegando, 
+        # deletar do banco registros existentes com a mesma dt_referente mas dt_deck diferentes
+        dt_referentes_novos = df_filtrado['dt_referente'].unique()
+        dt_deck_novo = df_filtrado['dt_deck'].iloc[0]  
+
+        for dt_ref in dt_referentes_novos:
+            NewavePatamarIntercambio.delete_patamar_intercambio_by_dt_referente_and_different_deck(dt_ref, dt_deck_novo)
+
+        # Converter DataFrame de volta para lista de dicionários
+        filtered_body_dict = df_filtrado.to_dict('records')
+
+        if filtered_body_dict:
+            query = db.insert(NewavePatamarIntercambio.tb).values(filtered_body_dict)
+            rows = __DB__.db_execute(query, commit=prod).rowcount
+        else:
+            rows = 0
 
         return {"message": f"{rows} registros de patamar de intercâmbio inseridos com sucesso"}
 
     @staticmethod
-    def delete_patamar_intercambio_by_dt_deck(dt_deck: datetime.date):
+    def delete_patamar_intercambio_by_dt_referente_and_different_deck(dt_referente: datetime.date, dt_deck_novo: datetime.date):
+        """
+        Deleta registros que tenham a mesma dt_referente mas dt_deck diferente do novo.
+        Isso garante que sempre mantemos a versão mais recente para cada dt_referente.
+        """
         query = db.delete(NewavePatamarIntercambio.tb).where(
-            NewavePatamarIntercambio.tb.c.dt_deck == dt_deck
+            db.and_(
+                NewavePatamarIntercambio.tb.c.dt_referente == dt_referente,
+                NewavePatamarIntercambio.tb.c.dt_deck != dt_deck_novo
+            )
         )
 
         rows = __DB__.db_execute(query, commit=prod).rowcount
-
-        logger.info(f"{rows} linhas deletadas da tb_nw_patamar_intercambio")
+        logger.info(f"{rows} linhas deletadas da newave_patamar_intercambio para dt_referente {dt_referente} com dt_deck diferente de {dt_deck_novo}")
         return None
     
     @staticmethod
@@ -1488,6 +1577,36 @@ class NewavePatamarIntercambio:
             raise HTTPException(
                 status_code=404, detail=f"Patamar de intercâmbio para a data {dt_deck} não encontrado"
             )
+
+        df = pd.DataFrame(result, columns=NewavePatamarIntercambio.tb.columns.keys())
+        return df.to_dict('records')
+
+    @staticmethod
+    def get_patamar_intercambio_by_dt_referente(dt_inicial: datetime.date, dt_final: datetime.date):
+        """
+        Obtém os patamares de intercâmbio para um intervalo de datas de referência.
+        
+        Args:
+            dt_inicial: Data inicial do intervalo
+            dt_final: Data final do intervalo
+        
+        Returns:
+            Lista de patamares de intercâmbio como dicionários
+        """
+        conditions = [
+            NewavePatamarIntercambio.tb.c.dt_referente >= dt_inicial,
+            NewavePatamarIntercambio.tb.c.dt_referente <= dt_final
+        ]
+        
+        query = db.select(NewavePatamarIntercambio.tb).where(
+            db.and_(*conditions)
+        )
+
+        result = __DB__.db_execute(query).fetchall()
+
+        if not result:
+            detail_msg = f"Patamar de intercâmbio não encontrado para o intervalo {dt_inicial} a {dt_final}"
+            raise HTTPException(status_code=404, detail=detail_msg)
 
         df = pd.DataFrame(result, columns=NewavePatamarIntercambio.tb.columns.keys())
         return df.to_dict('records')
@@ -1547,11 +1666,11 @@ class CheckCvu:
         return CheckCvu.get_by_id(check_cvu_id)
 
     @staticmethod
-    def get_by_data_atualizacao_title(data_atualizacao: datetime.datetime, title: str) -> CheckCvuReadDto:
+    def get_by_data_atualizacao_tipo_cvu(data_atualizacao: datetime.datetime, tipo_cvu: TipoCvuEnum) -> CheckCvuReadDto:
         select_query = db.select(
             CheckCvu.tb
         ).where(db.and_(
-                CheckCvu.tb.c['tipo_cvu'] == title,
+                CheckCvu.tb.c['tipo_cvu'] == tipo_cvu.value,
                 CheckCvu.tb.c['data_atualizacao'] == data_atualizacao))
         record = __DB__.db_execute(select_query).fetchone()
 
@@ -1576,7 +1695,7 @@ class CheckCvu:
         count_query = db.select(db.func.count()).select_from(CheckCvu.tb)
         total_records = __DB__.db_execute(count_query).scalar()
 
-        select_query = db.select(CheckCvu.tb).limit(page_size).offset(offset)
+        select_query = db.select(CheckCvu.tb).order_by(CheckCvu.tb.c.id.desc()).limit(page_size).offset(offset)
         records = __DB__.db_execute(select_query).fetchall()
 
         check_cvus = []
@@ -1601,3 +1720,86 @@ class CheckCvu:
                 "previous_page": page - 1 if has_previous else None
             }
         }
+
+class DessemPrevisao:
+    tb_ds_carga: db.Table = __DB__.getSchema('tb_ds_carga')
+    tb_submercado: db.Table = __DB__.getSchema('tb_submercado')
+
+    @staticmethod
+    def get_previsao_dessem():
+        """
+        Pega previsão IPDO:
+        - deck mais recente completo
+        - se faltarem registros de hoje, busca somente hoje no deck anterior
+        Agrega por dia e sigla, e retorna dict aninhado.
+        """
+        hoje = datetime.date.today()
+
+        max_deck_subquery = db.select(
+            db.func.max(DessemPrevisao.tb_ds_carga.c.id_deck)
+        ).scalar_subquery()
+
+        prev_deck_subquery = db.select(
+            db.func.max(DessemPrevisao.tb_ds_carga.c.id_deck)
+        ).where(
+            DessemPrevisao.tb_ds_carga.c.id_deck < max_deck_subquery
+        ).scalar_subquery()
+
+        query_max = db.select(
+            DessemPrevisao.tb_submercado.c.str_sigla.label('sigla'),
+            DessemPrevisao.tb_ds_carga.c.dataHora,
+            DessemPrevisao.tb_ds_carga.c.vl_carga
+        ).select_from(
+            DessemPrevisao.tb_ds_carga.join(
+                DessemPrevisao.tb_submercado,
+                DessemPrevisao.tb_ds_carga.c.cd_submercado == DessemPrevisao.tb_submercado.c.cd_submercado
+            )
+        ).where(
+            DessemPrevisao.tb_ds_carga.c.id_deck == max_deck_subquery
+        )
+
+        rows_max = __DB__.db_execute(query_max).fetchall()
+        df_max = pd.DataFrame(rows_max, columns=['sigla', 'dataHora', 'vl_carga'])
+        
+        if df_max.empty:
+            return {}
+
+        df_max['day'] = pd.to_datetime(df_max['dataHora']).dt.date.astype(str)
+
+        existe_hoje = (df_max['day'] == str(hoje)).any()
+
+        if not existe_hoje:
+            query_prev = db.select(
+                DessemPrevisao.tb_submercado.c.str_sigla.label('sigla'),
+                DessemPrevisao.tb_ds_carga.c.dataHora,
+                DessemPrevisao.tb_ds_carga.c.vl_carga
+            ).select_from(
+                DessemPrevisao.tb_ds_carga.join(
+                    DessemPrevisao.tb_submercado,
+                    DessemPrevisao.tb_ds_carga.c.cd_submercado == DessemPrevisao.tb_submercado.c.cd_submercado
+                )
+            ).where(
+                db.and_(
+                    DessemPrevisao.tb_ds_carga.c.id_deck == prev_deck_subquery,
+                    db.func.date(DessemPrevisao.tb_ds_carga.c.dataHora) == hoje
+                )
+            )
+
+            rows_prev = __DB__.db_execute(query_prev).fetchall()
+            df_prev = pd.DataFrame(rows_prev, columns=['sigla', 'dataHora', 'vl_carga'])
+            
+            if not df_prev.empty:
+                df_prev['day'] = pd.to_datetime(df_prev['dataHora']).dt.date.astype(str)
+                df_max = pd.concat([df_max, df_prev], ignore_index=True)
+
+        daily_avg = (
+            df_max
+            .groupby(['sigla', 'day'], as_index=False)
+            .agg(avg_vl_carga=('vl_carga', 'mean'))
+        )
+
+        nested = {}
+        for sigla, group in daily_avg.groupby('sigla'):
+            nested[sigla] = group[['day', 'avg_vl_carga']].to_dict('records')
+
+        return nested

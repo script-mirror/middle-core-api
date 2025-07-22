@@ -581,7 +581,7 @@ class db_mysql_master():
                                     db.Column('vl_geracao_eol_mmgd', db.Float),
                                     db.Column('vl_geracao_ufv_mmgd', db.Float),
                                     db.Column('dt_deck', db.DateTime),
-                                    db.Column('fonte', db.String(100)),
+                                    db.Column('versao', db.String(10)),
                                     extend_existing=True
                                     )
 
@@ -599,7 +599,7 @@ class db_mysql_master():
                                     db.Column('vl_boa_vista', db.Float),
                                     db.Column('vl_mmgd_n', db.Float),
                                     db.Column('dt_deck', db.DateTime),
-                                    db.Column('fonte', db.String(100)),
+                                    db.Column('versao', db.String(10)),
                                     )
 
         elif table_name.lower() == 'tb_postos_completo':
@@ -1525,7 +1525,7 @@ class db_mysql_master():
                                     db.Column('duracao_mensal', db.Numeric(5, 4), nullable=True),
                                     db.Column('indice_bloco', db.String(8), nullable=True),
                                     db.Column('dt_deck', db.Date, nullable=True),
-                                    db.Column('fonte', db.String(4), nullable=True),
+                                    db.Column('versao', db.String(10), nullable=True),
                                     extend_existing=True
                                     )
             
@@ -1539,7 +1539,7 @@ class db_mysql_master():
                                     db.Column('pu_intercambio_med', db.Numeric(5, 4), nullable=True),
                                     db.Column('duracao_mensal', db.Numeric(5, 4), nullable=True),
                                     db.Column('dt_deck', db.Date, nullable=True),
-                                    db.Column('fonte', db.String(4), nullable=True),
+                                    db.Column('versao', db.String(10), nullable=True),
                                     extend_existing=True
                                     )
 

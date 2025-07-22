@@ -129,7 +129,7 @@ class CargaNewaveSistemaEnergiaSchema(BaseModel):
     vl_geracao_eol_mmgd: float
     vl_geracao_ufv_mmgd: float
     dt_deck: datetime.datetime
-    fonte: str
+    versao: str
 
 
 class CargaNewaveCadicSchema(BaseModel):
@@ -143,7 +143,7 @@ class CargaNewaveCadicSchema(BaseModel):
     vl_mmgd_ne: float
     vl_mmgd_n: float
     dt_deck: datetime.datetime
-    fonte: str
+    versao: str
         
 class NewavePatamarCargaUsinaSchema(BaseModel):
     dt_referente: Optional[datetime.date] = None
@@ -153,7 +153,7 @@ class NewavePatamarCargaUsinaSchema(BaseModel):
     duracao_mensal: Optional[float] = None
     indice_bloco: Optional[IndiceBlocoEnum] = None
     dt_deck: Optional[datetime.date] = None
-    fonte: Optional[str] = None
+    versao: Optional[str] = None
 
 
 class NewavePatamarIntercambioSchema(BaseModel):
@@ -164,7 +164,7 @@ class NewavePatamarIntercambioSchema(BaseModel):
     pu_intercambio_med: Optional[float] = None
     duracao_mensal: Optional[float] = None
     dt_deck: Optional[datetime.date] = None
-    fonte: Optional[str] = None
+    versao: Optional[str] = None
 
 class CheckCvuCreateDto(BaseModel):
     tipo_cvu: Optional[TipoCvuEnum] = None

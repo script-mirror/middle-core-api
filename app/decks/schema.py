@@ -11,6 +11,18 @@ class TipoCvuEnum(str, Enum):
     custo_variavel_unitario_merchant = "merchant"
 
 
+class IndiceBlocoEnum(str, Enum):
+    CARGA = "CARGA"
+    PCH = "PCH"
+    PCT = "PCT"
+    EOL = "EOL"
+    UFV = "UFV"
+    PCH_MMGD = "PCH_MMGD"
+    PCT_MMGD = "PCT_MMGD"
+    EOL_MMGD = "EOL_MMGD"
+    UFV_MMGD = "UFV_MMGD"
+
+
 class PatamaresDecompSchema(BaseModel):
     inicio: datetime.datetime
     patamar: str
@@ -117,7 +129,7 @@ class CargaNewaveSistemaEnergiaSchema(BaseModel):
     vl_geracao_eol_mmgd: float
     vl_geracao_ufv_mmgd: float
     dt_deck: datetime.datetime
-    fonte: str
+    versao: str
 
 
 class CargaNewaveCadicSchema(BaseModel):
@@ -131,8 +143,28 @@ class CargaNewaveCadicSchema(BaseModel):
     vl_mmgd_ne: float
     vl_mmgd_n: float
     dt_deck: datetime.datetime
-    fonte: str
+    versao: str
+        
+class NewavePatamarCargaUsinaSchema(BaseModel):
+    dt_referente: Optional[datetime.date] = None
+    patamar: Optional[str] = None
+    submercado: Optional[str] = None
+    valor_pu: Optional[float] = None
+    duracao_mensal: Optional[float] = None
+    indice_bloco: Optional[IndiceBlocoEnum] = None
+    dt_deck: Optional[datetime.date] = None
+    versao: Optional[str] = None
 
+
+class NewavePatamarIntercambioSchema(BaseModel):
+    dt_referente: Optional[datetime.date] = None
+    patamar: Optional[str] = None
+    submercado_de: Optional[str] = None
+    submercado_para: Optional[str] = None
+    pu_intercambio_med: Optional[float] = None
+    duracao_mensal: Optional[float] = None
+    dt_deck: Optional[datetime.date] = None
+    versao: Optional[str] = None
 
 class CheckCvuCreateDto(BaseModel):
     tipo_cvu: Optional[TipoCvuEnum] = None

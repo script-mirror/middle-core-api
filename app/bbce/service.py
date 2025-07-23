@@ -355,7 +355,7 @@ background-color: #C7DBD2;
   background-color: #CFE2FF;
 }
 .dark{
-  background-color: #212529;
+  background-color: #000000;
   color: #FFFFFF;
 }
 *{

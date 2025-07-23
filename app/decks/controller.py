@@ -212,7 +212,7 @@ def get_sist_carga_global_deck_values():
 def get_sist_carga_liquida_deck_values():
     return service.NewaveSistEnergia.get_sist_carga_liquida_deck_values()
 
-@router.get("/newave/mmgd_total", tags=["Newave"])
+@router.get("/newave/sistema/mmgd_total", tags=["Newave"])
 def get_sist_mmgd_total_deck_values():
     """
     Retorna os valores totais de MMGD (soma de MMGD base e MMGD expansão)
@@ -224,6 +224,7 @@ def get_sist_mmgd_total_deck_values():
     """
     return service.NewaveSistEnergia.get_sist_mmgd_total_deck_values()
 
+
 @router.post("/newave/cadic", tags=["Newave"])
 def post_newave_cadic(
     body: List[CargaNewaveCadicSchema]
@@ -233,6 +234,10 @@ def post_newave_cadic(
 @router.get("/newave/cadic/mmgd_base", tags=["Newave"])
 def get_sist_mmgd_base_deck_values():
     return service.NewaveCadic.get_sist_mmgd_base_deck_values()
+
+@router.get("/newave/cadic/ande", tags=["Newave"])
+def get_cadic_ande_deck_values():
+    return service.NewaveCadic.get_cadic_ande_deck_values()
 
 
 @router.post("/newave/patamar/carga_usinas", tags=["Newave"])

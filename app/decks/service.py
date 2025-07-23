@@ -1281,19 +1281,20 @@ class NewaveSistEnergia:
     @staticmethod
     def get_sist_carga_liquida_deck_values():
         """
-        Calcula os valores de Carga Líquida (diferença entre Carga Global, MMGD Total e Usinas não simuladas)
+        Calcula os valores de Carga Líquida (diferença entre Carga Global, MMGD Total, UNSI e ANDE)
         para os dois decks mais recentes.
         
         Returns:
             Lista com informações dos dois decks mais recentes, contendo dados
             de Carga Líquida, organizados por mês e ano.
         """
-        # Obter dados de Carga Global, MMGD Total e UNSI
+        # Obter dados de Carga Global, MMGD Total, UNSI e ANDE
         carga_global_values = NewaveSistEnergia.get_sist_carga_global_deck_values()
         mmgd_total_values = NewaveSistEnergia.get_sist_mmgd_total_deck_values()
         unsi_values = NewaveSistEnergia.get_sist_unsi_deck_values()
+        ande_values = NewaveSistEnergia.get_sist_ande_deck_values()
         
-        if not carga_global_values or not mmgd_total_values or not unsi_values:
+        if not carga_global_values or not mmgd_total_values or not unsi_values or not ande_values:
             return []
             
         carga_liquida_values = []
@@ -1301,9 +1302,10 @@ class NewaveSistEnergia:
         for deck_global in carga_global_values:
             dt_deck = deck_global.get('dt_deck')
             
-            # Encontrar os decks correspondentes para MMGD e UNSI
+            # Encontrar os decks correspondentes para MMGD, UNSI e ANDE
             deck_mmgd = None
             deck_unsi = None
+            deck_ande = None
             
             for deck in mmgd_total_values:
                 if deck.get('dt_deck') == dt_deck:
@@ -1314,14 +1316,22 @@ class NewaveSistEnergia:
                 if deck.get('dt_deck') == dt_deck:
                     deck_unsi = deck
                     break
+                    
+            for deck in ande_values:
+                if deck.get('dt_deck') == dt_deck:
+                    deck_ande = deck
+                    break
             
-            if deck_mmgd and deck_unsi:
+            if deck_mmgd and deck_unsi and deck_ande:
                 # Criar dicionários para facilitar o acesso aos valores por (ano, mes)
                 mmgd_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_mmgd_total', 0) 
                            for item in deck_mmgd.get('data', [])}
                            
                 unsi_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_unsi', 0) 
                            for item in deck_unsi.get('data', [])}
+                           
+                ande_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_ande_total', 0) 
+                           for item in deck_ande.get('data', [])}
                 
                 deck_liquida = {
                     "dt_deck": dt_deck,
@@ -1333,12 +1343,13 @@ class NewaveSistEnergia:
                     mes = item_global.get('vl_mes')
                     valor_global = item_global.get('vl_deck_carga_global', 0)
                     
-                    # Obter valores correspondentes de MMGD e UNSI
+                    # Obter valores correspondentes de MMGD, UNSI e ANDE
                     valor_mmgd = mmgd_dict.get((ano, mes), 0)
                     valor_unsi = unsi_dict.get((ano, mes), 0)
+                    valor_ande = ande_dict.get((ano, mes), 0)
                     
-                    # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI
-                    carga_liquida = valor_global - valor_mmgd - valor_unsi
+                    # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI - ANDE
+                    carga_liquida = valor_global - valor_mmgd - valor_unsi - valor_ande
                     
                     item_liquida = {
                         "vl_ano": ano,
@@ -1407,6 +1418,18 @@ class NewaveSistEnergia:
                 mmgd_total_values.append(deck_total)
         
         return mmgd_total_values
+
+    @staticmethod
+    def get_sist_ande_deck_values():
+        """
+        Obtém os valores de ANDE para os dois decks mais recentes.
+        
+        Returns:
+            Lista com informações dos dois decks mais recentes, contendo dados
+            de ANDE total, organizados por mês e ano.
+        """
+        # Chama a função do NewaveCadic que já implementa a lógica
+        return NewaveCadic.get_cadic_ande_deck_values()
 
 
 class NewaveCadic:
@@ -1595,6 +1618,64 @@ class NewaveCadic:
 
         return decks_data
     
+    @staticmethod
+    def get_cadic_ande_deck_values():
+        subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"]
+        ).distinct().order_by(
+            NewaveCadic.tb.c["dt_deck"].desc()
+        ).limit(2).alias('latest_decks')
+
+        query = db.select(
+            NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["vl_mes"],
+            NewaveCadic.tb.c["vl_ano"],
+            db.func.sum(NewaveCadic.tb.c["vl_ande"]).label("vl_ande"),
+            
+        ).where(
+            NewaveCadic.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+        ).group_by(
+            NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["vl_ano"],
+            NewaveCadic.tb.c["vl_mes"]
+        ).order_by(
+            NewaveCadic.tb.c["dt_deck"].desc(),
+            NewaveCadic.tb.c["vl_ano"],
+            NewaveCadic.tb.c["vl_mes"]
+        )
+        
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+            'dt_deck', 'vl_mes', 'vl_ano', 'vl_ande'
+        ])
+        
+        if df.empty:
+            return []
+
+        decks_data = []
+        for dt_deck, deck_group in df.groupby('dt_deck'):
+            deck_info = {
+                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "data": []
+            }
+
+            for (ano, mes), month_group in deck_group.groupby(['vl_ano', 'vl_mes']):
+                row = month_group.iloc[0]
+
+                total_geracao = float(row['vl_ande'])
+            
+                data = {
+                    "vl_mes": int(mes),
+                    "vl_ano": int(ano),
+                    "vl_ande_total": total_geracao
+                }
+
+                deck_info["data"].append(data)
+
+            decks_data.append(deck_info)
+
+        return decks_data
+  
     
 class NewavePatamarCargaUsina:
     tb: db.Table = __DB__.getSchema('newave_patamar_carga_usina')
@@ -1737,7 +1818,6 @@ class NewavePatamarCargaUsina:
         )
 
         rows = __DB__.db_execute(query, commit=prod).rowcount
-        logger.info(f"{rows} linhas deletadas da newave_patamar_carga_usina para dt_referente {dt_referente} com dt_deck diferente de {dt_deck_novo}")
         return None
   
     
@@ -1921,7 +2001,6 @@ class NewavePatamarIntercambio:
         )
 
         rows = __DB__.db_execute(query, commit=prod).rowcount
-        logger.info(f"{rows} linhas deletadas da newave_patamar_intercambio para dt_referente {dt_referente} com dt_deck diferente de {dt_deck_novo}")
         return None
     
     @staticmethod

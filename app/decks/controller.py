@@ -16,13 +16,18 @@ def post_weol(
 ):
     return service.WeolSemanal.create(body)
 
-
 @router.get("/weol", tags=["Decomp"])
 def get_weol(
     data_produto: datetime.date
 ):
     return service.WeolSemanal.get_by_product_date(data_produto)
 
+@router.get("/weol/last-deck-date", tags=["Decomp"])
+def get_last_deck_date_weol():
+    """
+    Retorna a data do último deck de WEOL disponível.
+    """
+    return service.WeolSemanal.get_last_deck_date_weol()
 
 @router.get("/weol/product-date", tags=["Decomp"])
 def get_by_product_date_start_week_year_month_rv(

@@ -56,6 +56,17 @@ class WeolSemanal:
         rows = __DB__.db_execute(query, commit=prod).rowcount
         logger.info(f"{rows} linhas deletadas da tb_dc_weol_semanal")
         return None
+    
+    @staticmethod
+    def get_last_deck_date_weol():
+        
+        query = db.select(
+            db.func.max(WeolSemanal.tb.c.data_produto)
+        )
+        
+        result = __DB__.db_execute(query).fetchone()
+        
+        return result[0]
 
     @staticmethod
     def get_all():

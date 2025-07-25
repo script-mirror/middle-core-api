@@ -1386,7 +1386,7 @@ class NewaveSistEnergia:
         """
         # Obter dados do MMGD base e expansão
         from . import service  # Importação local para evitar referência circular
-        mmgd_base_values = service.NewaveCadic.get_sist_mmgd_base_deck_values()
+        mmgd_base_values = service.NewaveCadic.get_cadic_mmgd_base_deck_values()
         mmgd_exp_values = NewaveSistEnergia.get_sist_mmgd_expansao_deck_values()
         
         if not mmgd_base_values or not mmgd_exp_values:

@@ -1203,7 +1203,7 @@ class NewaveSistEnergia:
     def get_sist_carga_global_deck_values():
         
         # Get MMGD total values
-        mmgd_base_values = NewaveCadic.get_sist_mmgd_base_deck_values()
+        mmgd_base_values = NewaveCadic.get_cadic_mmgd_base_deck_values()
         
         subquery = db.select(
             NewaveSistEnergia.tb.c["dt_deck"]

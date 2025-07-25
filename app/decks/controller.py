@@ -237,8 +237,8 @@ def post_newave_cadic(
     return service.NewaveCadic.post_newave_cadic(body)
 
 @router.get("/newave/cadic/mmgd_base", tags=["Newave"])
-def get_sist_mmgd_base_deck_values():
-    return service.NewaveCadic.get_sist_mmgd_base_deck_values()
+def get_cadic_mmgd_base_deck_values():
+    return service.NewaveCadic.get_cadic_mmgd_base_deck_values()
 
 @router.get("/newave/cadic/ande", tags=["Newave"])
 def get_cadic_ande_deck_values():

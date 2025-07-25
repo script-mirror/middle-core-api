@@ -1359,8 +1359,8 @@ class NewaveSistEnergia:
                     valor_unsi = unsi_dict.get((ano, mes), 0)
                     valor_ande = ande_dict.get((ano, mes), 0)
                     
-                    # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI - ANDE
-                    carga_liquida = valor_global - valor_mmgd - valor_unsi - valor_ande
+                    # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI + ANDE
+                    carga_liquida = valor_global - valor_mmgd - valor_unsi + valor_ande
                     
                     item_liquida = {
                         "vl_ano": ano,
@@ -1568,7 +1568,7 @@ class NewaveCadic:
         return None
     
     @staticmethod
-    def get_sist_mmgd_base_deck_values():
+    def get_cadic_mmgd_base_deck_values():
         
         subquery = db.select(
             NewaveCadic.tb.c["dt_deck"]

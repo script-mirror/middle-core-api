@@ -519,21 +519,23 @@ class Rdh:
         )
         result = __DB__.db_execute(query).fetchall()
         df = pd.DataFrame(result, columns=[
-            "cd_posto"
-            "vl_vol_arm_perc"
-            "vl_mlt_vaz"
-            "vl_vaz_dia"
-            "vl_vaz_turb"
-            "vl_vaz_vert"
-            "vl_vaz_dfl"
-            "vl_vaz_transf"
-            "vl_vaz_afl"
-            "vl_vaz_inc"
-            "vl_vaz_consunt"
-            "vl_vaz_evp"
-            "dt_referente"
+            "cd_posto",
+            "vl_vol_arm_perc",
+            "vl_mlt_vaz",
+            "vl_vaz_dia",
+            "vl_vaz_turb",
+            "vl_vaz_vert",
+            "vl_vaz_dfl",
+            "vl_vaz_transf",
+            "vl_vaz_afl",
+            "vl_vaz_inc",
+            "vl_vaz_consunt",
+            "vl_vaz_evp",
+            "dt_referente",
         ])
-        return df.to_dict('records')
+        return df.replace(
+            {np.nan: None, np.inf: None, -np.inf: None}
+            ).to_dict('records')
 
     @staticmethod
     def remove_rdh_by_dt_referente(dt_referente: datetime.date):

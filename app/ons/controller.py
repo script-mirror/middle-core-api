@@ -9,6 +9,7 @@ from .schema import (
     EnaAcomphSchema,
     GranularidadeEnum,
     AcomphSchema,
+    RdhCreateDto
 )
 from app.core.utils import cache
 
@@ -141,3 +142,38 @@ def get_acompanhamento_ipdo(
     Obtém acompanhamento IPDO (carga) por data de referência.
     """
     return service.CargaIpdo.get_acompanhamento_ipdo(dtref)
+
+
+@router.get('/rdh')
+def get_rdh_by_data_referente(
+    data_referente: datetime.date
+):
+    """
+    Obtém RDH pela data do produto.
+    """
+    return service.Rdh.get_rdh_by_dt_referente(
+        data_referente
+    )
+
+@router.delete('/rdh')
+def remove_rdh_by_data_referente(
+    data_referente: datetime.date
+):
+    """
+    Remove RDH pela data do produto.
+    """
+    return service.Rdh.remove_rdh_by_dt_referente(
+        data_referente
+    )
+
+
+@router.post('/rdh')
+def post_rdh(
+    body: List[RdhCreateDto]
+):
+    """
+    Insere RDH.
+    """
+    return service.Rdh.post_rdh(
+        [item.model_dump() for item in body]
+    )

@@ -29,3 +29,18 @@ class AcomphSchema(BaseModel):
     vl_vaz_inc_conso: float | None
     vl_vaz_nat_conso: float | None
     dt_acomph: datetime.date
+
+class RdhCreateDto:
+    cd_posto: int
+    vl_vol_arm_perc: Optional[float] = None
+    vl_mlt_vaz: Optional[float] = None
+    vl_vaz_dia: Optional[float] = None
+    vl_vaz_turb: Optional[float] = None
+    vl_vaz_vert: Optional[float] = None
+    vl_vaz_dfl: Optional[float] = None
+    vl_vaz_transf: Optional[float] = None
+    vl_vaz_afl: Optional[float] = None
+    vl_vaz_inc: Optional[float] = None
+    vl_vaz_consunt: Optional[float] = None
+    vl_vaz_evp: Optional[float] = None
+    dt_referente: datetime.date

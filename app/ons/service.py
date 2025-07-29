@@ -495,6 +495,69 @@ class CargaIpdo:
         return ipdo_Verificado
 
 
+class Rdh:
+    tb: db.Table = __DB__.getSchema('tb_rdh')
+
+    @staticmethod
+    def get_rdh_by_dt_referente(dt_referente: datetime.date):
+        query = db.select(
+            Rdh.tb.c["cd_posto"],
+            Rdh.tb.c["vl_vol_arm_perc"],
+            Rdh.tb.c["vl_mlt_vaz"],
+            Rdh.tb.c["vl_vaz_dia"],
+            Rdh.tb.c["vl_vaz_turb"],
+            Rdh.tb.c["vl_vaz_vert"],
+            Rdh.tb.c["vl_vaz_dfl"],
+            Rdh.tb.c["vl_vaz_transf"],
+            Rdh.tb.c["vl_vaz_afl"],
+            Rdh.tb.c["vl_vaz_inc"],
+            Rdh.tb.c["vl_vaz_consunt"],
+            Rdh.tb.c["vl_vaz_evp"],
+            Rdh.tb.c["dt_referente"]
+        ).where(
+            Rdh.tb.c['dt_referente'] == dt_referente
+        )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            "cd_posto"
+            "vl_vol_arm_perc"
+            "vl_mlt_vaz"
+            "vl_vaz_dia"
+            "vl_vaz_turb"
+            "vl_vaz_vert"
+            "vl_vaz_dfl"
+            "vl_vaz_transf"
+            "vl_vaz_afl"
+            "vl_vaz_inc"
+            "vl_vaz_consunt"
+            "vl_vaz_evp"
+            "dt_referente"
+        ])
+        return df.to_dict('records')
+
+    @staticmethod
+    def remove_rdh_by_dt_referente(dt_referente: datetime.date):
+        data_str = dt_referente.strftime('%Y-%m-%d 00:00:00')
+        query = db.delete(Rdh.tb).where(
+            Rdh.tb.c['dt_referente'] == data_str
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes": result.rowcount}
+
+    @staticmethod
+    def post_rdh(
+        body: List[dict]
+    ):
+        """
+        Insere ou atualiza os dados de RDH.
+        """
+        df = pd.DataFrame(body)
+        Rdh.remove_rdh_by_dt_referente(df['dt_referente'].unique().tolist()[0])
+        query = db.insert(Rdh.tb).values(df.to_dict('records'))
+        result = __DB__.db_execute(query)
+        return {"inserts": result.rowcount}
+
+
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

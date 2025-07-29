@@ -30,7 +30,7 @@ class AcomphSchema(BaseModel):
     vl_vaz_nat_conso: float | None
     dt_acomph: datetime.date
 
-class RdhCreateDto:
+class RdhCreateDto(BaseModel):
     cd_posto: int
     vl_vol_arm_perc: Optional[float] = None
     vl_mlt_vaz: Optional[float] = None

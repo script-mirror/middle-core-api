@@ -14,17 +14,13 @@ RUN apk add --no-cache \
 RUN apk add --no-cache \
     ffmpeg \
     tzdata \
-    chromium \
-    chromium-chromedriver \
     xvfb-run \
     && ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
     && echo "America/Sao_Paulo" > /etc/timezone
 
 ENV LANG=pt_BR.UTF-8 \
     LC_ALL=pt_BR.UTF-8 \
-    TZ=America/Sao_Paulo \
-    CHROME_BIN=/usr/bin/chromium-browser \
-    CHROME_PATH=/usr/lib/chromium/
+    TZ=America/Sao_Paulo
 
 COPY . /app
 

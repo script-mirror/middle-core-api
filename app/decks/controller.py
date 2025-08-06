@@ -197,25 +197,31 @@ def get_carga_pmo_historico_previsao(
 
 @router.post("/newave/sistema", tags=["Newave"])
 def post_newave_sist_energia(
-    body: List[CargaNewaveSistemaEnergiaSchema]
+    body: List[CargaNewaveSistemaEnergiaCreateDto]
 ):
     return service.NewaveSistEnergia.post_newave_sist_energia(body)
 
-@router.get("/newave/sistema/unsi", tags=["Newave"])
-def get_sist_unsi_deck_values():
-    return service.NewaveSistEnergia.get_sist_unsi_deck_values()
+@router.get("/newave/sistema/total_unsi", tags=["Newave"])
+def get_sist_total_unsi_deck_values():
+    return service.NewaveSistEnergia.get_sist_total_unsi_deck_values()
 
-@router.get("/newave/sistema/mmgd_expansao", tags=["Newave"])
-def get_sist_mmgd_expansao_deck_values():
-    return service.NewaveSistEnergia.get_sist_mmgd_expansao_deck_values()
+@router.get("/newave/sistema/total_mmgd_expansao", tags=["Newave"])
+def get_sist_total_mmgd_expansao_deck_values():
+    return service.NewaveSistEnergia.get_sist_total_mmgd_expansao_deck_values()
 
-@router.get("/newave/sistema/cargas/carga_global", tags=["Newave"])
-def get_sist_carga_global_deck_values():
-    return service.NewaveSistEnergia.get_sist_carga_global_deck_values()
+@router.put("/newave/sistema/total_mmgd_expansao", tags=["Newave"])
+def put_sist_mmgd_com_previsoes_cargas_mensais(
+    body: List[CargaNewaveSistemaEnergiaUpdateDto]
+):
+    return service.NewaveSistEnergia.put_sist_mmgd_com_previsoes_cargas_mensais(body)
 
-@router.get("/newave/sistema/cargas/carga_liquida", tags=["Newave"])
-def get_sist_carga_liquida_deck_values():
-    return service.NewaveSistEnergia.get_sist_carga_liquida_deck_values()
+@router.get("/newave/sistema/cargas/total_carga_global", tags=["Newave"])
+def get_sist_total_carga_global_deck_values():
+    return service.NewaveSistEnergia.get_sist_total_carga_global_deck_values()
+
+@router.get("/newave/sistema/cargas/total_carga_liquida", tags=["Newave"])
+def get_sist_total_carga_liquida_deck_values():
+    return service.NewaveSistEnergia.get_sist_total_carga_liquida_deck_values()
 
 @router.get("/newave/sistema/mmgd_total", tags=["Newave"])
 def get_sist_mmgd_total_deck_values():
@@ -232,17 +238,23 @@ def get_sist_mmgd_total_deck_values():
 
 @router.post("/newave/cadic", tags=["Newave"])
 def post_newave_cadic(
-    body: List[CargaNewaveCadicSchema]
+    body: List[CargaNewaveCadicCreateDto]
 ):
     return service.NewaveCadic.post_newave_cadic(body)
 
-@router.get("/newave/cadic/mmgd_base", tags=["Newave"])
-def get_cadic_mmgd_base_deck_values():
-    return service.NewaveCadic.get_cadic_mmgd_base_deck_values()
+@router.get("/newave/cadic/total_mmgd_base", tags=["Newave"])
+def get_cadic_total_mmgd_base_deck_values():
+    return service.NewaveCadic.get_cadic_total_mmgd_base_deck_values()
 
-@router.get("/newave/cadic/ande", tags=["Newave"])
-def get_cadic_ande_deck_values():
-    return service.NewaveCadic.get_cadic_ande_deck_values()
+@router.put("/newave/cadic/total_mmgd_base", tags=["Newave"])
+def put_cadic_total_mmgd_base_deck_values(
+    body: List[CargaNewaveCadicUpdateDto]
+):
+    return service.NewaveCadic.put_cadic_total_mmgd_base_deck_values(body)
+
+@router.get("/newave/cadic/total_ande", tags=["Newave"])
+def get_cadic_total_ande_deck_values():
+    return service.NewaveCadic.get_cadic_total_ande_deck_values()
 
 
 @router.post("/newave/patamar/carga_usinas", tags=["Newave"])

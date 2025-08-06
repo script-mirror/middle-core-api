@@ -18,14 +18,17 @@ from .schema import (
     CvuSchema,
     CargaSemanalDecompSchema,
     CargaPmoSchema,
-    CargaNewaveSistemaEnergiaSchema,
-    CargaNewaveCadicSchema,
+    CargaNewaveSistemaEnergiaCreateDto,
+    CargaNewaveCadicCreateDto,
+    CargaNewaveCadicUpdateDto,
     CheckCvuCreateDto,
     CheckCvuReadDto,
     TipoCvuEnum,
     IndiceBlocoEnum,
     NewavePatamarCargaUsinaSchema,
     NewavePatamarIntercambioSchema,
+    CargaNewaveSistemaEnergiaCreateDto,
+    CargaNewaveSistemaEnergiaUpdateDto
 )
 
 logger = logging.getLogger(__name__)
@@ -1029,7 +1032,7 @@ class NewaveSistEnergia:
         return registros_para_inserir
 
     @staticmethod
-    def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaSchema]):
+    def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaCreateDto]):
         
         body_dict = [x.model_dump() for x in body]
         
@@ -1071,7 +1074,7 @@ class NewaveSistEnergia:
         return None
     
     @staticmethod
-    def get_sist_unsi_deck_values():
+    def get_sist_total_unsi_deck_values():
         """
         Obtém os valores de geração dos dois decks mais recentes, agrupados por deck,
         mês e ano, sem agrupamento por submercado.
@@ -1139,7 +1142,7 @@ class NewaveSistEnergia:
         return decks_data
     
     @staticmethod
-    def get_sist_mmgd_expansao_deck_values():
+    def get_sist_total_mmgd_expansao_deck_values():
         
         subquery = db.select(
             NewaveSistEnergia.tb.c["dt_deck"]
@@ -1151,10 +1154,10 @@ class NewaveSistEnergia:
             NewaveSistEnergia.tb.c["dt_deck"],
             NewaveSistEnergia.tb.c["vl_mes"],
             NewaveSistEnergia.tb.c["vl_ano"],
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch_mmgd"]).label("vl_geracao_pch_mmgd"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct_mmgd"]).label("vl_geracao_pct_mmgd"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol_mmgd"]).label("vl_geracao_eol_mmgd"),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv_mmgd"]).label("vl_geracao_uf_mmgd")
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch_mmgd"]),
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct_mmgd"]),
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol_mmgd"]),
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv_mmgd"])
         ).where(
             NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
         ).group_by(
@@ -1200,10 +1203,74 @@ class NewaveSistEnergia:
         return decks_data
     
     @staticmethod
-    def get_sist_carga_global_deck_values():
+    def put_sist_mmgd_com_previsoes_cargas_mensais(body: List[CargaNewaveSistemaEnergiaUpdateDto]):
+        """
+        Atualiza os valores MMGD de geração na tabela tb_nw_sist_energia.
+        Usa UPDATE individual para cada registro baseado na chave composta 
+        (dt_deck, vl_mes, vl_ano, cd_submercado), preservando os outros campos.
+        
+        Args:
+            body: Lista de objetos CargaNewaveSistemaEnergiaUpdateDto contendo os novos valores MMGD
+            
+        Returns:
+            Dict com informações sobre a operação realizada
+        """
+        
+        if not body:
+            return {"message": "Nenhum dado fornecido para atualização"}
+        
+        body_dict = [x.model_dump() for x in body]
+        
+        for item in body_dict:
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+            elif isinstance(item['dt_deck'], datetime.datetime):
+                item['dt_deck'] = item['dt_deck'].date()
+        
+        df_body_to_import = pd.DataFrame(body_dict)
+        dt_deck = df_body_to_import['dt_deck'].iloc[0]
+        
+        updates_count = 0
+        
+        for _, row in df_body_to_import.iterrows():
+            where_conditions = db.and_(
+                NewaveSistEnergia.tb.c.dt_deck == row['dt_deck'],
+                NewaveSistEnergia.tb.c.vl_ano == row['vl_ano'],
+                NewaveSistEnergia.tb.c.vl_mes == row['vl_mes'],
+                NewaveSistEnergia.tb.c.cd_submercado == row['cd_submercado']
+            )
+            
+            update_values = {
+                'vl_geracao_pch_mmgd': row['vl_geracao_pch_mmgd'],
+                'vl_geracao_pct_mmgd': row['vl_geracao_pct_mmgd'],
+                'vl_geracao_eol_mmgd': row['vl_geracao_eol_mmgd'],
+                'vl_geracao_ufv_mmgd': row['vl_geracao_ufv_mmgd'],
+                'versao': row['versao']
+            }
+            
+            update_query = db.update(NewaveSistEnergia.tb).where(
+                where_conditions
+            ).values(update_values)
+            
+            result = __DB__.db_execute(update_query, commit=prod)
+            rows_affected = result.rowcount
+            
+            if rows_affected > 0:
+                updates_count += rows_affected
+            
+        
+        return {
+            "message": "Atualização MMGD concluída",
+            "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+            "registros_atualizados": updates_count,
+            "total_registros_processados": len(df_body_to_import)
+        }
+    
+    @staticmethod
+    def get_sist_total_carga_global_deck_values():
         
         # Get MMGD total values
-        mmgd_base_values = NewaveCadic.get_cadic_mmgd_base_deck_values()
+        mmgd_base_values = NewaveCadic.get_cadic_total_mmgd_base_deck_values()
         
         subquery = db.select(
             NewaveSistEnergia.tb.c["dt_deck"]
@@ -1290,7 +1357,7 @@ class NewaveSistEnergia:
         return decks_data
     
     @staticmethod
-    def get_sist_carga_liquida_deck_values():
+    def get_sist_total_carga_liquida_deck_values():
         """
         Calcula os valores de Carga Líquida (diferença entre Carga Global, MMGD Total, UNSI e ANDE)
         para os dois decks mais recentes.
@@ -1300,10 +1367,10 @@ class NewaveSistEnergia:
             de Carga Líquida, organizados por mês e ano.
         """
         # Obter dados de Carga Global, MMGD Total, UNSI e ANDE
-        carga_global_values = NewaveSistEnergia.get_sist_carga_global_deck_values()
+        carga_global_values = NewaveSistEnergia.get_sist_total_carga_global_deck_values()
         mmgd_total_values = NewaveSistEnergia.get_sist_mmgd_total_deck_values()
-        unsi_values = NewaveSistEnergia.get_sist_unsi_deck_values()
-        ande_values = NewaveSistEnergia.get_sist_ande_deck_values()
+        unsi_values = NewaveSistEnergia.get_sist_total_unsi_deck_values()
+        ande_values = NewaveSistEnergia.get_sist_total_ande_deck_values()
         
         if not carga_global_values or not mmgd_total_values or not unsi_values or not ande_values:
             return []
@@ -1386,8 +1453,8 @@ class NewaveSistEnergia:
         """
         # Obter dados do MMGD base e expansão
         from . import service  # Importação local para evitar referência circular
-        mmgd_base_values = service.NewaveCadic.get_cadic_mmgd_base_deck_values()
-        mmgd_exp_values = NewaveSistEnergia.get_sist_mmgd_expansao_deck_values()
+        mmgd_base_values = service.NewaveCadic.get_cadic_total_mmgd_base_deck_values()
+        mmgd_exp_values = NewaveSistEnergia.get_sist_total_mmgd_expansao_deck_values()
         
         if not mmgd_base_values or not mmgd_exp_values:
             return []
@@ -1431,7 +1498,7 @@ class NewaveSistEnergia:
         return mmgd_total_values
 
     @staticmethod
-    def get_sist_ande_deck_values():
+    def get_sist_total_ande_deck_values():
         """
         Obtém os valores de ANDE para os dois decks mais recentes.
         
@@ -1440,9 +1507,9 @@ class NewaveSistEnergia:
             de ANDE total, organizados por mês e ano.
         """
         # Chama a função do NewaveCadic que já implementa a lógica
-        return NewaveCadic.get_cadic_ande_deck_values()
-
-
+        return NewaveCadic.get_cadic_total_ande_deck_values()
+    
+    
 class NewaveCadic:
     tb:db.Table = __DB__.getSchema('tb_nw_cadic')
     
@@ -1527,7 +1594,7 @@ class NewaveCadic:
         return registros_para_inserir
     
     @staticmethod
-    def post_newave_cadic(body: List[CargaNewaveCadicSchema]):
+    def post_newave_cadic(body: List[CargaNewaveCadicCreateDto]):
         
         body_dict = [x.model_dump() for x in body]
         
@@ -1568,7 +1635,7 @@ class NewaveCadic:
         return None
     
     @staticmethod
-    def get_cadic_mmgd_base_deck_values():
+    def get_cadic_total_mmgd_base_deck_values():
         
         subquery = db.select(
             NewaveCadic.tb.c["dt_deck"]
@@ -1630,7 +1697,67 @@ class NewaveCadic:
         return decks_data
     
     @staticmethod
-    def get_cadic_ande_deck_values():
+    def put_cadic_total_mmgd_base_deck_values(body: List[CargaNewaveCadicUpdateDto]):
+        """
+        Atualiza os valores MMGD base na tabela tb_nw_cadic.
+        Usa UPDATE individual para cada registro baseado na chave composta 
+        (dt_deck, vl_mes, vl_ano), preservando os outros campos.
+        
+        Args:
+            body: Lista de objetos CargaNewaveCadicUpdateDto contendo os novos valores MMGD base
+            
+        Returns:
+            Dict com informações sobre a operação realizada
+        """
+        
+        body_dict = [x.model_dump() for x in body]
+        
+        for item in body_dict:
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+            elif isinstance(item['dt_deck'], datetime.datetime):
+                item['dt_deck'] = item['dt_deck'].date()
+        
+        df_body_to_import = pd.DataFrame(body_dict)
+        dt_deck = df_body_to_import['dt_deck'].iloc[0]
+        
+        updates_count = 0
+        
+        for _, row in df_body_to_import.iterrows():
+            where_conditions = db.and_(
+                NewaveCadic.tb.c.dt_deck == row['dt_deck'],
+                NewaveCadic.tb.c.vl_ano == row['vl_ano'],
+                NewaveCadic.tb.c.vl_mes == row['vl_mes']
+            )
+            
+            update_values = {
+                'vl_mmgd_se': row['vl_mmgd_se'],
+                'vl_mmgd_s': row['vl_mmgd_s'],
+                'vl_mmgd_ne': row['vl_mmgd_ne'],
+                'vl_mmgd_n': row['vl_mmgd_n'],
+                'versao': row['versao']
+            }
+            
+            update_query = db.update(NewaveCadic.tb).where(
+                where_conditions
+            ).values(update_values)
+            
+            result = __DB__.db_execute(update_query, commit=prod)
+            rows_affected = result.rowcount
+            
+            if rows_affected > 0:
+                updates_count += rows_affected
+            
+        
+        return {
+            "message": "Atualização MMGD base concluída",
+            "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+            "registros_atualizados": updates_count,
+            "total_registros_processados": len(df_body_to_import)
+        }
+        
+    @staticmethod
+    def get_cadic_total_ande_deck_values():
         subquery = db.select(
             NewaveCadic.tb.c["dt_deck"]
         ).distinct().order_by(
@@ -1831,7 +1958,6 @@ class NewavePatamarCargaUsina:
         rows = __DB__.db_execute(query, commit=prod).rowcount
         return None
   
-    
     @staticmethod
     def get_patamar_carga_by_dt_referente(dt_inicial: datetime.date, dt_final: datetime.date, indice_bloco: Optional[IndiceBlocoEnum] = None):
         """

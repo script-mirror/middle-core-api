@@ -115,7 +115,7 @@ class CargaPmoSchema(BaseModel):
     periodicidade_final: datetime.datetime
 
 
-class CargaNewaveSistemaEnergiaSchema(BaseModel):
+class CargaNewaveSistemaEnergiaCreateDto(BaseModel):
     cd_submercado: int
     vl_ano: int
     vl_mes: int
@@ -130,14 +130,36 @@ class CargaNewaveSistemaEnergiaSchema(BaseModel):
     vl_geracao_ufv_mmgd: float
     dt_deck: datetime.datetime
     versao: str
+    
+class CargaNewaveSistemaEnergiaUpdateDto(BaseModel):
+    cd_submercado: int
+    vl_ano: int
+    vl_mes: int
+    vl_energia_total: float
+    vl_geracao_pch_mmgd: float
+    vl_geracao_pct_mmgd: float
+    vl_geracao_eol_mmgd: float
+    vl_geracao_ufv_mmgd: float
+    dt_deck: datetime.datetime
+    versao: str
 
 
-class CargaNewaveCadicSchema(BaseModel):
+class CargaNewaveCadicCreateDto(BaseModel):
     vl_ano: int
     vl_mes: int
     vl_const_itaipu: int
     vl_ande: float
     vl_boa_vista: float
+    vl_mmgd_se: float
+    vl_mmgd_s: float
+    vl_mmgd_ne: float
+    vl_mmgd_n: float
+    dt_deck: datetime.datetime
+    versao: str
+    
+class CargaNewaveCadicUpdateDto(BaseModel):
+    vl_ano: int
+    vl_mes: int
     vl_mmgd_se: float
     vl_mmgd_s: float
     vl_mmgd_ne: float

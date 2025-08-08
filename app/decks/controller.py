@@ -149,9 +149,9 @@ def post_carga_decomp(
     return service.CargaSemanalDecomp.create(body)
 
 
-@router.get("/carga-patamar", tags=["Decomp"])
+@router.get("/carga-decomp", tags=["Decomp"])
 def get_carga_decomp_by_date(
-    dataProduto: datetime.date
+    dataProduto: datetime.date | None = None
 ):
     return service.CargaSemanalDecomp.get_by_product_date(dataProduto)
 

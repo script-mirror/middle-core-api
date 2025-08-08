@@ -674,8 +674,23 @@ class CargaSemanalDecomp:
         logger.info(f"{rows} linhas deletadas da tb_dc_weol_semanal")
         return None
 
+
     @staticmethod
-    def get_by_product_date(data_produto: datetime.date):
+    def get_last_date():
+        query = db.select(
+            db.func.max(CargaSemanalDecomp.tb.c.data_produto)
+        )
+        result = __DB__.db_execute(query).fetchone()
+        if result and result[0]:
+            return result[0]
+        else:
+            raise HTTPException(
+                status_code=404, detail="Nenhum dado de carga semanal DECOMP encontrado")
+
+    @staticmethod
+    def get_by_product_date(data_produto: datetime.date | None):
+        if data_produto is None:
+            data_produto = CargaSemanalDecomp.get_last_date()
         query = db.select(
             CargaSemanalDecomp.tb
         ).where(db.and_(

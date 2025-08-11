@@ -565,6 +565,20 @@ class Cvu:
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
+
+    @staticmethod
+    def get_last_data_atualizacao_por_tipo_cvu(tipo_cvu: str):
+        query = db.select(
+            db.func.max(Cvu.tb.c.dt_atualizacao)
+        ).where(
+            Cvu.tb.c.fonte == tipo_cvu
+        )
+        __DB__.db_execute(query)
+        result = __DB__.db_execute(query).fetchone()
+        if result is not None:
+            return result[0]
+    
+    @staticmethod
     def get_cvu_by_params_deck(ano_mes_referencia: datetime.date, dt_atualizacao: datetime.date, fonte: str):
 
         conditions_cvu = []
@@ -576,10 +590,13 @@ class Cvu:
             conditions_merchant.append(
                 CvuMerchant.tb.c.mes_referencia == mes_referencia)
 
-        if dt_atualizacao is not None:
-            conditions_cvu.append(Cvu.tb.c.dt_atualizacao == dt_atualizacao)
-            conditions_merchant.append(
-                CvuMerchant.tb.c.dt_atualizacao == dt_atualizacao)
+        if dt_atualizacao is None:
+            dt_atualizacao = Cvu.get_last_data_atualizacao_por_tipo_cvu(fonte)
+
+        conditions_cvu.append(Cvu.tb.c.dt_atualizacao == dt_atualizacao)
+        conditions_merchant.append(
+            CvuMerchant.tb.c.dt_atualizacao == dt_atualizacao)
+            
 
         if fonte is not None:
             conditions_cvu.append(Cvu.tb.c.fonte == fonte)

@@ -18,7 +18,7 @@ def post_weol(
 
 @router.get("/weol", tags=["Decomp"])
 def get_weol(
-    data_produto: datetime.date
+    data_produto: Optional[datetime.date] = None
 ):
     return service.WeolSemanal.get_by_product_date(data_produto)
 

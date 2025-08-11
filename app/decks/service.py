@@ -110,6 +110,8 @@ class WeolSemanal:
 
     @staticmethod
     def get_by_product_date(data_produto: datetime.date):
+        if data_produto is None:
+            data_produto = WeolSemanal.get_last_deck_date_weol()
         query = db.select(
             WeolSemanal.tb
         ).where(WeolSemanal.tb.c.data_produto == data_produto)

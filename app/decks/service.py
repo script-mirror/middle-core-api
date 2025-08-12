@@ -568,40 +568,62 @@ class Cvu:
 
     @staticmethod
     def get_last_data_atualizacao_por_tipo_cvu(tipo_cvu: str):
-        query = db.select(
-            db.func.max(Cvu.tb.c.dt_atualizacao)
-        ).where(
-            Cvu.tb.c.fonte == tipo_cvu
-        )
+        if "merchant" in tipo_cvu.lower():
+            query = db.select(
+                db.func.max(CvuMerchant.tb.c.dt_atualizacao)
+            ).where(
+                CvuMerchant.tb.c.fonte == tipo_cvu
+            )
+        else:
+            query = db.select(
+                db.func.max(Cvu.tb.c.dt_atualizacao)
+            ).where(
+                Cvu.tb.c.fonte == tipo_cvu
+            )
         __DB__.db_execute(query)
         result = __DB__.db_execute(query).fetchone()
         if result is not None:
             return result[0]
     
     @staticmethod
-    def get_cvu_by_params_deck(ano_mes_referencia: datetime.date, dt_atualizacao: datetime.date, fonte: str):
-
+    def get_cvu_by_tipo_data_atualizacao(
+        tipo_cvu: str,
+        data_atualizacao: datetime.date
+    ):
         conditions_cvu = []
         conditions_merchant = []
-
-        if ano_mes_referencia is not None:
-            mes_referencia = ano_mes_referencia.strftime('%Y%m')
-            conditions_cvu.append(Cvu.tb.c.mes_referencia == mes_referencia)
+        
+        if tipo_cvu is None and data_atualizacao is None:
+            for tipo_cvu in ['CCEE_conjuntural', 'CCEE_estrutural', 'CCEE_conjuntural_revisado']:
+                data_atualizacao = Cvu.get_last_data_atualizacao_por_tipo_cvu(tipo_cvu)
+                conditions_cvu.append(
+                    db.and_(
+                        Cvu.tb.c.fonte == tipo_cvu,
+                        Cvu.tb.c.dt_atualizacao == data_atualizacao
+                    )
+                )
+            conditions_cvu = [db.or_(*conditions_cvu)]
+            data_atualizacao = Cvu.get_last_data_atualizacao_por_tipo_cvu('CCEE_merchant')
             conditions_merchant.append(
-                CvuMerchant.tb.c.mes_referencia == mes_referencia)
+                db.and_(
+                    CvuMerchant.tb.c.dt_atualizacao == data_atualizacao
+                )
+            )
+        else:
+            if tipo_cvu[:5] != "CCEE_":
+                tipo_cvu = "CCEE_" + tipo_cvu
 
-        if dt_atualizacao is None:
-            dt_atualizacao = Cvu.get_last_data_atualizacao_por_tipo_cvu(fonte)
+            if data_atualizacao is None:
+                data_atualizacao = Cvu.get_last_data_atualizacao_por_tipo_cvu(tipo_cvu)
 
-        conditions_cvu.append(Cvu.tb.c.dt_atualizacao == dt_atualizacao)
-        conditions_merchant.append(
-            CvuMerchant.tb.c.dt_atualizacao == dt_atualizacao)
+            conditions_cvu.append(Cvu.tb.c.dt_atualizacao == data_atualizacao)
+            conditions_merchant.append(
+                CvuMerchant.tb.c.dt_atualizacao == data_atualizacao)
             
 
-        if fonte is not None:
-            conditions_cvu.append(Cvu.tb.c.fonte == fonte)
-            conditions_merchant.append(CvuMerchant.tb.c.fonte == fonte)
-
+            if tipo_cvu is not None:
+                conditions_cvu.append(Cvu.tb.c.fonte == tipo_cvu)
+                conditions_merchant.append(CvuMerchant.tb.c.fonte == tipo_cvu)
         query = db.select(Cvu.tb).where(db.and_(*conditions_cvu))
         rows = __DB__.db_execute(query)
         df_cvu = pd.DataFrame(rows)

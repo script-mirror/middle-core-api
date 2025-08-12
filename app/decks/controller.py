@@ -116,15 +116,13 @@ def get_usinas_cvu():
 
 
 @router.get("/cvu", tags=["CVU"])
-def get_cvu_by_params_deck(
-    ano_mes_referencia: Optional[datetime.date] = None,
+def get_cvu_by_tipo_data_atualizacao(
     dt_atualizacao: Optional[datetime.datetime] = None,
     fonte: Optional[str] = None,
 ):
-    return service.Cvu.get_cvu_by_params_deck(
-        ano_mes_referencia=ano_mes_referencia,
-        dt_atualizacao=dt_atualizacao,
-        fonte=fonte
+    return service.Cvu.get_cvu_by_tipo_data_atualizacao(
+        data_atualizacao=dt_atualizacao,
+        tipo_cvu=fonte
     )
 
 

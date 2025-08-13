@@ -188,17 +188,18 @@ class db_mysql_master():
                                     db.Column('str_fonte', db.VARCHAR(100))
                                     )
 
-        elif table_name.lower() == 'tb_nw_carga':
-            table_schema = db.Table('tb_nw_carga', self.meta,
+        elif  table_name.lower() == 'newave_previsoes_cargas': 
+            table_schema = db.Table('newave_previsoes_cargas', self.meta,
+                                    db.Column('id', db.Integer,primary_key=True,autoincrement=True),
                                     db.Column('id_deck', db.Integer),
-                                    db.Column('dt_referente', db.Date),
-                                    db.Column('cd_submercado', db.Integer),
-                                    db.Column('vl_carga', db.FLOAT),
-                                    db.Column('Exp_CGH', db.FLOAT),
-                                    db.Column('Exp_EOL', db.FLOAT),
-                                    db.Column('Exp_UFV', db.FLOAT),
-                                    db.Column('Exp_UTE', db.FLOAT),
-                                    db.Column('Exp_MMGD', db.FLOAT)
+                                    db.Column('dt_referente',db.Date), 
+                                    db.Column('submercado',db.String(2)),
+                                    db.Column('patamar', db.String(6)),
+                                    db.Column('vl_energia_total',db.FLOAT),
+                                    db.Column('vl_geracao_pch_mmgd',db.FLOAT),
+                                    db.Column('vl_geracao_eol_mmgd',db.FLOAT),
+                                    db.Column('vl_geracao_ufv_mmgd',db.FLOAT),
+                                    db.Column('vl_geracao_pct_mmgd',db.FLOAT)
                                     )
 
         elif table_name.lower() == 'tb_cadastro_decomp':

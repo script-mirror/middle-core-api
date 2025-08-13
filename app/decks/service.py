@@ -25,6 +25,8 @@ from .schema import (
     CheckCvuReadDto,
     TipoCvuEnum,
     IndiceBlocoEnum,
+    PatamaresEnum,
+    SubmercadosEnum,
     NewavePatamarCargaUsinaSchema,
     NewavePatamarIntercambioSchema,
     CargaNewaveSistemaEnergiaCreateDto,
@@ -961,6 +963,36 @@ class CargaPmo:
 
         return dados_carga
     
+class NewavePrevisoesCargas:
+    tb: db.Table = __DB__.getSchema('newave_previsoes_cargas')
+
+    @staticmethod
+    def get_previsoes_cargas(dt_referente: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
+        query = db.select(
+            NewavePrevisoesCargas.tb.c["dt_referente"],
+            NewavePrevisoesCargas.tb.c["submercado"],
+            NewavePrevisoesCargas.tb.c["patamar"],
+            NewavePrevisoesCargas.tb.c["vl_energia_total"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_pch_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_eol_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_ufv_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_pct_mmgd"]
+        )
+        if dt_referente:
+            query = query.where(NewavePrevisoesCargas.tb.c.dt_referente == dt_referente)
+        else:
+            query = query.where(NewavePrevisoesCargas.tb.c.dt_referente == db.func.max(NewavePrevisoesCargas.tb.c.dt_referente))    
+            
+        if submercado:
+            query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)
+        if patamar:
+            query = query.where(NewavePrevisoesCargas.tb.c.patamar == patamar)
+        result = __DB__.db_execute(query).fetchall()
+        
+        df = pd.DataFrame(result)
+        
+        
+        return df.to_dict('records')
 
 class NewaveSistEnergia:
     tb: db.Table = __DB__.getSchema('tb_nw_sist_energia')

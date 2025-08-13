@@ -10,7 +10,18 @@ class TipoCvuEnum(str, Enum):
     custo_variavel_unitario_conjuntural_revisado = "conjuntural_revisado"
     custo_variavel_unitario_merchant = "merchant"
 
-
+class PatamaresEnum(str, Enum):
+    leve = "leve"
+    medio = "medio"
+    pesado = "pesado"
+    media = "média"
+    
+class SubmercadosEnum(str, Enum):
+    se = "sudeste"
+    s = "sul"
+    ne = "nordeste"
+    n = "norte"
+    
 class IndiceBlocoEnum(str, Enum):
     CARGA = "CARGA"
     PCH = "PCH"
@@ -114,6 +125,15 @@ class CargaPmoSchema(BaseModel):
     periodicidade_inicial: datetime.datetime
     periodicidade_final: datetime.datetime
 
+class NewavePrevisoesCargasReadDto(BaseModel):
+    dt_referente: datetime.date
+    submercado: str
+    patamar: str
+    vl_energia_total: float
+    vl_geracao_pch_mmgd: float
+    vl_geracao_pct_mmgd: float
+    vl_geracao_eol_mmgd: float
+    vl_geracao_ufv_mmgd: float
 
 class CargaNewaveSistemaEnergiaCreateDto(BaseModel):
     cd_submercado: int

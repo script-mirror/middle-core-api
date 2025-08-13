@@ -18,7 +18,7 @@ def post_weol(
 
 @router.get("/weol", tags=["Decomp"])
 def get_weol(
-    data_produto: datetime.date
+    data_produto: Optional[datetime.date] = None
 ):
     return service.WeolSemanal.get_by_product_date(data_produto)
 
@@ -116,15 +116,13 @@ def get_usinas_cvu():
 
 
 @router.get("/cvu", tags=["CVU"])
-def get_cvu_by_params_deck(
-    ano_mes_referencia: Optional[datetime.date] = None,
+def get_cvu_by_tipo_data_atualizacao(
     dt_atualizacao: Optional[datetime.datetime] = None,
     fonte: Optional[str] = None,
 ):
-    return service.Cvu.get_cvu_by_params_deck(
-        ano_mes_referencia=ano_mes_referencia,
-        dt_atualizacao=dt_atualizacao,
-        fonte=fonte
+    return service.Cvu.get_cvu_by_tipo_data_atualizacao(
+        data_atualizacao=dt_atualizacao,
+        tipo_cvu=fonte
     )
 
 
@@ -149,9 +147,9 @@ def post_carga_decomp(
     return service.CargaSemanalDecomp.create(body)
 
 
-@router.get("/carga-patamar", tags=["Decomp"])
+@router.get("/carga-decomp", tags=["Decomp"])
 def get_carga_decomp_by_date(
-    dataProduto: datetime.date
+    dataProduto: datetime.date | None = None
 ):
     return service.CargaSemanalDecomp.get_by_product_date(dataProduto)
 

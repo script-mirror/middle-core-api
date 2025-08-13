@@ -980,6 +980,9 @@ class NewavePrevisoesCargas:
         )
         if dt_referente:
             query = query.where(NewavePrevisoesCargas.tb.c.dt_referente == dt_referente)
+        else:
+            query = query.where(NewavePrevisoesCargas.tb.c.dt_referente == db.func.max(NewavePrevisoesCargas.tb.c.dt_referente))    
+            
         if submercado:
             query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)
         if patamar:

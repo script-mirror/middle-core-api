@@ -1,9 +1,24 @@
-from sys import path
-
 from fastapi import APIRouter
 from typing import List, Optional
 from . import service
-from .schema import *
+from .schema import (
+    RestricoesEletricasSchema,
+    CargaNewaveSistemaEnergiaCreateDto,
+    CargaNewaveSistemaEnergiaUpdateDto,
+    CargaNewaveCadicCreateDto,
+    CargaNewaveCadicUpdateDto,
+    CvuSchema,
+    CvuMerchantSchema,
+    WeolSemanalSchema,
+    PatamaresDecompSchema,
+    CargaSemanalDecompSchema,
+    CargaPmoSchema,
+    NewavePatamarCargaUsinaSchema,
+    NewavePatamarIntercambioSchema,
+    CheckCvuCreateDto,
+    TipoCvuEnum,
+    IndiceBlocoEnum,
+    )
 import datetime
 
 
@@ -338,3 +353,26 @@ def get_previsao_dessem():
     - Agrega por dia e sigla, retornando dict aninhado
     """
     return service.DessemPrevisao.get_previsao_dessem()
+
+
+@router.post("/restricoes-eletricas", tags=["Restricoes Eletricas"])
+def create_restricoes_eletricas(
+    body: List[RestricoesEletricasSchema]
+):
+    """
+    Cria novas restrições elétricas.
+    """
+    return service.RestricoesEletricas.post_restricoes_eletricas(body)
+
+@router.get("/restricoes-eletricas", tags=["Restricoes Eletricas"])
+def get_restricoes_eletricas_by_data_produto(
+    data_produto: Optional[datetime.date] = None,
+):
+    """
+    Obtém restrições elétricas por data de produto.
+    """
+    return service.RestricoesEletricas.get_restricoes_eletricas_by_data_produto(data_produto)
+
+@router.get("/restricoes-eletricas/historico", tags=["Restricoes Eletricas"])
+def get_restricoes_eletricas_historico():
+    return service.RestricoesEletricas.get_datas_produto()

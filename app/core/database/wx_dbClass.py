@@ -1542,7 +1542,18 @@ class db_mysql_master():
                                     db.Column('versao', db.String(10), nullable=True),
                                     extend_existing=True
                                     )
-
+        elif table_name.lower() == 'restricao_eletrica':
+            table_schema = db.Table('restricao_eletrica', self.meta,
+                                    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                                    db.Column('re', db.Integer, nullable=False),
+                                    db.Column('limite', db.String(255), nullable=False),
+                                    db.Column('mes_ano', db.Date, nullable=False),
+                                    db.Column('patamar', db.String(100), nullable=False),
+                                    db.Column('valor', db.Numeric(10, 2), nullable=False),
+                                    db.Column('data_produto', db.Date, nullable=False),
+                                    db.Column('created_at', db.DateTime, default=db.func.current_timestamp()),
+                                    extend_existing=True
+                                    )
 
         return table_schema
 

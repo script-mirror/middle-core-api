@@ -28,13 +28,13 @@ from .schema import (
     NewavePatamarCargaUsinaSchema,
     NewavePatamarIntercambioSchema,
     CargaNewaveSistemaEnergiaCreateDto,
-    CargaNewaveSistemaEnergiaUpdateDto
+    CargaNewaveSistemaEnergiaUpdateDto,
+    RestricoesEletricasSchema,
 )
 
 logger = logging.getLogger(__name__)
 
 
-prod = True
 __DB__ = db_mysql_master('db_decks')
 
 
@@ -48,7 +48,7 @@ class WeolSemanal:
         for date in delete_dates:
             WeolSemanal.delete_by_product_date(date)
         query = db.insert(WeolSemanal.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_dc_weol_semanal")
         return None
 
@@ -56,7 +56,7 @@ class WeolSemanal:
     def delete_by_product_date(date: datetime.date):
         query = db.delete(WeolSemanal.tb).where(
             WeolSemanal.tb.c.data_produto == date)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_dc_weol_semanal")
         return None
     
@@ -457,7 +457,7 @@ class Patamares:
         Patamares.delete_by_start_date_between(
             dates[0].date(), dates[-1].date())
         query = db.insert(Patamares.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_patamar_decomp")
         return None
 
@@ -465,7 +465,7 @@ class Patamares:
     def delete_by_start_date(date: datetime.date):
         query = db.delete(Patamares.tb).where(
             db.func.date(Patamares.tb.c.inicio) == date)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_patamar_decomp")
         return None
 
@@ -473,7 +473,7 @@ class Patamares:
     def delete_by_start_date_between(start: datetime.date, end: datetime.date):
         query = db.delete(Patamares.tb).where(
             db.func.date(Patamares.tb.c.inicio).between(start, end))
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_patamar_decomp")
         return None
 
@@ -513,7 +513,7 @@ class CvuUsinasTermicas:
     def get_usinas_termicas():
 
         query = db.select(CvuUsinasTermicas.tb)
-        rows = __DB__.db_execute(query, commit=prod)
+        rows = __DB__.db_execute(query)
         return pd.DataFrame(rows).to_dict('records')
 
 
@@ -546,14 +546,14 @@ class Cvu:
         # Insert new records
         logger.info(f"Inserting {len(df)} records into tb_cvu")
         query = db.insert(Cvu.tb).values(df.to_dict('records'))
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_cvu")
         return None
 
     @staticmethod
     def delete_():
         query = db.delete(Cvu.tb).where(Cvu.tb.c.mes_referencia == '202503')
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
@@ -561,7 +561,7 @@ class Cvu:
     def delete_by_params(**kwargs):
         query = db.delete(Cvu.tb).where(
             db.and_(*[getattr(Cvu.tb.c, key) == value for key, value in kwargs.items()]))
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
@@ -683,7 +683,7 @@ class CvuMerchant:
             )
 
         query = db.insert(CvuMerchant.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na tb_cvu")
         return None
 
@@ -691,7 +691,7 @@ class CvuMerchant:
     def delete_by_params(**kwargs):
         query = db.delete(CvuMerchant.tb).where(db.and_(
             *[getattr(CvuMerchant.tb.c, key) == value for key, value in kwargs.items()]))
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
@@ -706,7 +706,7 @@ class CargaSemanalDecomp:
         for date in delete_dates:
             CargaSemanalDecomp.delete_by_product_date(date)
         query = db.insert(CargaSemanalDecomp.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na carga_semanal_dc")
         return None
 
@@ -714,7 +714,7 @@ class CargaSemanalDecomp:
     def delete_by_product_date(date: datetime.date):
         query = db.delete(CargaSemanalDecomp.tb).where(
             CargaSemanalDecomp.tb.c.data_produto == date)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_dc_weol_semanal")
         return None
 
@@ -772,7 +772,7 @@ class CargaPmo:
 
         # Insert new records
         query = db.insert(CargaPmo.tb).values(body_dict)
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na carga_consolidada_pmo")
         return {"message": f"{rows} registros de carga PMO inseridos com sucesso"}
 
@@ -789,7 +789,7 @@ class CargaPmo:
                 CargaPmo.tb.c.revisao == revisao
             )
         )
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da carga_consolidada_pmo")
         return None
 
@@ -1029,7 +1029,7 @@ class NewaveSistEnergia:
                 NewaveSistEnergia.tb.c.versao == 'preliminar'
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros preliminares deletados para dt_deck {dt_deck}")
         return rows_deleted
@@ -1043,7 +1043,7 @@ class NewaveSistEnergia:
                 NewaveSistEnergia.tb.c.versao == versao
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros existentes deletados para dt_deck {dt_deck} versao {versao}")
         return rows_deleted
@@ -1111,7 +1111,7 @@ class NewaveSistEnergia:
         
         if registros_para_inserir:
             query = db.insert(NewaveSistEnergia.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query, commit=prod).rowcount
+            rows = __DB__.db_execute(query).rowcount
         else:
             rows = 0
         
@@ -1124,7 +1124,7 @@ class NewaveSistEnergia:
             NewaveSistEnergia.tb.c.dt_deck == dt_deck
         )
         
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         
         logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
         return None
@@ -1308,7 +1308,7 @@ class NewaveSistEnergia:
                 where_conditions
             ).values(update_values)
             
-            result = __DB__.db_execute(update_query, commit=prod)
+            result = __DB__.db_execute(update_query)
             rows_affected = result.rowcount
             
             if rows_affected > 0:
@@ -1591,7 +1591,7 @@ class NewaveCadic:
                 NewaveCadic.tb.c.versao == 'preliminar'
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros preliminares CADIC deletados para dt_deck {dt_deck}")
         return rows_deleted
@@ -1605,7 +1605,7 @@ class NewaveCadic:
                 NewaveCadic.tb.c.versao == versao
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros existentes CADIC deletados para dt_deck {dt_deck} versao {versao}")
         return rows_deleted
@@ -1673,7 +1673,7 @@ class NewaveCadic:
         
         if registros_para_inserir:
             query = db.insert(NewaveCadic.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query, commit=prod).rowcount
+            rows = __DB__.db_execute(query).rowcount
         else:
             rows = 0
         
@@ -1685,7 +1685,7 @@ class NewaveCadic:
             NewaveCadic.tb.c.dt_deck == dt_deck
         )
         
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         
         logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
         return None
@@ -1798,7 +1798,7 @@ class NewaveCadic:
                 where_conditions
             ).values(update_values)
             
-            result = __DB__.db_execute(update_query, commit=prod)
+            result = __DB__.db_execute(update_query)
             rows_affected = result.rowcount
             
             if rows_affected > 0:
@@ -1896,7 +1896,7 @@ class NewavePatamarCargaUsina:
                 NewavePatamarCargaUsina.tb.c.versao == 'preliminar'
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros preliminares patamar carga usina deletados para dt_deck {dt_deck}")
         return rows_deleted
@@ -1910,7 +1910,7 @@ class NewavePatamarCargaUsina:
                 NewavePatamarCargaUsina.tb.c.versao == versao
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros existentes patamar carga usina deletados para dt_deck {dt_deck} versao {versao}")
         return rows_deleted
@@ -1992,7 +1992,7 @@ class NewavePatamarCargaUsina:
 
         if registros_para_inserir:
             query = db.insert(NewavePatamarCargaUsina.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query, commit=prod).rowcount
+            rows = __DB__.db_execute(query).rowcount
         else:
             rows = 0
 
@@ -2011,7 +2011,7 @@ class NewavePatamarCargaUsina:
             )
         )
 
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         return None
   
     @staticmethod
@@ -2078,7 +2078,7 @@ class NewavePatamarIntercambio:
                 NewavePatamarIntercambio.tb.c.versao == 'preliminar'
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros preliminares patamar intercâmbio deletados para dt_deck {dt_deck}")
         return rows_deleted
@@ -2092,7 +2092,7 @@ class NewavePatamarIntercambio:
                 NewavePatamarIntercambio.tb.c.versao == versao
             )
         )
-        rows_deleted = __DB__.db_execute(query, commit=prod).rowcount
+        rows_deleted = __DB__.db_execute(query).rowcount
         if rows_deleted > 0:
             logger.info(f"{rows_deleted} registros existentes patamar intercâmbio deletados para dt_deck {dt_deck} versao {versao}")
         return rows_deleted
@@ -2174,7 +2174,7 @@ class NewavePatamarIntercambio:
 
         if registros_para_inserir:
             query = db.insert(NewavePatamarIntercambio.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query, commit=prod).rowcount
+            rows = __DB__.db_execute(query).rowcount
         else:
             rows = 0
 
@@ -2193,7 +2193,7 @@ class NewavePatamarIntercambio:
             )
         )
 
-        rows = __DB__.db_execute(query, commit=prod).rowcount
+        rows = __DB__.db_execute(query).rowcount
         return None
     
     @staticmethod
@@ -2251,7 +2251,7 @@ class CheckCvu:
         create_data = body.model_dump(exclude_none=True)
 
         query = db.insert(CheckCvu.tb).values(**create_data)
-        result = __DB__.db_execute(query, commit=prod)
+        result = __DB__.db_execute(query)
 
         record_id = result.inserted_primary_key[0]
 
@@ -2287,7 +2287,7 @@ class CheckCvu:
             CheckCvu.tb.c.id == check_cvu_id
         ).values(status=status)
 
-        result = __DB__.db_execute(update_query, commit=prod)
+        result = __DB__.db_execute(update_query)
 
         if result.rowcount == 0:
             raise Exception("Erro ao atualizar status do check cvu")
@@ -2435,3 +2435,77 @@ class DessemPrevisao:
             nested[sigla] = group[['day', 'avg_vl_carga']].to_dict('records')
 
         return nested
+
+class RestricoesEletricas:
+    tb: db.Table = __DB__.getSchema('restricao_eletrica')
+
+    @staticmethod
+    def remove_restricoes_eletricas_by_data_produto(data_produto: datetime.date):
+        query = db.delete(RestricoesEletricas.tb).where(
+            RestricoesEletricas.tb.c['data_produto'] == data_produto
+        )
+        result = __DB__.db_execute(query)
+        logger.info(f"{result.rowcount} restricoes eletricas removidas para a data {data_produto}")
+        return None
+
+
+    @staticmethod
+    def post_restricoes_eletricas(body: List[RestricoesEletricasSchema]):
+        data = [x.model_dump() for x in body]
+        RestricoesEletricas.remove_restricoes_eletricas_by_data_produto(data[0]['data_produto'])
+        query = db.insert(RestricoesEletricas.tb).values(data)
+        result = __DB__.db_execute(query)
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Erro ao inserir restricao eletrica")
+        
+        return {"message": "Restricao eletrica inserida com sucesso"}
+
+
+    @staticmethod
+    def get_last_data_produto():
+        query = db.select(
+            db.func.max(RestricoesEletricas.tb.c['data_produto'])
+        )
+        result = __DB__.db_execute(query).scalar()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Nenhuma data de produto encontrada")
+        
+        return result
+
+
+    @staticmethod
+    def get_restricoes_eletricas_by_data_produto(
+        data_produto: Optional[datetime.date] = None
+    ):
+        if not data_produto:
+            data_produto = RestricoesEletricas.get_last_data_produto()
+            
+        query = db.select(RestricoesEletricas.tb).where(
+            RestricoesEletricas.tb.c['data_produto'] == data_produto
+        )
+        
+        result = __DB__.db_execute(query).fetchall()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Nenhuma restrição elétrica encontrada")
+        
+        df = pd.DataFrame(result, columns=RestricoesEletricas.tb.columns.keys())
+        return df.to_dict('records')
+    
+    @staticmethod
+    def get_datas_produto():
+        query = db.select(
+            db.func.distinct(RestricoesEletricas.tb.c['data_produto'])
+        ).order_by(
+            RestricoesEletricas.tb.c['data_produto'].desc()
+        )
+        
+        result = __DB__.db_execute(query).fetchall()
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Nenhuma data de produto encontrada")
+        
+        datas_produto = [row[0] for row in result]
+        return datas_produto

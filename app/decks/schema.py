@@ -201,3 +201,12 @@ class CheckCvuReadDto(BaseModel):
     status: Optional[str] = None
     created_at: Optional[datetime.datetime] = None
     updated_at: Optional[datetime.datetime] = None
+
+
+class RestricoesEletricasSchema(BaseModel):
+    re: int
+    limite: str
+    mes_ano: datetime.date
+    patamar: str
+    valor: float
+    data_produto: datetime.date

@@ -18,6 +18,9 @@ from .schema import (
     CheckCvuCreateDto,
     TipoCvuEnum,
     IndiceBlocoEnum,
+    SubmercadosEnum,
+    PatamaresEnum,
+    NewavePrevisoesCargasReadDto,
     )
 import datetime
 

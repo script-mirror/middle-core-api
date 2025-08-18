@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 import pandas as pd
 from typing import List, Dict, Any
+from .schema import *
 
 from app.core.database.wx_dbClass import db_mysql_master
 
@@ -8,16 +9,56 @@ __DB__ = db_mysql_master('db_meteorologia')
 
 
 class EstacaoChuvosaObservada:
-    # Define tables at class level - they'll be assigned in the methods since they depend on parameters
     tb_ec_norte = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa_norte')
     tb_ec_sudeste = __DB__.getSchema('tb_chuva_observada_estacao_chuvosa')
-    tb_cadastro_ec_norte = __DB__.getSchema(
-        'tb_cadastro_estacao_chuvosa_norte')
-    tb_cadastro_ec_sudeste = __DB__.getSchema('tb_cadastro_estacao_chuvosa')
-    tb_chuva_prevista_ec_norte = __DB__.getSchema(
-        'tb_chuva_prevista_estacao_chuvosa_norte')
-    tb_chuva_prevista_ec_sudeste = __DB__.getSchema(
-        'tb_chuva_prevista_estacao_chuvosa')
+    
+    
+    @staticmethod
+    def post_chuva_observada(body: List[ChuvaObservadaCreateDTO]) -> Dict[str, Any]:
+        """
+        Insere os dados de chuva observada para a estação chuvosa.
+        Se já existirem registros para a data informada, eles serão sobrescritos.
+        
+        Args:
+            Regiões:
+            - norte
+            - sudeste
+        """
+        df_body = pd.DataFrame([item.dict() for item in body])
+        
+        df_norte = df_body[df_body['regiao'] == 'norte']
+        df_sudeste = df_body[df_body['regiao'] == 'sudeste']
+        
+        inserted_count = 0
+
+        if not df_norte.empty:
+            df_ec_norte = df_norte[['dt_observada', 'vl_chuva']]
+            
+            query_delete = sa.delete(EstacaoChuvosaObservada.tb_ec_norte).where(
+                EstacaoChuvosaObservada.tb_ec_norte.c.dt_observada.in_(df_ec_norte['dt_observada'].tolist())
+            )
+            __DB__.db_execute(query_delete)
+            
+            query_insert_ec = EstacaoChuvosaObservada.tb_ec_norte.insert().values(df_ec_norte.to_dict(orient='records'))
+            __DB__.db_execute(query_insert_ec)
+            
+            inserted_count += len(df_norte)
+
+        if not df_sudeste.empty:
+            df_ec_sudeste = df_sudeste[['dt_observada', 'vl_chuva']]
+
+            query_delete = sa.delete(EstacaoChuvosaObservada.tb_ec_sudeste).where(
+                EstacaoChuvosaObservada.tb_ec_sudeste.c.dt_observada.in_(df_ec_sudeste['dt_observada'].tolist())
+            )
+            __DB__.db_execute(query_delete)
+
+            query_insert_ec = EstacaoChuvosaObservada.tb_ec_sudeste.insert().values(df_ec_sudeste.to_dict(orient='records'))
+            __DB__.db_execute(query_insert_ec)
+            
+            inserted_count += len(df_sudeste)    
+
+        return {'message': f'{inserted_count} registros inseridos com sucesso.'}
+
 
     @staticmethod
     def get_chuva_observada(dt_ini_obs, dt_fim_obs, regiao):
@@ -43,6 +84,108 @@ class EstacaoChuvosaObservada:
         df_cpc = pd.DataFrame(cpc_values, columns=["dt_observada", "vl_chuva"])
 
         return df_cpc.to_dict('records')
+
+    
+
+class EstacaoChuvosaPrevista:
+    tb_cadastro_ec_norte = __DB__.getSchema('tb_cadastro_estacao_chuvosa_norte')
+    tb_cadastro_ec_sudeste = __DB__.getSchema('tb_cadastro_estacao_chuvosa')
+    tb_chuva_prevista_ec_norte = __DB__.getSchema('tb_chuva_prevista_estacao_chuvosa_norte')
+    tb_chuva_prevista_ec_sudeste = __DB__.getSchema('tb_chuva_prevista_estacao_chuvosa')
+    
+    
+    @staticmethod
+    def post_chuva_prevista_estacao_chuvosa(body: List[ChuvaPrevistaCreateDTO]) -> Dict[str, Any]:
+
+        df_body = pd.DataFrame([item.dict() for item in body])
+        
+        df_norte = df_body[df_body['regiao'] == 'norte']
+        df_sudeste = df_body[df_body['regiao'] == 'sudeste']
+        
+        inserted_count = 0
+
+        if not df_norte.empty:
+            df_cadastro_norte = df_norte[['dt_rodada', 'hr_rodada', 'str_modelo']].drop_duplicates()
+            df_cadastro_norte['dt_rodada'] = pd.to_datetime(df_cadastro_norte['dt_rodada']).dt.strftime('%Y-%m-%d')
+            
+            for _, cadastro in df_cadastro_norte.iterrows():
+                query_select = sa.select(EstacaoChuvosaPrevista.tb_cadastro_ec_norte.c.id).where(
+                    sa.and_(
+                        EstacaoChuvosaPrevista.tb_cadastro_ec_norte.c.dt_rodada == cadastro['dt_rodada'],
+                        EstacaoChuvosaPrevista.tb_cadastro_ec_norte.c.hr_rodada == cadastro['hr_rodada'],
+                        EstacaoChuvosaPrevista.tb_cadastro_ec_norte.c.str_modelo == cadastro['str_modelo']
+                    )
+                )
+                result = __DB__.db_execute(query_select).fetchone()
+                
+                if result:
+                    id_cadastro = result[0]
+                    query_delete = sa.delete(EstacaoChuvosaPrevista.tb_chuva_prevista_ec_norte).where(
+                        EstacaoChuvosaPrevista.tb_chuva_prevista_ec_norte.c.id_cadastro == id_cadastro
+                    )
+                    __DB__.db_execute(query_delete)
+                else:
+                    query_insert_cadastro = EstacaoChuvosaPrevista.tb_cadastro_ec_norte.insert().values(cadastro.to_dict())
+                    result = __DB__.db_execute(query_insert_cadastro)
+                    id_cadastro = result.inserted_primary_key[0]
+                
+                df_prevista_filtrado = df_norte[
+                    (df_norte['dt_rodada'] == cadastro['dt_rodada']) & 
+                    (df_norte['hr_rodada'] == cadastro['hr_rodada']) & 
+                    (df_norte['str_modelo'] == cadastro['str_modelo'])
+                ]
+                df_prevista_ec_norte = df_prevista_filtrado[['dt_prevista', 'vl_chuva']].copy()
+                df_prevista_ec_norte['id_cadastro'] = id_cadastro
+                
+                query_insert_ec = EstacaoChuvosaPrevista.tb_chuva_prevista_ec_norte.insert().values(
+                    df_prevista_ec_norte.to_dict(orient='records')
+                )
+                __DB__.db_execute(query_insert_ec)
+                
+                inserted_count += len(df_prevista_ec_norte)
+
+        if not df_sudeste.empty:
+            df_cadastro_sudeste = df_sudeste[['dt_rodada', 'hr_rodada', 'str_modelo']].drop_duplicates()
+            df_cadastro_sudeste['dt_rodada'] = pd.to_datetime(df_cadastro_sudeste['dt_rodada']).dt.strftime('%Y-%m-%d')
+            
+            for _, cadastro in df_cadastro_sudeste.iterrows():
+                query_select = sa.select(EstacaoChuvosaPrevista.tb_cadastro_ec_sudeste.c.id).where(
+                    sa.and_(
+                        EstacaoChuvosaPrevista.tb_cadastro_ec_sudeste.c.dt_rodada == cadastro['dt_rodada'],
+                        EstacaoChuvosaPrevista.tb_cadastro_ec_sudeste.c.hr_rodada == cadastro['hr_rodada'],
+                        EstacaoChuvosaPrevista.tb_cadastro_ec_sudeste.c.str_modelo == cadastro['str_modelo']
+                    )
+                )
+                result = __DB__.db_execute(query_select).fetchone()
+                
+                if result:
+                    id_cadastro = result[0]
+                    query_delete = sa.delete(EstacaoChuvosaPrevista.tb_chuva_prevista_ec_sudeste).where(
+                        EstacaoChuvosaPrevista.tb_chuva_prevista_ec_sudeste.c.id_cadastro == id_cadastro
+                    )
+                    __DB__.db_execute(query_delete)
+                else:
+                    query_insert_cadastro = EstacaoChuvosaPrevista.tb_cadastro_ec_sudeste.insert().values(cadastro.to_dict())
+                    result = __DB__.db_execute(query_insert_cadastro)
+                    id_cadastro = result.inserted_primary_key[0]
+                
+                df_prevista_filtrado = df_sudeste[
+                    (df_sudeste['dt_rodada'] == cadastro['dt_rodada']) & 
+                    (df_sudeste['hr_rodada'] == cadastro['hr_rodada']) & 
+                    (df_sudeste['str_modelo'] == cadastro['str_modelo'])
+                ]
+                df_prevista_ec_sudeste = df_prevista_filtrado[['dt_prevista', 'vl_chuva']].copy()
+                df_prevista_ec_sudeste['id_cadastro'] = id_cadastro
+                
+                query_insert_ec = EstacaoChuvosaPrevista.tb_chuva_prevista_ec_sudeste.insert().values(
+                    df_prevista_ec_sudeste.to_dict(orient='records')
+                )
+                __DB__.db_execute(query_insert_ec)
+                
+                inserted_count += len(df_prevista_ec_sudeste)
+
+        return {'message': f'{inserted_count} registros inseridos com sucesso.'}
+
 
     @staticmethod
     def get_chuva_prevista_estacao_chuvosa(modelo: str, hr_rodada: int, dt_rodada: str, regiao: str):
@@ -83,7 +226,6 @@ class EstacaoChuvosaObservada:
         df_prev['dt_rodada'] = dt_rodada
 
         return df_prev.to_dict('records')
-
 
 class ClimatologiaChuva:
 

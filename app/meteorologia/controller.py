@@ -16,13 +16,50 @@ def get_chuva_cpc_estacao_chuvosa(regiao: RegioesChuvaEstacaoChuvosa, dt_ini_obs
     # service.get_chuva_observ.get_bacias(divisao.name)
     return service.EstacaoChuvosaObservada.get_chuva_observada(dt_ini_obs, dt_fim_obs, regiao.name)
 
+@router.post('/estacao-chuvosa', tags=['Meteorologia'])
+def post_chuva_cpc_estacao_chuvosa(body: List[ChuvaObservadaCreateDTO]):
+    """
+        Insere os dados de chuva prevista para a estação chuvosa.
+        
+            - regiao (str): Regiao especifica da chuva. Regioes aceitos:
+                * norte
+                * sudeste
+                
+            - dt_* (str): Datas no formato 'YYYY-MM-DD'
+                
+    """
+    return service.EstacaoChuvosaObservada.post_chuva_observada(body)
+
 ##############################################################################################################################################################
 
 
 @router.get('/estacao-chuvosa-prev', tags=['Meteorologia'])
 def get_chuva_cpc_estacao_chuvosa_previsao(regiao: RegioesChuvaEstacaoChuvosa, modelo=None, dt_rodada: Optional[datetime.date] = datetime.datetime.now().strftime('%Y-%m-%d'), hr_rodada='00'):
     # service.get_chuva_observ.get_bacias(divisao.name)
-    return service.EstacaoChuvosaObservada.get_chuva_prevista_estacao_chuvosa(dt_rodada=dt_rodada, hr_rodada=hr_rodada, regiao=regiao.name, modelo=modelo)
+    return service.EstacaoChuvosaPrevista.get_chuva_prevista_estacao_chuvosa(dt_rodada=dt_rodada, hr_rodada=hr_rodada, regiao=regiao.name, modelo=modelo)
+
+@router.post('/estacao-chuvosa-prev', tags=['Meteorologia'])
+def post_chuva_cpc_estacao_chuvosa_previsao(body: List[ChuvaPrevistaCreateDTO]):
+    """
+        Insere os dados de chuva prevista para a estação chuvosa.
+        
+            - str_modelo (str): Nome do modelo utilizado. Modelos aceitos:
+                * gfs
+                * gefs
+                * gefs-estendido
+                * ecmwf
+                * ecmwf-aifs
+                * ecmwf-ens
+                * ecmwf-ens-estendido
+               
+            - regiao (str): Regiao especifica da chuva. Regioes aceitos:
+                * norte
+                * sudeste
+                
+            - dt_* (str): Datas no formato 'YYYY-MM-DD'
+                
+    """
+    return service.EstacaoChuvosaPrevista.post_chuva_prevista_estacao_chuvosa(body)
 
 ##############################################################################################################################################################
 

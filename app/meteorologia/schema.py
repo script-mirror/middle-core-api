@@ -6,6 +6,12 @@ from typing import Dict, List
 class ModelosChuvaEstacaoChuvosa(str, Enum):
     gfs = 'gfs'
     gefs = 'gefs'
+    gefs_estendido = 'gefs-estendido'
+    ecmwf = 'ecmwf'
+    ecmwf_aifs = 'ecmwf-aifs'
+    ecmwf_ens = 'ecmwf-ens'
+    ecmwf_ens_estendido = 'ecmwf-ens-estendido'
+    
 
 
 class RegioesChuvaEstacaoChuvosa(str, Enum):
@@ -41,3 +47,15 @@ class EstacoesMeteorologicas(BaseModel):
 
 class EstacoesMeteorologicasPostRequest(EstacoesMeteorologicas):
     pass
+
+class ChuvaObservadaCreateDTO(BaseModel):
+    dt_observada: str
+    vl_chuva: float
+    regiao: RegioesChuvaEstacaoChuvosa
+class ChuvaPrevistaCreateDTO(BaseModel):
+    dt_prevista: str
+    vl_chuva: float
+    str_modelo: ModelosChuvaEstacaoChuvosa
+    regiao: RegioesChuvaEstacaoChuvosa
+    hr_rodada: int
+    dt_rodada: str

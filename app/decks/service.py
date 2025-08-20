@@ -1230,7 +1230,7 @@ class NewaveSistEnergia:
         return decks_data
     
     @staticmethod
-    def get_sist_total_mmgd_expansao_deck_values():
+    def get_sist_mmgd_total_deck_values():
         
         subquery = db.select(
             NewaveSistEnergia.tb.c["dt_deck"]
@@ -1359,6 +1359,7 @@ class NewaveSistEnergia:
         
         # Get MMGD total values
         mmgd_base_values = NewaveCadic.get_cadic_total_mmgd_base_deck_values()
+        boa_vista_values = NewaveCadic.get_cadic_boa_vista_values()
         
         subquery = db.select(
             NewaveSistEnergia.tb.c["dt_deck"]
@@ -1405,6 +1406,21 @@ class NewaveSistEnergia:
                     mmgd_dict[dt_deck][ano] = {}
                     
                 mmgd_dict[dt_deck][ano][mes] = item.get('vl_deck_mmgd_base', 0)
+
+        # Criando um dicionário para relacionar os valores de Boa Vista
+        boa_vista_dict = {}
+        for deck in boa_vista_values:
+            dt_deck = deck.get('dt_deck')
+            boa_vista_dict[dt_deck] = {}
+            
+            for item in deck.get('data', []):
+                ano = item.get('vl_ano')
+                mes = item.get('vl_mes')
+                
+                if ano not in boa_vista_dict[dt_deck]:
+                    boa_vista_dict[dt_deck][ano] = {}
+                    
+                boa_vista_dict[dt_deck][ano][mes] = item.get('vl_boa_vista', 0)
         
         # Adicionar coluna de MMGD total baseado no dicionário
         df['vl_deck_mmgd_base'] = df.apply(
@@ -1421,8 +1437,23 @@ class NewaveSistEnergia:
             axis=1
         )
         
-        # Calculando a carga global (soma da energia total e MMGD total)
-        df['vl_deck_carga_global'] = df['vl_deck_energia_total'] + df['vl_deck_mmgd_base']
+        # Adicionar coluna de Boa Vista baseado no dicionário
+        df['vl_deck_boa_vista'] = df.apply(
+            lambda row: boa_vista_dict.get(
+                row['dt_deck'].strftime('%Y-%m-%d') if isinstance(row['dt_deck'], datetime.date) else str(row['dt_deck']), 
+                {}
+            ).get(
+                row['vl_ano'], 
+                {}
+            ).get(
+                row['vl_mes'], 
+                0
+            ),
+            axis=1
+        )
+        
+        # Calculando a carga global (soma da energia total, MMGD total e Boa Vista)
+        df['vl_deck_carga_global'] = df['vl_deck_energia_total'] + df['vl_deck_mmgd_base'] + df['vl_deck_boa_vista']
         
         # Formatando o resultado final
         decks_data = []
@@ -1458,7 +1489,7 @@ class NewaveSistEnergia:
         carga_global_values = NewaveSistEnergia.get_sist_total_carga_global_deck_values()
         mmgd_total_values = NewaveSistEnergia.get_sist_mmgd_total_deck_values()
         unsi_values = NewaveSistEnergia.get_sist_total_unsi_deck_values()
-        ande_values = NewaveSistEnergia.get_sist_total_ande_deck_values()
+        ande_values = NewaveCadic.get_cadic_total_ande_deck_values()
         
         if not carga_global_values or not mmgd_total_values or not unsi_values or not ande_values:
             return []
@@ -1528,74 +1559,6 @@ class NewaveSistEnergia:
                 carga_liquida_values.append(deck_liquida)
         
         return carga_liquida_values
-    
-    @staticmethod
-    def get_sist_mmgd_total_deck_values():
-        """
-        Calcula os valores totais de MMGD (soma de MMGD base e MMGD expansão)
-        para os dois decks mais recentes.
-        
-        Returns:
-            Lista com informações dos decks, contendo dados agregados de MMGD total
-            (MMGD base + MMGD expansão), organizados por mês e ano.
-        """
-        # Obter dados do MMGD base e expansão
-        from . import service  # Importação local para evitar referência circular
-        mmgd_base_values = service.NewaveCadic.get_cadic_total_mmgd_base_deck_values()
-        mmgd_exp_values = NewaveSistEnergia.get_sist_total_mmgd_expansao_deck_values()
-        
-        if not mmgd_base_values or not mmgd_exp_values:
-            return []
-            
-        mmgd_total_values = []
-        
-        for deck_base in mmgd_base_values:
-            dt_deck_base = deck_base.get('dt_deck')
-            
-            deck_exp = None
-            for deck in mmgd_exp_values:
-                if deck.get('dt_deck') == dt_deck_base:
-                    deck_exp = deck
-                    break
-            
-            if deck_exp:
-                exp_dict = {(item.get('vl_ano'), item.get('vl_mes')): item.get('vl_deck_mmgd_exp', 0) 
-                           for item in deck_exp.get('data', [])}
-                
-                deck_total = {
-                    "dt_deck": dt_deck_base,
-                    "data": []
-                }
-                
-                for item_base in deck_base.get('data', []):
-                    ano = item_base.get('vl_ano')
-                    mes = item_base.get('vl_mes')
-                    valor_base = item_base.get('vl_deck_mmgd_base', 0)
-                    valor_exp = exp_dict.get((ano, mes), 0)
-                    
-                    item_total = {
-                        "vl_ano": ano,
-                        "vl_mes": mes,
-                        "vl_deck_mmgd_total": int(round(valor_base + valor_exp))
-                    }
-                    
-                    deck_total['data'].append(item_total)
-                
-                mmgd_total_values.append(deck_total)
-        
-        return mmgd_total_values
-
-    @staticmethod
-    def get_sist_total_ande_deck_values():
-        """
-        Obtém os valores de ANDE para os dois decks mais recentes.
-        
-        Returns:
-            Lista com informações dos dois decks mais recentes, contendo dados
-            de ANDE total, organizados por mês e ano.
-        """
-        # Chama a função do NewaveCadic que já implementa a lógica
-        return NewaveCadic.get_cadic_total_ande_deck_values()
     
     
 class NewaveCadic:
@@ -1738,8 +1701,7 @@ class NewaveCadic:
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_se"]).label("vl_mmgd_se"),
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_s"]).label("vl_mmgd_s"),
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_ne"]).label("vl_mmgd_ne"),
-            db.func.sum(NewaveCadic.tb.c["vl_mmgd_n"]).label("vl_mmgd_n")
-            
+            db.func.sum(NewaveCadic.tb.c["vl_mmgd_n"]).label("vl_mmgd_n"),
         ).where(
             NewaveCadic.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
         ).group_by(
@@ -1771,13 +1733,52 @@ class NewaveCadic:
                 row = month_group.iloc[0]
 
                 total_geracao = float(row['MMGD_SE']) + float(row['MMGD_S']) + float(row['MMGD_NE']) + float(row['MMGD_N'])
-            
                 data = {
                     "vl_mes": int(mes),
                     "vl_ano": int(ano),
                     "vl_deck_mmgd_base": total_geracao
                 }
 
+                deck_info["data"].append(data)
+
+            decks_data.append(deck_info)
+
+        return decks_data
+    
+    @staticmethod
+    def get_cadic_boa_vista_values():
+        query = db.select(
+            NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["vl_mes"],
+            NewaveCadic.tb.c["vl_ano"],
+            NewaveCadic.tb.c["vl_boa_vista"]
+        ).order_by(
+            NewaveCadic.tb.c["dt_deck"].desc(),
+            NewaveCadic.tb.c["vl_ano"],
+            NewaveCadic.tb.c["vl_mes"]
+        )
+        
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+            'dt_deck', 'vl_mes', 'vl_ano', 'vl_boa_vista'
+        ])
+        
+        if df.empty:
+            return []
+
+        decks_data = []
+        for dt_deck, deck_group in df.groupby('dt_deck'):
+            deck_info = {
+                "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "data": []
+            }
+
+            for _, row in deck_group.iterrows():
+                data = {
+                    "vl_mes": int(row['vl_mes']),
+                    "vl_ano": int(row['vl_ano']),
+                    "vl_boa_vista": float(row['vl_boa_vista'])
+                }
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)

@@ -241,12 +241,8 @@ def post_newave_sist_energia(
 def get_sist_total_unsi_deck_values():
     return service.NewaveSistEnergia.get_sist_total_unsi_deck_values()
 
-@router.get("/newave/sistema/total_mmgd_expansao", tags=["Newave"])
-def get_sist_total_mmgd_expansao_deck_values():
-    return service.NewaveSistEnergia.get_sist_total_mmgd_expansao_deck_values()
-
-@router.put("/newave/sistema/total_mmgd_expansao", tags=["Newave"])
-def put_sist_mmgd_com_previsoes_cargas_mensais(
+@router.put("/newave/sistema/mmgd_total", tags=["Newave"])
+def put_sist_mmgd_total_com_previsoes_cargas_mensais(
     body: List[CargaNewaveSistemaEnergiaUpdateDto]
 ):
     return service.NewaveSistEnergia.put_sist_mmgd_com_previsoes_cargas_mensais(body)

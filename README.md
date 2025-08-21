@@ -1,4 +1,4 @@
-# API Middle de Comercialização de Energia Raízen
+# API Core Middle
 
 ## Estrutura do Projeto
 

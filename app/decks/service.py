@@ -588,6 +588,63 @@ class Cvu:
             return result[0]
     
     @staticmethod
+    def get_cvu_merchant(conditions: list) -> pd.DataFrame:
+        query = db.select(CvuMerchant.tb).where(db.and_(*conditions))
+        rows = __DB__.db_execute(query)
+        df_cvu_merchant = pd.DataFrame(rows)
+        if not df_cvu_merchant.empty:
+            df_usinas_cf = pd.DataFrame(CvuMerchantRecuperacaoCustoFixo.get_all())
+            df_cvu_merchant['vl_cvu_cf'] = df_cvu_merchant['vl_cvu_cf'].fillna(df_cvu_merchant['vl_cvu_scf'])
+
+            df_cvu_merchant['vl_cvu'] = np.where(
+                df_cvu_merchant['recuperacao_custo_fixo'].str.lower() == 'não',
+                df_cvu_merchant['vl_cvu_cf'],
+                df_cvu_merchant['vl_cvu_scf']
+            )
+
+            ano_inicial = int(
+                df_cvu_merchant['mes_referencia'].unique()[0][:4])
+
+            df_conjuntural = df_cvu_merchant.copy()
+            df_conjuntural['tipo_cvu'] = 'conjuntural'
+            df_conjuntural['ano_horizonte'] = ano_inicial
+            
+            # definindo valores de merchant da data fim pra frente como sem custo fixo
+            # essa regra pode ser alterada futuramente
+            df_conjuntural['data_fim_aux'] = df_conjuntural['data_fim']
+            df_conjuntural.merge(df_usinas_cf, on='cd_usina', how='inner')
+            
+            df_conjuntural_update_dt_fim = df_conjuntural[df_conjuntural['cd_usina'].isin(
+                df_usinas_cf['cd_usina']
+            )].merge(df_usinas_cf, on='cd_usina', how='left')
+            df_conjuntural_update_dt_fim['data_fim'] = df_conjuntural_update_dt_fim['dt_recupera_cf']
+            df_conjuntural[df_conjuntural['cd_usina'].isin(
+                df_usinas_cf['cd_usina']
+            )] = df_conjuntural_update_dt_fim
+            df_scf = df_conjuntural.copy()
+            
+            df_scf = df_scf[df_scf['cd_usina'].isin(df_usinas_cf['cd_usina'])]
+            df_merged = df_scf.merge(df_usinas_cf, on='cd_usina', how='inner')
+            df_merged['dt_recupera_cf'] = pd.to_datetime(df_merged['dt_recupera_cf'])
+            df_filtrado = df_merged[df_merged['data_fim_aux'] > df_merged['dt_recupera_cf']]
+            df_scf = df_filtrado[df_scf.columns]
+            
+            df_scf['data_inicio'] = df_scf['data_fim']
+            df_scf['data_fim'] = df_scf['data_fim_aux']
+            df_scf['vl_cvu'] = df_scf['vl_cvu_scf']
+            
+            df_cvu_merchant = pd.concat([
+                df_conjuntural, df_scf
+            ], ignore_index=True)
+            df_cvu_merchant.drop(columns=['vl_cvu_cf', 'vl_cvu_scf', 'recuperacao_custo_fixo', 'data_fim_aux'], inplace=True)
+        df_cvu_merchant.drop_duplicates(['mes_referencia', 'cd_usina', 'data_inicio'], inplace=True)
+        df_cvu_merchant['cd_usina'] = df_cvu_merchant['cd_usina'].astype(int)
+        df_cvu_merchant.dropna(inplace=True)
+        df_cvu_merchant['ano_horizonte'] = df_cvu_merchant['ano_horizonte'].astype(int)
+        pdb.set_trace()
+        return df_cvu_merchant
+    
+    @staticmethod
     def get_cvu_by_tipo_data_atualizacao(
         tipo_cvu: str,
         data_atualizacao: datetime.date
@@ -612,7 +669,7 @@ class Cvu:
                 )
             )
         else:
-            if tipo_cvu[:5] != "CCEE_":
+            if tipo_cvu is not None and tipo_cvu[:5] != "CCEE_":
                 tipo_cvu = "CCEE_" + tipo_cvu
 
             if data_atualizacao is None:
@@ -630,38 +687,12 @@ class Cvu:
         rows = __DB__.db_execute(query)
         df_cvu = pd.DataFrame(rows)
 
-        query = db.select(CvuMerchant.tb).where(db.and_(*conditions_merchant))
-        rows = __DB__.db_execute(query)
-        df_cvu_merchant = pd.DataFrame(rows)
+
+        df_cvu_merchant = Cvu.get_cvu_merchant(conditions_merchant)
 
         if not df_cvu_merchant.empty:
-            df_cvu_merchant['vl_cvu_cf'] = df_cvu_merchant['vl_cvu_cf'].fillna(df_cvu_merchant['vl_cvu_scf'])
-
-            df_cvu_merchant['vl_cvu'] = np.where(
-                df_cvu_merchant['recuperacao_custo_fixo'].str.lower() == 'não',
-                df_cvu_merchant['vl_cvu_cf'],
-                df_cvu_merchant['vl_cvu_scf']
-            )
-
-            df_cvu_merchant_completo = df_cvu_merchant.drop(
-                columns=['vl_cvu_cf', 'vl_cvu_scf'])
-
-            ano_inicial = int(
-                df_cvu_merchant['mes_referencia'].unique()[0][:4])
-
-            df_conjuntural = df_cvu_merchant_completo.copy()
-            df_conjuntural['tipo_cvu'] = 'conjuntural'
-            df_conjuntural['ano_horizonte'] = ano_inicial
-
-            df_estrutural = df_cvu_merchant_completo.copy()
-            df_estrutural = df_estrutural.loc[df_estrutural.index.repeat(
-                5)].reset_index(drop=True)
-            df_estrutural['tipo_cvu'] = 'estrutural'
-            ordem_anos_repetidos = list(
-                range(ano_inicial, ano_inicial+5)) * (len(df_estrutural) // 5)
-            df_estrutural['ano_horizonte'] = ordem_anos_repetidos
-
-            df_cvu = pd.concat([df_cvu, df_conjuntural, df_estrutural])
+            df_cvu = pd.concat([df_cvu, df_cvu_merchant])
+            
         df_cvu = df_cvu.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df_cvu.to_dict('records')
 
@@ -696,6 +727,23 @@ class CvuMerchant:
         rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
+
+
+class CvuMerchantRecuperacaoCustoFixo:
+    tb: db.Table = __DB__.getSchema('cvu_merchant_recupera_cf')
+
+    @staticmethod
+    def get_all():
+        query = db.select(CvuMerchantRecuperacaoCustoFixo.tb)
+        rows = __DB__.db_execute(query).fetchall()
+        if rows:
+            df = pd.DataFrame(rows, columns=['cd_usina', 'dt_recupera_cf'])
+            return df.to_dict('records')
+        
+        logger.warning("Nenhum dado encontrado na tabela cvu_merchant_recupera_cf")
+        raise HTTPException(
+            status_code=404, detail="Nenhum dado encontrado na tabela cvu_merchant_recupera_cf")
+
 
 
 class CargaSemanalDecomp:

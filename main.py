@@ -11,7 +11,6 @@ from app import (
     ons_controller,
     bbce_controller,
     decks_controller,
-    speech_to_text_controller,
     meteorologia_controller,
     pluvia_controller,
     utils_controller
@@ -41,25 +40,32 @@ app.add_middleware(
 
 
 app.include_router(rodadas_controller, prefix="/api/v2",)
-app.include_router(ons_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
+app.include_router(
+    ons_controller, prefix="/api/v2",
+    dependencies=[Depends(auth_scheme),
+    Depends(cognito.auth_required)]
+)
 app.include_router(bbce_controller, prefix="/api/v2")
-app.include_router(decks_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
-app.include_router(speech_to_text_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
-app.include_router(meteorologia_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
-app.include_router(pluvia_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
-app.include_router(utils_controller, prefix="/api/v2",
-                   dependencies=[Depends(auth_scheme),
-                                 Depends(cognito.auth_required)])
+app.include_router(
+    decks_controller, prefix="/api/v2",
+    dependencies=[Depends(auth_scheme),
+    Depends(cognito.auth_required)]
+)
+app.include_router(
+    meteorologia_controller, prefix="/api/v2",
+    dependencies=[Depends(auth_scheme),
+    Depends(cognito.auth_required)]
+)
+app.include_router(
+    pluvia_controller, prefix="/api/v2",
+    dependencies=[Depends(auth_scheme),
+    Depends(cognito.auth_required)]
+)
+app.include_router(
+    utils_controller, prefix="/api/v2",
+    dependencies=[Depends(auth_scheme),
+    Depends(cognito.auth_required)]
+)
 
 
 @app.get("/api/v2/health")

@@ -97,7 +97,7 @@ def get_weol_by_product_date_start_week_year_month_rv(
 
 @router.get("/weol/weighted-average", tags=["Decomp"])
 def get_weighted_avg_by_product_date(
-    dataProduto: datetime.date,
+    dataProduto: Optional[datetime.date] = None,
 ):
     return service.WeolSemanal.get_weighted_avg_by_product_date(dataProduto)
 

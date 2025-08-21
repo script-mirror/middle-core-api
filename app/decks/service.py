@@ -139,7 +139,9 @@ class WeolSemanal:
         return result.to_dict('records')
 
     @staticmethod
-    def get_weighted_avg_by_product_date(product_date: datetime.date, ):
+    def get_weighted_avg_by_product_date(product_date: datetime.date,):
+        if product_date is None:
+            product_date = WeolSemanal.get_last_deck_date_weol()
         df = pd.DataFrame(WeolSemanal.get_by_product_date(product_date))
         df_horas_por_patamar = pd.DataFrame(Patamares.get_horas_por_patamar_por_inicio_semana_data(
             df['inicioSemana'].min(), df['finalSemana'].max()))

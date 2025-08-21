@@ -241,12 +241,20 @@ def post_newave_sist_energia(
 def get_sist_total_unsi_deck_values():
     return service.NewaveSistEnergia.get_sist_total_unsi_deck_values()
 
-@router.get("/newave/sistema/total_mmgd_expansao", tags=["Newave"])
-def get_sist_total_mmgd_expansao_deck_values():
-    return service.NewaveSistEnergia.get_sist_total_mmgd_expansao_deck_values()
+@router.get("/newave/sistema/mmgd_total", tags=["Newave"])
+def get_sist_mmgd_total_deck_values():
+    """
+    Retorna os valores totais de MMGD (soma de MMGD base e MMGD expansão)
+    para os dois decks mais recentes.
+    
+    Returns:
+        Lista com informações dos decks, contendo dados agregados de MMGD total
+        (MMGD base + MMGD expansão), organizados por mês e ano.
+    """
+    return service.NewaveSistEnergia.get_sist_mmgd_total_deck_values()
 
-@router.put("/newave/sistema/total_mmgd_expansao", tags=["Newave"])
-def put_sist_mmgd_com_previsoes_cargas_mensais(
+@router.put("/newave/sistema/mmgd_total", tags=["Newave"])
+def put_sist_mmgd_total_com_previsoes_cargas_mensais(
     body: List[CargaNewaveSistemaEnergiaUpdateDto]
 ):
     return service.NewaveSistEnergia.put_sist_mmgd_com_previsoes_cargas_mensais(body)
@@ -259,17 +267,6 @@ def get_sist_total_carga_global_deck_values():
 def get_sist_total_carga_liquida_deck_values():
     return service.NewaveSistEnergia.get_sist_total_carga_liquida_deck_values()
 
-@router.get("/newave/sistema/mmgd_total", tags=["Newave"])
-def get_sist_mmgd_total_deck_values():
-    """
-    Retorna os valores totais de MMGD (soma de MMGD base e MMGD expansão)
-    para os dois decks mais recentes.
-    
-    Returns:
-        Lista com informações dos decks, contendo dados agregados de MMGD total
-        (MMGD base + MMGD expansão), organizados por mês e ano.
-    """
-    return service.NewaveSistEnergia.get_sist_mmgd_total_deck_values()
 
 
 @router.post("/newave/cadic", tags=["Newave"])

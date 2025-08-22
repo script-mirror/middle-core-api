@@ -594,6 +594,8 @@ class Cvu:
         query = db.select(CvuMerchant.tb).where(db.and_(*conditions))
         rows = __DB__.db_execute(query)
         df_cvu_merchant = pd.DataFrame(rows)
+        
+        
         if not df_cvu_merchant.empty:
             df_usinas_cf = pd.DataFrame(CvuMerchantRecuperacaoCustoFixo.get_all())
             df_cvu_merchant['vl_cvu_cf'] = df_cvu_merchant['vl_cvu_cf'].fillna(df_cvu_merchant['vl_cvu_scf'])
@@ -640,12 +642,10 @@ class Cvu:
             ], ignore_index=True)
             df_cvu_merchant.drop(columns=['vl_cvu_cf', 'vl_cvu_scf', 'recuperacao_custo_fixo', 'data_fim_aux'], inplace=True)
         df_cvu_merchant.drop_duplicates(['mes_referencia', 'cd_usina', 'data_inicio'], inplace=True)
-        df_cvu_merchant['cd_usina'].dropna(inplace=True)
+        df_cvu_merchant.dropna(inplace=True)
         df_cvu_merchant = df_cvu_merchant.replace({np.nan: None, np.inf: None, -np.inf: None})
         df_cvu_merchant['cd_usina'] = df_cvu_merchant['cd_usina'].astype(int)
-        df_cvu_merchant.dropna(inplace=True)
         df_cvu_merchant['ano_horizonte'] = df_cvu_merchant['ano_horizonte'].astype(int)
-        pdb.set_trace()
         return df_cvu_merchant
     
     @staticmethod

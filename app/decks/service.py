@@ -640,6 +640,7 @@ class Cvu:
             ], ignore_index=True)
             df_cvu_merchant.drop(columns=['vl_cvu_cf', 'vl_cvu_scf', 'recuperacao_custo_fixo', 'data_fim_aux'], inplace=True)
         df_cvu_merchant.drop_duplicates(['mes_referencia', 'cd_usina', 'data_inicio'], inplace=True)
+        df_cvu_merchant = df_cvu_merchant.replace({np.nan: None, np.inf: None, -np.inf: None})
         df_cvu_merchant['cd_usina'] = df_cvu_merchant['cd_usina'].astype(int)
         df_cvu_merchant.dropna(inplace=True)
         df_cvu_merchant['ano_horizonte'] = df_cvu_merchant['ano_horizonte'].astype(int)

@@ -1030,14 +1030,14 @@ class NewavePrevisoesCargas:
             NewavePrevisoesCargas.tb.c["submercado"],
             NewavePrevisoesCargas.tb.c["patamar"],
             NewavePrevisoesCargas.tb.c["vl_energia_total"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_pch"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_eol"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_ufv"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_pct"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_pch_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_eol_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_ufv_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_geracao_pct_mmgd"]
+            NewavePrevisoesCargas.tb.c["vl_base_pch_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_base_eol_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_base_ufv_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_base_pct_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_exp_pch_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_exp_eol_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_exp_ufv_mmgd"],
+            NewavePrevisoesCargas.tb.c["vl_exp_pct_mmgd"]
         )
         if data_revisao:
             query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == data_revisao)

@@ -132,14 +132,14 @@ class NewavePrevisoesCargasReadDto(BaseModel):
     submercado: str
     patamar: str
     vl_energia_total: float
-    vl_geracao_pch: float
-    vl_geracao_pct: float
-    vl_geracao_eol: float
-    vl_geracao_ufv: float
-    vl_geracao_pch_mmgd: float
-    vl_geracao_pct_mmgd: float
-    vl_geracao_eol_mmgd: float
-    vl_geracao_ufv_mmgd: float
+    vl_base_pch_mmgd: float
+    vl_base_pct_mmgd: float
+    vl_base_eol_mmgd: float
+    vl_base_ufv_mmgd: float
+    vl_exp_pch_mmgd: float
+    vl_exp_pct_mmgd: float
+    vl_exp_eol_mmgd: float
+    vl_exp_ufv_mmgd: float
 
 class CargaNewaveSistemaEnergiaCreateDto(BaseModel):
     cd_submercado: int

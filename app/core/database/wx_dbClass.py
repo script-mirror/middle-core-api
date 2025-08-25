@@ -197,14 +197,14 @@ class db_mysql_master():
                                     db.Column('submercado',db.String(2)),
                                     db.Column('patamar', db.String(6)),
                                     db.Column('vl_energia_total',db.FLOAT),
-                                    db.Column('vl_geracao_pch',db.FLOAT),
-                                    db.Column('vl_geracao_eol',db.FLOAT),
-                                    db.Column('vl_geracao_ufv',db.FLOAT),
-                                    db.Column('vl_geracao_pct',db.FLOAT),
-                                    db.Column('vl_geracao_pch_mmgd',db.FLOAT),
-                                    db.Column('vl_geracao_eol_mmgd',db.FLOAT),
-                                    db.Column('vl_geracao_ufv_mmgd',db.FLOAT),
-                                    db.Column('vl_geracao_pct_mmgd',db.FLOAT)
+                                    db.Column('vl_base_pch_mmgd',db.FLOAT),
+                                    db.Column('vl_base_eol_mmgd',db.FLOAT),
+                                    db.Column('vl_base_ufv_mmgd',db.FLOAT),
+                                    db.Column('vl_base_pct_mmgd',db.FLOAT),
+                                    db.Column('vl_exp_pch_mmgd',db.FLOAT),
+                                    db.Column('vl_exp_eol_mmgd',db.FLOAT),
+                                    db.Column('vl_exp_ufv_mmgd',db.FLOAT),
+                                    db.Column('vl_exp_pct_mmgd',db.FLOAT)
                                     )
 
         elif table_name.lower() == 'tb_cadastro_decomp':

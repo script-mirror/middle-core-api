@@ -262,8 +262,8 @@ class WeolSemanal:
 
             html += '</tr>'
         html += '</tbody></table>'
-        with open('weol.html', 'w') as f:
-            f.write(html)
+        # with open('weol.html', 'w') as f:
+        #     f.write(html)
         return {"html": html}
 
     @staticmethod

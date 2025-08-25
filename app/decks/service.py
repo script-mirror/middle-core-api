@@ -1037,8 +1037,8 @@ class NewavePrevisoesCargas:
         if data_produto:
             query = query.where(NewavePrevisoesCargas.tb.c.data_produto == data_produto)
         else:
-            subq_max_dt = db.select(db.func.max(c.data_produto)).scalar_subquery()
-            query = query.where(c.data_produto == subq_max_dt)   
+            subq_max_dt = db.select(db.func.max(NewavePrevisoesCargas.tb.c.data_produto)).scalar_subquery()
+            query = query.where(NewavePrevisoesCargas.tb.c.data_produto == subq_max_dt)   
             
         if submercado:
             query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)

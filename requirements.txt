@@ -7,9 +7,6 @@ pydantic
 pydantic_settings
 pydub
 Requests
-SpeechRecognition
 SQLAlchemy
 uvicorn
-webdriver_manager
 pymysql
-selenium

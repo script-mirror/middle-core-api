@@ -1556,6 +1556,12 @@ class db_mysql_master():
                                     extend_existing=True
                                     )
 
+        elif table_name.lower() == 'cvu_merchant_recupera_cf':
+            table_schema = db.Table('cvu_merchant_recupera_cf', self.meta,
+                                    db.Column('cd_usina', db.Integer, nullable=False),
+                                    db.Column('dt_recupera_cf', db.Date, nullable=False),
+                                    extend_existing=True
+                                    )
         return table_schema
 
 

@@ -215,7 +215,7 @@ def get_carga_pmo_historico_previsao(
 
 @router.get("/newave/previsoes-cargas", tags=["Newave"])
 def get_newave_previsoes_cargas(
-    data_produto: Optional[datetime.date] = None,
+    data_revisao: Optional[datetime.date] = None,
     submercado: Optional[SubmercadosEnum] = None,
     patamar: Optional[PatamaresEnum] = None
 ) -> List[NewavePrevisoesCargasReadDto]:
@@ -223,14 +223,14 @@ def get_newave_previsoes_cargas(
     Retorna as previsões de cargas do Newave.
     
     Parameters:
-    - data_produto: Data de referência para filtrar os resultados
+    - data_revisao: Data de referência para filtrar os resultados
     - submercado: Código do submercado para filtrar os resultados
     - patamar: Patamar para filtrar os resultados
     
     Returns:
     - Lista de registros de previsões de cargas
     """
-    return service.NewavePrevisoesCargas.get_previsoes_cargas(data_produto, submercado, patamar)
+    return service.NewavePrevisoesCargas.get_previsoes_cargas(data_revisao, submercado, patamar)
 
 
 @router.post("/newave/sistema", tags=["Newave"])

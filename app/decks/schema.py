@@ -17,10 +17,10 @@ class PatamaresEnum(str, Enum):
     media = "média"
     
 class SubmercadosEnum(str, Enum):
-    se = "sudeste"
-    s = "sul"
-    ne = "nordeste"
-    n = "norte"
+    SE = "sudeste"
+    S = "sul"
+    NE = "nordeste"
+    N = "norte"
     
 class IndiceBlocoEnum(str, Enum):
     CARGA = "CARGA"
@@ -127,10 +127,15 @@ class CargaPmoSchema(BaseModel):
 
 class NewavePrevisoesCargasReadDto(BaseModel):
     data_produto: datetime.date
+    data_revisao: datetime.date
     data_referente: datetime.date
     submercado: str
     patamar: str
     vl_energia_total: float
+    vl_geracao_pch: float
+    vl_geracao_pct: float
+    vl_geracao_eol: float
+    vl_geracao_ufv: float
     vl_geracao_pch_mmgd: float
     vl_geracao_pct_mmgd: float
     vl_geracao_eol_mmgd: float

@@ -1022,23 +1022,28 @@ class NewavePrevisoesCargas:
     tb: db.Table = __DB__.getSchema('newave_previsoes_cargas')
 
     @staticmethod
-    def get_previsoes_cargas(data_produto: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
+    def get_previsoes_cargas(data_revisao: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
         query = db.select(
             NewavePrevisoesCargas.tb.c["data_produto"],
+            NewavePrevisoesCargas.tb.c["data_revisao"],
             NewavePrevisoesCargas.tb.c["data_referente"],
             NewavePrevisoesCargas.tb.c["submercado"],
             NewavePrevisoesCargas.tb.c["patamar"],
             NewavePrevisoesCargas.tb.c["vl_energia_total"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_pch"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_eol"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_ufv"],
+            NewavePrevisoesCargas.tb.c["vl_geracao_pct"],
             NewavePrevisoesCargas.tb.c["vl_geracao_pch_mmgd"],
             NewavePrevisoesCargas.tb.c["vl_geracao_eol_mmgd"],
             NewavePrevisoesCargas.tb.c["vl_geracao_ufv_mmgd"],
             NewavePrevisoesCargas.tb.c["vl_geracao_pct_mmgd"]
         )
-        if data_produto:
-            query = query.where(NewavePrevisoesCargas.tb.c.data_produto == data_produto)
+        if data_revisao:
+            query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == data_revisao)
         else:
-            subq_max_dt = db.select(db.func.max(NewavePrevisoesCargas.tb.c.data_produto)).scalar_subquery()
-            query = query.where(NewavePrevisoesCargas.tb.c.data_produto == subq_max_dt)   
+            subq_max_dt = db.select(db.func.max(NewavePrevisoesCargas.tb.c.data_revisao)).scalar_subquery()
+            query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == subq_max_dt)   
             
         if submercado:
             query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)
@@ -1631,6 +1636,8 @@ class NewaveSistEnergia:
                     valor_mmgd = mmgd_dict.get((ano, mes), 0)
                     valor_unsi = unsi_dict.get((ano, mes), 0)
                     valor_ande = ande_dict.get((ano, mes), 0)
+                    pdb.set_trace()
+                    
                     
                     # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI + ANDE
                     carga_liquida = valor_global - valor_mmgd - valor_unsi + valor_ande

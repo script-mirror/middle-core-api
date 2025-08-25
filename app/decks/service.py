@@ -262,8 +262,8 @@ class WeolSemanal:
 
             html += '</tr>'
         html += '</tbody></table>'
-        # with open('weol.html', 'w') as f:
-        #     f.write(html)
+        with open('weol.html', 'w') as f:
+            f.write(html)
         return {"html": html}
 
     @staticmethod
@@ -300,9 +300,10 @@ class WeolSemanal:
         df = df.groupby('yearMonth').mean()
 
         df = pd.merge(df_eol_newave, df, on='yearMonth', how='left')
+        df.sort_values(['ano', 'mes'], inplace=True)
 
         df.drop(columns=['mes', 'ano'], inplace=True)
-
+        df.sort_values('yearMonth', ascending=True)
         df['yearMonth'] = columns_rename
         df.rename(columns={'yearMonth': 'Origem',
                   'geracaoEolica': 'Eolica Newave'}, inplace=True)

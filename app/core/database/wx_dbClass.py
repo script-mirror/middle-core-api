@@ -188,23 +188,28 @@ class db_mysql_master():
                                     db.Column('str_fonte', db.VARCHAR(100))
                                     )
 
-        elif  table_name.lower() == 'newave_previsoes_cargas': 
+        elif table_name.lower() == 'newave_previsoes_cargas':
             table_schema = db.Table('newave_previsoes_cargas', self.meta,
-                                    db.Column('id', db.Integer,primary_key=True,autoincrement=True),
-                                    db.Column('data_produto',db.Date), 
-                                    db.Column('data_revisao',db.Date),
-                                    db.Column('data_referente',db.Date), 
-                                    db.Column('submercado',db.String(2)),
-                                    db.Column('patamar', db.String(6)),
-                                    db.Column('vl_energia_total',db.FLOAT),
-                                    db.Column('vl_base_pch_mmgd',db.FLOAT),
-                                    db.Column('vl_base_eol_mmgd',db.FLOAT),
-                                    db.Column('vl_base_ufv_mmgd',db.FLOAT),
-                                    db.Column('vl_base_pct_mmgd',db.FLOAT),
-                                    db.Column('vl_exp_pch_mmgd',db.FLOAT),
-                                    db.Column('vl_exp_eol_mmgd',db.FLOAT),
-                                    db.Column('vl_exp_ufv_mmgd',db.FLOAT),
-                                    db.Column('vl_exp_pct_mmgd',db.FLOAT)
+                                    db.Column("id", db.Integer, primary_key=True, autoincrement=True),
+                                    db.Column("submercado", db.VARCHAR(2)),
+                                    db.Column("vl_carga", db.FLOAT),
+                                    db.Column("vl_carga_global", db.FLOAT),
+                                    db.Column("patamar", db.VARCHAR(10)),
+                                    db.Column("horas", db.FLOAT),
+                                    db.Column("vl_exp_pch_mmgd", db.FLOAT),
+                                    db.Column("vl_exp_eol_mmgd", db.FLOAT),
+                                    db.Column("vl_exp_ufv_mmgd", db.FLOAT),
+                                    db.Column("vl_exp_pct_mmgd", db.FLOAT),
+                                    db.Column("vl_base_pch_mmgd", db.FLOAT),
+                                    db.Column("vl_base_eol_mmgd", db.FLOAT),
+                                    db.Column("vl_base_ufv_mmgd", db.FLOAT),
+                                    db.Column("vl_base_pct_mmgd", db.FLOAT),
+                                    db.Column("vl_base_total_mmgd", db.FLOAT),
+                                    db.Column("vl_exp_total_mmgd", db.FLOAT),
+                                    db.Column("data_revisao", db.DATE),
+                                    db.Column("data_produto", db.DATE),
+                                    db.Column("data_referente", db.DATE),
+                                    db.Column("quadrimestral", db.Boolean, default=False)
                                     )
 
         elif table_name.lower() == 'tb_cadastro_decomp':

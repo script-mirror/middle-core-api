@@ -126,20 +126,47 @@ class CargaPmoSchema(BaseModel):
     periodicidade_final: datetime.datetime
 
 class NewavePrevisoesCargasReadDto(BaseModel):
-    data_produto: datetime.date
-    data_revisao: datetime.date
-    data_referente: datetime.date
+    id: int
     submercado: str
+    vl_carga: float
+    vl_carga_global: float
     patamar: str
-    vl_energia_total: float
-    vl_base_pch_mmgd: float
-    vl_base_pct_mmgd: float
-    vl_base_eol_mmgd: float
-    vl_base_ufv_mmgd: float
+    horas: float
     vl_exp_pch_mmgd: float
-    vl_exp_pct_mmgd: float
     vl_exp_eol_mmgd: float
     vl_exp_ufv_mmgd: float
+    vl_exp_pct_mmgd: float
+    vl_base_pch_mmgd: float
+    vl_base_eol_mmgd: float
+    vl_base_ufv_mmgd: float
+    vl_base_pct_mmgd: float
+    vl_base_total_mmgd: float
+    vl_exp_total_mmgd: float
+    data_revisao: datetime.date
+    data_produto: datetime.date
+    data_referente: datetime.date
+    quadrimestral: bool
+    
+class NewavePrevisoesCargasCreateDto(BaseModel):
+    submercado: str
+    vl_carga: float
+    vl_carga_global: float
+    patamar: str
+    horas: float
+    vl_exp_pch_mmgd: float
+    vl_exp_eol_mmgd: float
+    vl_exp_ufv_mmgd: float
+    vl_exp_pct_mmgd: float
+    vl_base_pch_mmgd: float
+    vl_base_eol_mmgd: float
+    vl_base_ufv_mmgd: float
+    vl_base_pct_mmgd: float
+    vl_base_total_mmgd: float
+    vl_exp_total_mmgd: float
+    data_revisao: datetime.date
+    data_produto: datetime.date
+    data_referente: datetime.date
+    quadrimestral: bool = False
 
 class CargaNewaveSistemaEnergiaCreateDto(BaseModel):
     cd_submercado: int
@@ -276,3 +303,4 @@ class RestricoesEletricasSchema(BaseModel):
     patamar: str
     valor: float
     data_produto: datetime.date
+    

@@ -34,6 +34,7 @@ from .schema import (
     CargaNewaveSistemaEnergiaCreateDto,
     CargaNewaveSistemaEnergiaUpdateDto,
     RestricoesEletricasSchema,
+    NewavePrevisoesCargasCreateDto,
 )
 
 logger = logging.getLogger(__name__)
@@ -1024,20 +1025,7 @@ class NewavePrevisoesCargas:
     @staticmethod
     def get_previsoes_cargas(data_revisao: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
         query = db.select(
-            NewavePrevisoesCargas.tb.c["data_produto"],
-            NewavePrevisoesCargas.tb.c["data_revisao"],
-            NewavePrevisoesCargas.tb.c["data_referente"],
-            NewavePrevisoesCargas.tb.c["submercado"],
-            NewavePrevisoesCargas.tb.c["patamar"],
-            NewavePrevisoesCargas.tb.c["vl_energia_total"],
-            NewavePrevisoesCargas.tb.c["vl_base_pch_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_base_eol_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_base_ufv_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_base_pct_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_exp_pch_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_exp_eol_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_exp_ufv_mmgd"],
-            NewavePrevisoesCargas.tb.c["vl_exp_pct_mmgd"]
+            NewavePrevisoesCargas.tb
         )
         if data_revisao:
             query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == data_revisao)
@@ -1055,6 +1043,29 @@ class NewavePrevisoesCargas:
         
         
         return df.to_dict('records')
+    
+    @staticmethod
+    def delete_by_data_produto_data_revisao_equals(data_produto: datetime.date, data_revisao: datetime.date):
+        query = db.delete(NewavePrevisoesCargas.tb).where(
+            db.and_(
+                NewavePrevisoesCargas.tb.c["data_produto"] == data_produto,
+                NewavePrevisoesCargas.tb.c["data_revisao"] == data_revisao
+            )
+        )
+        rows = __DB__.db_execute(query).rowcount
+        logger.info(f"{rows} linhas deletadas da newave_previsoes_cargas")
+        return None
+
+    @staticmethod
+    def create(body: List[NewavePrevisoesCargasCreateDto]):
+        body_dict = [x.model_dump() for x in body]
+        delete_dates = (body_dict[0]['data_produto'], body_dict[0]['data_revisao'])
+        NewavePrevisoesCargas.delete_by_data_produto_data_revisao_equals(*delete_dates)
+        
+        query = db.insert(NewavePrevisoesCargas.tb).values(body_dict)
+        rows = __DB__.db_execute(query).rowcount
+        logger.info(f"{rows} linhas adicionadas na newave_previsoes_cargas")
+        return {"message": f"{rows} linhas adicionadas na newave_previsoes_cargas"}
 
 class NewaveSistEnergia:
     tb: db.Table = __DB__.getSchema('tb_nw_sist_energia')

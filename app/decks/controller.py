@@ -23,6 +23,7 @@ from .schema import (
     SubmercadosEnum,
     PatamaresEnum,
     NewavePrevisoesCargasReadDto,
+    NewavePrevisoesCargasCreateDto,
     )
 import datetime
 
@@ -231,6 +232,13 @@ def get_newave_previsoes_cargas(
     - Lista de registros de previsões de cargas
     """
     return service.NewavePrevisoesCargas.get_previsoes_cargas(data_revisao, submercado, patamar)
+
+
+@router.post("/newave/previsoes-cargas", tags=["Newave"])
+def post_newave_previsoes_cargas(
+    body: List[NewavePrevisoesCargasCreateDto]
+):
+    return service.NewavePrevisoesCargas.create(body)
 
 
 @router.post("/newave/sistema", tags=["Newave"])

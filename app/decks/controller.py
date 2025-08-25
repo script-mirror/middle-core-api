@@ -4,9 +4,11 @@ from . import service
 from .schema import (
     RestricoesEletricasSchema,
     CargaNewaveSistemaEnergiaCreateDto,
+    CargaNewaveSistemaEnergiaReadDto,
     CargaNewaveSistemaEnergiaUpdateDto,
     CargaNewaveCadicCreateDto,
     CargaNewaveCadicUpdateDto,
+    CargaNewaveCadicReadDto,
     CvuSchema,
     CvuMerchantSchema,
     WeolSemanalSchema,
@@ -213,7 +215,7 @@ def get_carga_pmo_historico_previsao(
 
 @router.get("/newave/previsoes_cargas", tags=["Newave"])
 def get_newave_previsoes_cargas(
-    dt_referente: Optional[datetime.date] = None,
+    data_produto: Optional[datetime.date] = None,
     submercado: Optional[SubmercadosEnum] = None,
     patamar: Optional[PatamaresEnum] = None
 ) -> List[NewavePrevisoesCargasReadDto]:
@@ -221,14 +223,14 @@ def get_newave_previsoes_cargas(
     Retorna as previsões de cargas do Newave.
     
     Parameters:
-    - dt_referente: Data de referência para filtrar os resultados
+    - data_produto: Data de referência para filtrar os resultados
     - submercado: Código do submercado para filtrar os resultados
     - patamar: Patamar para filtrar os resultados
     
     Returns:
     - Lista de registros de previsões de cargas
     """
-    return service.NewavePrevisoesCargas.get_previsoes_cargas(dt_referente, submercado, patamar)
+    return service.NewavePrevisoesCargas.get_previsoes_cargas(data_produto, submercado, patamar)
 
 
 @router.post("/newave/sistema", tags=["Newave"])
@@ -236,6 +238,16 @@ def post_newave_sist_energia(
     body: List[CargaNewaveSistemaEnergiaCreateDto]
 ):
     return service.NewaveSistEnergia.post_newave_sist_energia(body)
+
+@router.get("/newave/sistema/last_deck", tags=["Newave"])
+def get_last_newave_sist_energia() -> List[CargaNewaveSistemaEnergiaReadDto]:
+    """
+    Retorna os dados do sistema de energia Newave.
+    
+    Returns:
+        Lista de registros do sistema de energia Newave
+    """
+    return service.NewaveSistEnergia.get_last_newave_sist_energia()
 
 @router.get("/newave/sistema/total_unsi", tags=["Newave"])
 def get_sist_total_unsi_deck_values():
@@ -274,6 +286,16 @@ def post_newave_cadic(
     body: List[CargaNewaveCadicCreateDto]
 ):
     return service.NewaveCadic.post_newave_cadic(body)
+
+@router.get("/newave/cadic/last_deck", tags=["Newave"])
+def get_last_newave_cadic() -> List[CargaNewaveCadicReadDto]:
+    """
+    Retorna os dados do Cadic Newave.
+    
+    Returns:
+        Lista de registros do Cadic Newave
+    """
+    return service.NewaveCadic.get_last_newave_cadic()
 
 @router.get("/newave/cadic/total_mmgd_base", tags=["Newave"])
 def get_cadic_total_mmgd_base_deck_values():

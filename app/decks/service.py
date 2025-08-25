@@ -19,7 +19,9 @@ from .schema import (
     CargaSemanalDecompSchema,
     CargaPmoSchema,
     CargaNewaveSistemaEnergiaCreateDto,
+    CargaNewaveSistemaEnergiaReadDto,
     CargaNewaveCadicCreateDto,
+    CargaNewaveCadicReadDto,
     CargaNewaveCadicUpdateDto,
     CheckCvuCreateDto,
     CheckCvuReadDto,
@@ -967,9 +969,10 @@ class NewavePrevisoesCargas:
     tb: db.Table = __DB__.getSchema('newave_previsoes_cargas')
 
     @staticmethod
-    def get_previsoes_cargas(dt_referente: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
+    def get_previsoes_cargas(data_produto: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
         query = db.select(
-            NewavePrevisoesCargas.tb.c["dt_referente"],
+            NewavePrevisoesCargas.tb.c["data_produto"],
+            NewavePrevisoesCargas.tb.c["data_referente"],
             NewavePrevisoesCargas.tb.c["submercado"],
             NewavePrevisoesCargas.tb.c["patamar"],
             NewavePrevisoesCargas.tb.c["vl_energia_total"],
@@ -978,10 +981,10 @@ class NewavePrevisoesCargas:
             NewavePrevisoesCargas.tb.c["vl_geracao_ufv_mmgd"],
             NewavePrevisoesCargas.tb.c["vl_geracao_pct_mmgd"]
         )
-        if dt_referente:
-            query = query.where(NewavePrevisoesCargas.tb.c.dt_referente == dt_referente)
+        if data_produto:
+            query = query.where(NewavePrevisoesCargas.tb.c.data_produto == data_produto)
         else:
-            query = query.where(NewavePrevisoesCargas.tb.c.dt_referente == db.func.max(NewavePrevisoesCargas.tb.c.dt_referente))    
+            query = query.where(NewavePrevisoesCargas.tb.c.data_produto == db.func.max(NewavePrevisoesCargas.tb.c.data_produto))    
             
         if submercado:
             query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)
@@ -1148,7 +1151,36 @@ class NewaveSistEnergia:
             rows = 0
         
         return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
-        
+    
+    @staticmethod
+    def get_last_newave_sist_energia() -> List[dict]:
+        max_dt_subq = db.select(db.func.max(NewaveSistEnergia.tb.c.dt_deck)).scalar_subquery()
+
+        query = (
+            db.select(
+                NewaveSistEnergia.tb.c.cd_submercado,
+                NewaveSistEnergia.tb.c.vl_ano,
+                NewaveSistEnergia.tb.c.vl_mes,
+                NewaveSistEnergia.tb.c.vl_energia_total,
+                NewaveSistEnergia.tb.c.vl_geracao_pch,
+                NewaveSistEnergia.tb.c.vl_geracao_pct,
+                NewaveSistEnergia.tb.c.vl_geracao_eol,
+                NewaveSistEnergia.tb.c.vl_geracao_ufv,
+                NewaveSistEnergia.tb.c.vl_geracao_pch_mmgd,
+                NewaveSistEnergia.tb.c.vl_geracao_pct_mmgd,
+                NewaveSistEnergia.tb.c.vl_geracao_eol_mmgd,
+                NewaveSistEnergia.tb.c.vl_geracao_ufv_mmgd,
+                NewaveSistEnergia.tb.c.dt_deck,
+                NewaveSistEnergia.tb.c.versao
+            )
+            .where(NewaveSistEnergia.tb.c.dt_deck == max_dt_subq)
+        )
+
+        result = __DB__.db_execute(query)
+        rows = result.mappings().all()  
+
+        return rows or []
+       
     @staticmethod
     def delete_sist_deck_by_dt_deck(dt_deck:datetime.date):
         
@@ -1408,19 +1440,20 @@ class NewaveSistEnergia:
                 mmgd_dict[dt_deck][ano][mes] = item.get('vl_deck_mmgd_base', 0)
 
         # Criando um dicionário para relacionar os valores de Boa Vista
-        boa_vista_dict = {}
-        for deck in boa_vista_values:
-            dt_deck = deck.get('dt_deck')
-            boa_vista_dict[dt_deck] = {}
-            
-            for item in deck.get('data', []):
-                ano = item.get('vl_ano')
-                mes = item.get('vl_mes')
-                
-                if ano not in boa_vista_dict[dt_deck]:
-                    boa_vista_dict[dt_deck][ano] = {}
-                    
-                boa_vista_dict[dt_deck][ano][mes] = item.get('vl_boa_vista', 0)
+        if boa_vista_values != None:
+            boa_vista_dict = {}
+            for deck in boa_vista_values:
+                dt_deck = deck.get('dt_deck')
+                boa_vista_dict[dt_deck] = {}
+
+                for item in deck.get('data', []):
+                    ano = item.get('vl_ano')
+                    mes = item.get('vl_mes')
+
+                    if ano not in boa_vista_dict[dt_deck]:
+                        boa_vista_dict[dt_deck][ano] = {}
+
+                    boa_vista_dict[dt_deck][ano][mes] = item.get('vl_boa_vista', 0)
         
         # Adicionar coluna de MMGD total baseado no dicionário
         df['vl_deck_mmgd_base'] = df.apply(
@@ -1673,6 +1706,32 @@ class NewaveCadic:
             rows = 0
         
         return {"message": f"{rows} registros de CADIC Newave inseridos com sucesso"}
+    
+    @staticmethod
+    def get_last_newave_cadic() -> List[CargaNewaveCadicReadDto]:
+        
+        max_dt_subq = db.select(db.func.max(NewaveCadic.tb.c.dt_deck)).scalar_subquery()
+        
+        query = db.select(
+            NewaveCadic.tb.c.vl_ano,
+            NewaveCadic.tb.c.vl_mes,
+            NewaveCadic.tb.c.vl_const_itaipu,
+            NewaveCadic.tb.c.vl_ande,
+            NewaveCadic.tb.c.vl_mmgd_se,
+            NewaveCadic.tb.c.vl_mmgd_s,
+            NewaveCadic.tb.c.vl_mmgd_ne,
+            NewaveCadic.tb.c.vl_mmgd_n,
+            NewaveCadic.tb.c.vl_boa_vista,
+            NewaveCadic.tb.c.dt_deck,
+            NewaveCadic.tb.c.versao
+        ).where(
+            NewaveCadic.tb.c.dt_deck == max_dt_subq
+        )
+        
+        result = __DB__.db_execute(query)
+        rows = result.mappings().all()
+        
+        return rows or []
         
     @staticmethod
     def delete_cadic_deck_by_dt_deck(dt_deck:datetime.date):

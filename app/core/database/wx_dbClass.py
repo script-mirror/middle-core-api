@@ -191,8 +191,8 @@ class db_mysql_master():
         elif  table_name.lower() == 'newave_previsoes_cargas': 
             table_schema = db.Table('newave_previsoes_cargas', self.meta,
                                     db.Column('id', db.Integer,primary_key=True,autoincrement=True),
-                                    db.Column('id_deck', db.Integer),
-                                    db.Column('dt_referente',db.Date), 
+                                    db.Column('data_produto',db.Date), 
+                                    db.Column('data_referente',db.Date), 
                                     db.Column('submercado',db.String(2)),
                                     db.Column('patamar', db.String(6)),
                                     db.Column('vl_energia_total',db.FLOAT),

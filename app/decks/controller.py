@@ -213,7 +213,7 @@ def get_carga_pmo_historico_previsao(
 
     return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)
 
-@router.get("/newave/previsoes_cargas", tags=["Newave"])
+@router.get("/newave/previsoes-cargas", tags=["Newave"])
 def get_newave_previsoes_cargas(
     data_produto: Optional[datetime.date] = None,
     submercado: Optional[SubmercadosEnum] = None,

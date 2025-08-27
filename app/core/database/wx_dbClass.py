@@ -1525,7 +1525,7 @@ class db_mysql_master():
                 db.Column('str_indice', db.String(255)),
             extend_existing=True
             )
-            
+
         elif table_name.lower() == 'newave_patamar_carga_usina':
             table_schema = db.Table('newave_patamar_carga_usina', self.meta,
                                     db.Column('id', db.Integer, primary_key=True, autoincrement=True),
@@ -1539,7 +1539,7 @@ class db_mysql_master():
                                     db.Column('versao', db.String(10), nullable=True),
                                     extend_existing=True
                                     )
-            
+
         elif table_name.lower() == 'newave_patamar_intercambio':
             table_schema = db.Table('newave_patamar_intercambio', self.meta,
                                     db.Column('id', db.Integer, primary_key=True, autoincrement=True),
@@ -1572,7 +1572,50 @@ class db_mysql_master():
                                     db.Column('dt_recupera_cf', db.Date, nullable=False),
                                     extend_existing=True
                                     )
+            
+        elif table_name.lower() == 'tb_cadastro_indices_itcz':
+            table_schema = db.Table('tb_cadastro_indices_itcz', self.meta,
+                                    db.Column('id', db.Integer, primary_key=True, autoincrement=True),
+                                    db.Column('dt_rodada', db.Date, nullable=True),
+                                    db.Column('hr_rodada', db.Integer, nullable=True),
+                                    db.Column('str_modelo', db.String(255), nullable=True),
+                                    extend_existing=True
+                                    )
+            
+        elif table_name.lower() == 'tb_indices_itcz_observado':
+            table_schema = db.Table('tb_indices_itcz_observado', self.meta,
+                                    db.Column('dt_observada', db.Date, nullable=True),
+                                    db.Column('lats_min', db.Float, nullable=True),
+                                    db.Column('lats_max', db.Float, nullable=True),
+                                    db.Column('lats_menor_olr', db.Float, nullable=True),
+                                    db.Column('lats_menor_vento', db.Float, nullable=True),
+                                    db.Column('lats_media_vento_olr', db.Float, nullable=True),
+                                    db.Column('intensidades_olr', db.Float, nullable=True),
+                                    db.Column('intensidades_chuva', db.Float, nullable=True),
+                                    db.Column('largura', db.Float, nullable=True),
+                                    extend_existing=True
+                                    )
+            
+        elif table_name.lower() == 'tb_indices_itcz_previsto':
+            table_schema = db.Table('tb_indices_itcz_previsto', self.meta,
+                                    db.Column('id_cadastro', db.Integer, nullable=True),
+                                    db.Column('dt_prevista', db.Date, nullable=True),
+                                    db.Column('lats_min', db.Integer, nullable=True),
+                                    db.Column('lats_max', db.Integer, nullable=True),
+                                    db.Column('lats_menor_olr', db.Float, nullable=True),
+                                    db.Column('lats_menor_vento', db.Float, nullable=True),
+                                    db.Column('lats_media_vento_olr', db.Float, nullable=True),
+                                    db.Column('intensidades_olr', db.Float, nullable=True),
+                                    db.Column('intensidades_chuva', db.Float, nullable=True),
+                                    db.Column('largura', db.Float, nullable=True),
+                                    extend_existing=True
+                                    )
+            
+            
+        
         return table_schema
+    
+    
 
 
 if __name__ == '__main__':

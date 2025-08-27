@@ -176,3 +176,35 @@ def get_infos_estacoes_meteorologicas():
     Obtém informações das estações meteorológicas.
     """
     return service.EstacoesMeteorologicas.get_infos_estacao()
+
+##############################################################################################################################################################
+
+@router.post('/indices-itcz-observados', tags=['Meteorologia'])
+def post_indices_itcz_observados(body: List[IndicesITCZObservadosCreateDTO]):
+    """
+    
+    """
+    return service.IndicesITCZObservados.post_indices_itcz_observados(body)
+
+@router.get('/indices-itcz-observados', tags=['Meteorologia'])
+def get_indices_itcz_observados(dt_inicio: datetime.date = None, dt_fim: datetime.date = None) -> List[IndicesITCZObservadosReadDTO]:
+    """
+    
+    """
+    return service.IndicesITCZObservados.get_indices_itcz_observados(dt_inicio, dt_fim)
+
+
+@router.post('/indices-itcz-previstos', tags=['Meteorologia'])
+def post_indices_itcz_previstos(body: List[IndicesITCZPrevistosCreateDTO]):
+    """
+    
+    """
+    return service.IndicesITCZPrevistos.post_indices_itcz_previstos(body)
+
+@router.get('/indices-itcz-previstos', tags=['Meteorologia'])
+def get_indices_itcz_previstos(dt_inicio: datetime.date = None, dt_fim: datetime.date = None) -> List[IndicesITCZPrevistosReadDTO]:
+    """
+    
+    """
+    return service.IndicesITCZPrevistos.get_indices_itcz_previstos(dt_inicio, dt_fim)
+    

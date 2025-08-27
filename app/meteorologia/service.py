@@ -2,6 +2,9 @@ import sqlalchemy as sa
 import pandas as pd
 from typing import List, Dict, Any
 from .schema import *
+from app.core.utils.logger import logging
+import datetime
+logger = logging.getLogger(__name__)
 
 from app.core.database.wx_dbClass import db_mysql_master
 
@@ -430,6 +433,172 @@ class IndicesSST:
 
         return df_results.to_dict('records')
 
+
+class IndicesITCZObservados:
+    
+    tb_indices_itcz_observado = __DB__.getSchema('tb_indices_itcz_observado')
+    
+    def get_indices_itcz_observados(dt_inicio: datetime.date = None, dt_fim: datetime.date = None) -> List[IndicesITCZObservadosReadDTO]:
+        
+        tb = IndicesITCZObservados.tb_indices_itcz_observado
+        data = tb.c.dt_observada
+        
+    
+        query = sa.select(
+            data,
+            tb.c.lats_min,
+            tb.c.lats_max,
+            tb.c.lats_menor_olr,
+            tb.c.lats_menor_vento,
+            tb.c.lats_media_vento_olr,
+            tb.c.intensidades_olr,
+            tb.c.intensidades_chuva,
+            tb.c.largura
+        )
+        
+        if dt_inicio and dt_fim:
+            query = query.where(
+                data.between(dt_inicio, dt_fim)
+            )
+        elif dt_inicio:
+            query = query.where(
+                data >= dt_inicio
+            )
+        elif dt_fim:
+            query = query.where(
+                data <= dt_fim
+            )
+        else:
+            subq_max_dt = sa.select(sa.func.max(data)).scalar_subquery()
+            query = query.where(data == subq_max_dt)
+        
+        results = __DB__.db_execute(query).fetchall()
+        df_results = pd.DataFrame(results, columns=[
+            'dt_observada', 'lats_min', 'lats_max', 'lats_menor_olr', 'lats_menor_vento',
+            'lats_media_vento_olr', 'intensidades_olr', 'intensidades_chuva', 'largura'
+        ])
+
+        return df_results.to_dict('records')
+    
+    @staticmethod
+    def _delete_by_data_observada_equals(datas_observadas: List[datetime.date]):
+        tb = IndicesITCZObservados.tb_indices_itcz_observado
+
+        query = sa.delete(tb).where(
+            tb.c.dt_observada.in_(datas_observadas)
+        )
+
+        result = __DB__.db_execute(query)
+        return result.rowcount
+    
+    def post_indices_itcz_observados(body: List[IndicesITCZObservadosCreateDTO]) -> Dict[str, Any]:
+        
+        tb = IndicesITCZObservados.tb_indices_itcz_observado
+        body_dict = [item.dict() for item in body]
+        delete_dates = (item['dt_observada'] for item in body_dict)
+        IndicesITCZObservados._delete_by_data_observada_equals(delete_dates)
+        
+        
+        query = sa.insert(tb).values(body_dict)
+        result = __DB__.db_execute(query)
+        logger.info(f'Inseridos {result.rowcount} registros de índices ITCZ observados para a data {delete_dates}.')
+        
+        return None
+    
+class IndicesITCZPrevistos:
+    
+    tb_cadastro_indices_itcz = __DB__.getSchema('tb_cadastro_indices_itcz')
+    tb_indices_itcz_previsto = __DB__.getSchema('tb_indices_itcz_previsto')
+    
+    def get_indices_itcz_previstos(dt_inicio: datetime.date = None, dt_fim: datetime.date = None) -> List[IndicesITCZPrevistosReadDTO]:
+        
+        tb_indices = IndicesITCZPrevistos.tb_indices_itcz_previsto
+        
+        data = tb_indices.c.dt_prevista
+        
+        query = sa.select(
+            data,
+            tb_indices.c.lats_min,
+            tb_indices.c.lats_max,
+            tb_indices.c.lats_menor_olr,
+            tb_indices.c.lats_menor_vento,
+            tb_indices.c.lats_media_vento_olr,
+            tb_indices.c.intensidades_olr,
+            tb_indices.c.intensidades_chuva,
+            tb_indices.c.largura
+        )
+        
+        if dt_inicio and dt_fim:
+            query = query.where(
+                data.between(dt_inicio, dt_fim)
+            )
+        elif dt_inicio:
+            query = query.where(
+                data >= dt_inicio
+            )
+        elif dt_fim:
+            query = query.where(
+                data <= dt_fim
+            )
+        else:
+            subq_max_dt = sa.select(sa.func.max(data)).scalar_subquery()
+            query = query.where(data == subq_max_dt)
+        
+        results = __DB__.db_execute(query).fetchall()
+        df_results = pd.DataFrame(results, columns=[
+            'dt_prevista', 'lats_min', 'lats_max', 'lats_menor_olr', 'lats_menor_vento',
+            'lats_media_vento_olr', 'intensidades_olr', 'intensidades_chuva', 'largura'
+        ])
+        
+        return df_results.to_dict('records')
+    
+    
+    def post_indices_itcz_previstos(body: List[IndicesITCZPrevistosCreateDTO]) -> Dict[str, Any]:
+        
+        df_body = pd.DataFrame([item.dict() for item in body])
+        df_body["dt_prevista"] = pd.to_datetime(df_body["dt_prevista"]).dt.date
+        df_body["dt_rodada"] = pd.to_datetime(df_body["dt_rodada"]).dt.date
+        df_cadastro = df_body[['dt_rodada', 'hr_rodada', 'str_modelo']].drop_duplicates()
+        
+        for _, cadastro in df_cadastro.iterrows():
+            query_select = sa.select(IndicesITCZPrevistos.tb_cadastro_indices_itcz.c.id).where(
+                sa.and_(
+                    IndicesITCZPrevistos.tb_cadastro_indices_itcz.c.dt_rodada == cadastro['dt_rodada'],
+                    IndicesITCZPrevistos.tb_cadastro_indices_itcz.c.hr_rodada == cadastro['hr_rodada'],
+                    IndicesITCZPrevistos.tb_cadastro_indices_itcz.c.str_modelo == cadastro['str_modelo']
+                )
+            )
+            result = __DB__.db_execute(query_select).fetchone()
+            
+            if result:
+                id_cadastro = result[0]
+                query_delete = sa.delete(IndicesITCZPrevistos.tb_indices_itcz_previsto).where(
+                    IndicesITCZPrevistos.tb_indices_itcz_previsto.c.id_cadastro == id_cadastro
+                )
+                __DB__.db_execute(query_delete)
+            else:
+                query_insert_cadastro = IndicesITCZPrevistos.tb_cadastro_indices_itcz.insert().values(cadastro.to_dict())
+                result = __DB__.db_execute(query_insert_cadastro)
+                id_cadastro = result.inserted_primary_key[0]
+            
+            df_filtrado = df_body[
+                (df_body['dt_rodada'] == cadastro['dt_rodada']) & 
+                (df_body['hr_rodada'] == cadastro['hr_rodada']) & 
+                (df_body['str_modelo'] == cadastro['str_modelo'])
+            ]
+            df_valores = df_filtrado[['dt_prevista', 'lats_min', 'lats_max', 'lats_menor_olr', 'lats_media_vento_olr', 'intensidades_chuva', 'largura']].copy()
+            df_valores['id_cadastro'] = id_cadastro
+            
+            query_insert_valores = IndicesITCZPrevistos.tb_indices_itcz_previsto.insert().values(
+                df_valores.to_dict(orient='records')
+            )
+            result = __DB__.db_execute(query_insert_valores)
+            rows = result.rowcount
+            
+        return {'message': f'Inseridos {rows} registros de índices ITCZ previstos para a rodada {cadastro["dt_rodada"]} {cadastro["hr_rodada"]} {cadastro["str_modelo"]}.'}
+        
+    
+    
 
 class EstacoesMeteorologicas:
 

@@ -1647,7 +1647,6 @@ class NewaveSistEnergia:
                     valor_mmgd = mmgd_dict.get((ano, mes), 0)
                     valor_unsi = unsi_dict.get((ano, mes), 0)
                     valor_ande = ande_dict.get((ano, mes), 0)
-                    pdb.set_trace()
                     
                     
                     # Calcular Carga Líquida = Carga Global - MMGD Total - UNSI + ANDE

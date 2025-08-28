@@ -1613,6 +1613,52 @@ class db_mysql_master():
             
             
         
+        elif table_name.lower() == 'dados_hidraulicos_uhe':
+            table_schema = db.Table('dados_hidraulicos_uhe', self.meta,
+                                    db.Column('id', db.BigInteger, primary_key=True, autoincrement=True),
+                                    db.Column('cd_subsistema', db.VARCHAR(4)),
+                                    db.Column('nome_subsistema', db.VARCHAR(65)),
+                                    db.Column('tipo_reservatorio', db.VARCHAR(65)),
+                                    db.Column('nome_bacia', db.VARCHAR(65)),
+                                    db.Column('nome_ree', db.VARCHAR(65)),
+                                    db.Column('cd_reservatorio', db.VARCHAR(65)),
+                                    db.Column('nome_reservatorio', db.VARCHAR(65)),
+                                    db.Column('ordem_cascata', db.Integer),
+                                    db.Column('cd_usina', db.Integer),
+                                    db.Column('data_referente', db.Date),
+                                    db.Column('nivel_montante', db.Float),
+                                    db.Column('nivel_jusante', db.Float),
+                                    db.Column('volume', db.Float),
+                                    db.Column('vazao_afluente', db.Float),
+                                    db.Column('vazao_turbinada', db.Float),
+                                    db.Column('vazao_vertida', db.Float),
+                                    db.Column('vazao_outras_estruturas', db.Float),
+                                    db.Column('vazao_defluente', db.Float),
+                                    db.Column('vazao_transferida', db.Float),
+                                    db.Column('vazao_natural', db.Float),
+                                    db.Column('vazao_artificial', db.Float),
+                                    db.Column('vazao_incremental', db.Float),
+                                    db.Column('vazao_evaporacao', db.Float),
+                                    db.Column('vazao_uso_consuntivo', db.Float),
+                                    db.Column('vazao_incremental_bruta', db.Float),
+                                    extend_existing=True
+                                    )
+
+        elif table_name.lower() == 'dados_hidraulicos_subsistema':
+            table_schema = db.Table('dados_hidraulicos_subsistema', self.meta,
+                                    db.Column('id', db.BigInteger, primary_key=True, autoincrement=True),
+                                    db.Column('cd_subsistema', db.VARCHAR(65)),
+                                    db.Column('nome_subsistema', db.VARCHAR(65)),
+                                    db.Column('data_referente', db.Date),
+                                    db.Column('ear_max', db.Float),
+                                    db.Column('ear_mwmes', db.Float),
+                                    db.Column('ear_percentual', db.Float),
+                                    db.Column('ena_mwmed', db.Float),
+                                    db.Column('ena_percentual_mlt', db.Float),
+                                    db.Column('ena_armazenavel_mwmed', db.Float),
+                                    db.Column('ena_armazenavel_percentual_mlt', db.Float),
+                                    extend_existing=True
+                                    )
         return table_schema
     
     

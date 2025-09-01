@@ -647,7 +647,7 @@ class Cvu:
             df_cvu_merchant.drop(columns=['vl_cvu_cf', 'vl_cvu_scf', 'recuperacao_custo_fixo', 'data_fim_aux'], inplace=True)
             df_cvu_merchant.drop_duplicates(['mes_referencia', 'cd_usina', 'data_inicio'], inplace=True)
             df_cvu_merchant.dropna(inplace=True)
-            df_cvu_merchant = df_cvu_merchant.replace({np.nan: None, np.inf: None, -np.inf: None})
+            df_cvu_merchant = df_cvu_merchant.replace({np.nan: None, np.inf: None, -np.inf: None}, inplace=True)
             df_cvu_merchant['cd_usina'] = df_cvu_merchant['cd_usina'].astype(int)
             df_cvu_merchant['ano_horizonte'] = df_cvu_merchant['ano_horizonte'].astype(int)
         return df_cvu_merchant
@@ -2701,10 +2701,11 @@ class DadosHidraulicosUhe:
         data_max = df['data_referente'].max()
         data_min = df['data_referente'].min()
         df_dados_atuais = pd.DataFrame(DadosHidraulicosUhe.get_by_data_referente_entre(data_min, data_max))
-        df = df.combine_first(df_dados_atuais)
+        if not df_dados_atuais.empty:
+            df = df.combine_first(df_dados_atuais)
         DadosHidraulicosUhe.delete_by_data_referente_entre(data_min, data_max)
         
-        query = db.insert(DadosHidraulicosUhe.tb).values(body_dict)
+        query = db.insert(DadosHidraulicosUhe.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query).rowcount
         logger.info(f"{result} dados hidraulicos UHE inseridos entre {data_min} e {data_max}")
         return body_dict
@@ -2723,6 +2724,7 @@ class DadosHidraulicosUhe:
         result = __DB__.db_execute(query).fetchall()
 
         if not result:
+            return [{}]
             raise HTTPException(
                 status_code=404, detail=f"Dados hidraulicos UHE entre {data_inicio} e {data_fim} nao encontrados"
             )
@@ -2752,10 +2754,11 @@ class DadosHidraulicosSubsistema:
         data_max = df['data_referente'].max()
         data_min = df['data_referente'].min()
         df_dados_atuais = pd.DataFrame(DadosHidraulicosSubsistema.get_by_data_referente_entre(data_min, data_max))
-        df = df.combine_first(df_dados_atuais)
+        if not df_dados_atuais.empty:
+            df = df.combine_first(df_dados_atuais)
         DadosHidraulicosSubsistema.delete_by_data_referente_entre(data_min, data_max)
         
-        query = db.insert(DadosHidraulicosSubsistema.tb).values(body_dict)
+        query = db.insert(DadosHidraulicosSubsistema.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query).rowcount
         logger.info(f"{result} dados hidraulicos subsistema inseridos entre {data_min} e {data_max}")
         return body_dict
@@ -2777,9 +2780,7 @@ class DadosHidraulicosSubsistema:
         result = __DB__.db_execute(query).fetchall()
 
         if not result:
-            raise HTTPException(
-                status_code=404, detail=f"Dados hidraulicos subsistema entre {data_inicio} e {data_fim} nao encontrados"
-            )
+            return [{}]
 
         df = pd.DataFrame(result, columns=DadosHidraulicosSubsistema.tb.columns.keys())
         return df.to_dict('records')

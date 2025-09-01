@@ -2787,7 +2787,7 @@ class DadosHidraulicosSubsistema:
 
         if not result:
             return [{}]
-
         df = pd.DataFrame(result, columns=DadosHidraulicosSubsistema.tb.columns.keys())
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
     

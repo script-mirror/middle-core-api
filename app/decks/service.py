@@ -2686,9 +2686,10 @@ class DadosHidraulicosUhe:
             query_param = (DadosHidraulicosUhe.tb.c.data_referente >= data_inicio)
         else:
             query_param = (DadosHidraulicosUhe.tb.c.data_referente.between(data_inicio, data_fim))
-        query = db.select(DadosHidraulicosUhe.tb).where(
+        query = db.delete(DadosHidraulicosUhe.tb).where(
             query_param
         )
+        
 
         result = __DB__.db_execute(query)
         logger.info(f"{result.rowcount} dados hidraulicos UHE removidos entre {data_inicio} e {data_fim}")

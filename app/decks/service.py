@@ -2718,8 +2718,12 @@ class DadosHidraulicosUhe:
         data_fim: datetime.date | None = None
     ):
         
+        if not data_fim:
+            query_param = (DadosHidraulicosUhe.tb.c.data_referente >= data_inicio)
+        else:
+            query_param = (DadosHidraulicosUhe.tb.c.data_referente.between(data_inicio, data_fim))
         query = db.select(DadosHidraulicosUhe.tb).where(
-            DadosHidraulicosUhe.tb.c.data_referente.between(data_inicio, data_fim)
+            query_param
         )
 
         result = __DB__.db_execute(query).fetchall()

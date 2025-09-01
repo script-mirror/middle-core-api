@@ -2687,7 +2687,7 @@ class DadosHidraulicosUhe:
         else:
             query_param = (DadosHidraulicosUhe.tb.c.data_referente.between(data_inicio, data_fim))
         query = db.select(DadosHidraulicosUhe.tb).where(
-            *query_param
+            query_param
         )
 
         result = __DB__.db_execute(query)
@@ -2774,7 +2774,7 @@ class DadosHidraulicosSubsistema:
         else:
             query_param = (DadosHidraulicosSubsistema.tb.c.data_referente.between(data_inicio, data_fim))
         query = db.select(DadosHidraulicosSubsistema.tb).where(
-            *query_param
+            query_param
         )
 
         result = __DB__.db_execute(query).fetchall()

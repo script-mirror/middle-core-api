@@ -2704,7 +2704,7 @@ class DadosHidraulicosUhe:
         if not df_dados_atuais.empty:
             df = df.combine_first(df_dados_atuais)
         DadosHidraulicosUhe.delete_by_data_referente_entre(data_min, data_max)
-        
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         query = db.insert(DadosHidraulicosUhe.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query).rowcount
         logger.info(f"{result} dados hidraulicos UHE inseridos entre {data_min} e {data_max}")
@@ -2757,7 +2757,7 @@ class DadosHidraulicosSubsistema:
         if not df_dados_atuais.empty:
             df = df.combine_first(df_dados_atuais)
         DadosHidraulicosSubsistema.delete_by_data_referente_entre(data_min, data_max)
-        
+        df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         query = db.insert(DadosHidraulicosSubsistema.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query).rowcount
         logger.info(f"{result} dados hidraulicos subsistema inseridos entre {data_min} e {data_max}")

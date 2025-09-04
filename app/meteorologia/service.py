@@ -501,9 +501,10 @@ class IndicesITCZObservados:
         
         query = sa.insert(tb).values(body_dict)
         result = __DB__.db_execute(query)
+        rows = result.rowcount
         logger.info(f'Inseridos {result.rowcount} registros de índices ITCZ observados para a data {delete_dates}.')
         
-        return None
+        return {'message': f'Inseridos {rows} registros de índices ITCZ observados.'}
     
 class IndicesITCZPrevistos:
     
@@ -586,7 +587,7 @@ class IndicesITCZPrevistos:
                 (df_body['hr_rodada'] == cadastro['hr_rodada']) & 
                 (df_body['str_modelo'] == cadastro['str_modelo'])
             ]
-            df_valores = df_filtrado[['dt_prevista', 'lats_min', 'lats_max', 'lats_menor_olr', 'lats_media_vento_olr', 'intensidades_chuva', 'largura']].copy()
+            df_valores = df_filtrado[['dt_prevista', 'lats_min', 'lats_max', 'lats_menor_olr', 'lats_menor_vento', 'lats_media_vento_olr', 'intensidades_olr' ,'intensidades_chuva', 'largura']].copy()
             df_valores['id_cadastro'] = id_cadastro
             
             query_insert_valores = IndicesITCZPrevistos.tb_indices_itcz_previsto.insert().values(
@@ -595,7 +596,7 @@ class IndicesITCZPrevistos:
             result = __DB__.db_execute(query_insert_valores)
             rows = result.rowcount
             
-        return {'message': f'Inseridos {rows} registros de índices ITCZ previstos para a rodada {cadastro["dt_rodada"]} {cadastro["hr_rodada"]} {cadastro["str_modelo"]}.'}
+        return {'message': f'Inseridos {rows} registros de índices ITCZ previstos.'}
         
     
     

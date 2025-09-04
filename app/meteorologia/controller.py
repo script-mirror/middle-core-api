@@ -202,7 +202,7 @@ def post_indices_itcz_previstos(body: List[IndicesITCZPrevistosCreateDTO]):
     return service.IndicesITCZPrevistos.post_indices_itcz_previstos(body)
 
 @router.get('/indices-itcz-previstos', tags=['Meteorologia'])
-def get_indices_itcz_previstos(dt_inicio: datetime.date = None, dt_fim: datetime.date = None) -> List[IndicesITCZPrevistosReadDTO]:
+def get_indices_itcz_previstos(dt_inicio: datetime.date = None, dt_fim: datetime.date = None) -> List[IndicesITCZPrevistosCreateDTO]:
     """
     
     """

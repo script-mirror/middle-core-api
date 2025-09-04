@@ -84,7 +84,7 @@ class IndicesITCZObservadosReadDTO(BaseModel):
     largura: float
     
 class IndicesITCZPrevistosCreateDTO(BaseModel):
-    dt_observada: str
+    dt_prevista: str
     dt_rodada: str
     hr_rodada: int
     str_modelo: str
@@ -100,7 +100,10 @@ class IndicesITCZPrevistosCreateDTO(BaseModel):
     
     
 class IndicesITCZPrevistosReadDTO(BaseModel):
-    dt_prevista: datetime.datetime
+    dt_prevista: str
+    dt_rodada: str
+    hr_rodada: int
+    str_modelo: str
     lats_min: float
     lats_max: float
     lats_menor_olr: float

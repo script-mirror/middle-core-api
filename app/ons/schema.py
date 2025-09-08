@@ -44,3 +44,10 @@ class RdhCreateDto(BaseModel):
     vl_vaz_consunt: Optional[float] = None
     vl_vaz_evp: Optional[float] = None
     dt_referente: datetime.date
+
+class CargaIpdoCreateDto(BaseModel):
+    dt_referente: datetime.date
+    carga_se: float
+    carga_s: float
+    carga_ne: float
+    carga_n: float

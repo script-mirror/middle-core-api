@@ -9,7 +9,8 @@ from .schema import (
     EnaAcomphSchema,
     GranularidadeEnum,
     AcomphSchema,
-    RdhCreateDto
+    RdhCreateDto,
+    CargaIpdoCreateDto,
 )
 from app.core.utils import cache
 
@@ -134,14 +135,18 @@ def get_produtibilidade():
     return service.Produtibilidade.get_all()
 
 
-@router.get('/acompanhamento-ipdo')
-def get_acompanhamento_ipdo(
-    dtref: str
+@router.get('/ipdo')
+def get_carga_ipdo(
+    data_referencia: datetime.date
 ):
-    """
-    Obtém acompanhamento IPDO (carga) por data de referência.
-    """
-    return service.CargaIpdo.get_acompanhamento_ipdo(dtref)
+    return service.CargaIpdo.get_carga_ipdo(data_referencia)
+
+
+@router.post('/ipdo')
+def post_carga_ipdo(
+    body: CargaIpdoCreateDto
+):
+    return service.CargaIpdo.post_carga_ipdo(body)
 
 
 @router.get('/rdh')

@@ -19,6 +19,7 @@ from .schema import (
     SmapCreateDto,
     SmapReadDto,
     CadastroRodadasReadDto,
+    VazoesObservadasCreateDTO
 )
 
 from app.core.utils import cache, date_util
@@ -1857,6 +1858,28 @@ class VazoesObs:
         df['data_referente'] = pd.to_datetime(
             df['data_referente'].values).date
         return df.to_dict('records')
+    
+    @staticmethod
+    def delete_by_data_produto_data_revisao_equals(dt_referente: datetime.date):
+        query = db.delete(VazoesObs.tb).where(
+            db.and_(
+                VazoesObs.tb.c["dt_referente"] == dt_referente,
+            )
+        )
+        rows = __DB__.db_execute(query).rowcount
+        logger.info(f"{rows} linhas deletadas de vazoes observadas")
+        return None
+    
+    @staticmethod
+    def post_vazao_observada(body: List[VazoesObservadasCreateDTO]):
+        body_dict = [x.model_dump() for x in body]
+        delete_dates = (body_dict[0]['dt_referente'])
+        VazoesObs.delete_by_data_produto_data_revisao_equals(*delete_dates)
+        
+        query = db.insert(VazoesObs.tb).values(body_dict)
+        rows = __DB__.db_execute(query).rowcount
+        logger.info(f"{rows} linhas adicionadas de vazoes observadas")
+        return {"message": f"{rows} linhas adicionadas de vazoes observadas"}
 
 
 class PostosPluviometricos:

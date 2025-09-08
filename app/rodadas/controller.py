@@ -14,7 +14,8 @@ from .schema import (
     SmapCreateDto,
     CadastroRodadasReadDto,
     PostosPluRes,
-    PostosPluReq
+    PostosPluReq,
+    VazoesObservadasCreateDTO
 )
 
 import datetime
@@ -303,6 +304,11 @@ def get_vazao_observada_pdp(
         data_inicio, data_fim
     )
 
+@router.post("vazao-observada-pdb", tags=['Rodadas'])
+def post_vazao_observada(
+    body: VazoesObservadasCreateDTO
+):
+    return service.VazoesObs.post_vazao_observada(body)
 
 @router.get(
     '/postos-pluviometricos',

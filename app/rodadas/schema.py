@@ -120,3 +120,11 @@ class PostosPluRes(BaseModel):
     sub_bacia: Optional[str] = Field(default=None, max_length=45)
     posto: Optional[str] = Field(default=None, max_length=45)
     peso: Optional[float] = Field(default=None, ge=0, le=1.000)
+    
+    
+class VazoesObservadasCreateDTO(BaseModel):
+    txt_subbacia: str
+    cd_estacao: int
+    txt_tipo_vaz: str
+    dt_referente: datetime.date
+    vl_vaz: float

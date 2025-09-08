@@ -24,8 +24,6 @@ from .schema import (
     PatamaresEnum,
     NewavePrevisoesCargasReadDto,
     NewavePrevisoesCargasCreateDto,
-    DadosHidraulicosUheCreateDto,
-    DadosHidraulicosSubsistemaCreateDto,
     )
 import datetime
 
@@ -429,29 +427,4 @@ def get_restricoes_eletricas_by_data_produto(
 def get_restricoes_eletricas_historico():
     return service.RestricoesEletricas.get_datas_produto()
 
-@router.post("/dados-hidraulicos-uhe", tags=["Dados Hidraulicos"])
-def post_dados_hidraulicos_uhe(
-    body: List[DadosHidraulicosUheCreateDto]
-):
-    return service.DadosHidraulicosUhe.create(body)
-
-@router.get("/dados-hidraulicos-uhe", tags=["Dados Hidraulicos"])
-def get_dados_hidraulicos_uhe_by_data_referente(
-    data_inicial: datetime.date,
-    data_final: Optional[datetime.date] = None
-):
-    return service.DadosHidraulicosUhe.get_by_data_referente_entre(data_inicial, data_final)
-
-@router.post("/dados-hidraulicos-subsistema", tags=["Dados Hidraulicos"])
-def post_dados_hidraulicos_subsistema(
-    body: List[DadosHidraulicosSubsistemaCreateDto]
-):
-    return service.DadosHidraulicosSubsistema.create(body)
-
-@router.get("/dados-hidraulicos-subsistema", tags=["Dados Hidraulicos"])
-def get_dados_hidraulicos_subsistema_by_data_referente(
-    data_inicial: datetime.date,
-    data_final: Optional[datetime.date] = None
-):
-    return service.DadosHidraulicosSubsistema.get_by_data_referente_entre(data_inicial, data_final) 
 

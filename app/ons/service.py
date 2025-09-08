@@ -458,7 +458,7 @@ class CargaIpdo:
             raise HTTPException(
                 status_code=404, detail=f"Carga IPDO da data {data_referente} nao encontrada")
         df = pd.DataFrame(result, columns=[
-            'data_referente', 'carga_se', 'carga_s', 'carga_ne', 'carga_n'
+            'dt_referente', 'carga_se', 'carga_s', 'carga_ne', 'carga_n'
         ])
         df = df.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df.to_dict('records')
@@ -474,6 +474,7 @@ class CargaIpdo:
     
     @staticmethod
     def post_carga_ipdo(body: CargaIpdoCreateDto):
+        body = body.model_dump()
         CargaIpdo.delete_carga_ipdo_by_dt_referente(body['dt_referente'])
         query = db.insert(CargaIpdo.tb).values([body])
         result = __DB__.db_execute(query)

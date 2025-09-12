@@ -841,13 +841,16 @@ class CargaPmoDecomp:
         if data_produto is None:
             data_produto = CargaPmoDecomp.get_last_date()
         query = db.select(
-            CargaPmoDecomp.tb
+            CargaPmoDecomp.tb.c['data_produto'],
+            CargaPmoDecomp.tb.c['periodo'],
+            CargaPmoDecomp.tb.c['carga'],
+            CargaPmoDecomp.tb.c['subsistema']
         ).where(db.and_(
                 CargaPmoDecomp.tb.c.data_produto == data_produto
                 ))
         result = __DB__.db_execute(query).fetchall()
         result = pd.DataFrame(result, columns=[
-            'data_produto', 'periodo', 'carga', 'patamar'
+            'data_produto', 'periodo', 'carga', 'subsistema'
         ])
         return result.to_dict('records')
 

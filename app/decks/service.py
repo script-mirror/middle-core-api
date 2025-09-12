@@ -17,7 +17,7 @@ from .schema import (
     CvuMerchantSchema,
     CvuSchema,
     CargaSemanalDecompSchema,
-    CargaPmoSchema,
+    CargaPmoDecompSchema,
     CargaNewaveSistemaEnergiaCreateDto,
     CargaNewaveCadicCreateDto,
     CargaNewaveCadicReadDto,
@@ -802,221 +802,55 @@ class CargaSemanalDecomp:
         return result.to_dict('records')
 
 
-class CargaPmo:
-    tb: db.Table = __DB__.getSchema('carga_consolidada_pmo')
+class CargaPmoDecomp:
+    tb: db.Table = __DB__.getSchema('carga_pmo_decomp')
 
     @staticmethod
-    def create(body: List[CargaPmoSchema]):
-        # Convert body to list of dictionaries
+    def create(body: List[CargaPmoDecompSchema]):
         body_dict = [x.model_dump() for x in body]
-
-        # Extract unique combinations of dt_inicio and revisao
-        unique_combinations = []
-        for item in body_dict:
-            combination = (item['dt_inicio'], item['revisao'])
-            if combination not in unique_combinations:
-                unique_combinations.append(combination)
-
-        # Delete existing records for each unique combination
-        for dt_inicio, revisao in unique_combinations:
-            CargaPmo.delete_by_dt_inicio_revisao(dt_inicio, revisao)
-
-        # Convert dt_inicio from string to datetime
-        for item in body_dict:
-            item['dt_inicio'] = datetime.datetime.strptime(
-                item['dt_inicio'], '%Y%m%d').date()
-
-        # Insert new records
-        query = db.insert(CargaPmo.tb).values(body_dict)
+        delete_dates = list(set([x['data_produto'] for x in body_dict]))
+        for date in delete_dates:
+            CargaPmoDecomp.delete_by_product_date(date)
+        query = db.insert(CargaPmoDecomp.tb).values(body_dict)
         rows = __DB__.db_execute(query).rowcount
-        logger.info(f"{rows} linhas adicionadas na carga_consolidada_pmo")
-        return {"message": f"{rows} registros de carga PMO inseridos com sucesso"}
-
-    @staticmethod
-    def delete_by_dt_inicio_revisao(dt_inicio: str, revisao: str):
-        # Convert dt_inicio string to date if it's a string
-        if isinstance(dt_inicio, str):
-            dt_inicio = datetime.datetime.strptime(dt_inicio, '%Y%m%d').date()
-
-        # Delete records with matching dt_inicio and revisao
-        query = db.delete(CargaPmo.tb).where(
-            db.and_(
-                CargaPmo.tb.c.dt_inicio == dt_inicio,
-                CargaPmo.tb.c.revisao == revisao
-            )
-        )
-        rows = __DB__.db_execute(query).rowcount
-        logger.info(f"{rows} linhas deletadas da carga_consolidada_pmo")
+        logger.info(f"{rows} linhas adicionadas na carga_pmo_decomp")
         return None
 
     @staticmethod
-    def get_by_dt_inicio(dt_inicio: datetime.date, revisao: Optional[str] = None):
-        if dt_inicio is None:
-            # today
-            dt_inicio = datetime.date.today()
-        # Build query conditions
-        conditions = [CargaPmo.tb.c.dt_inicio == dt_inicio]
-
-        # Add revisao condition if provided
-        if revisao is not None:
-            conditions.append(CargaPmo.tb.c.revisao == revisao)
-
-        # Execute query
-        query = db.select(CargaPmo.tb).where(db.and_(*conditions))
-        result = __DB__.db_execute(query).fetchall()
-
-        # Check if empty result
-        if not result:
-            if revisao:
-                raise HTTPException(
-                    status_code=404, detail=f"Dados de carga PMO para dt_inicio={dt_inicio} e revisao={revisao} não encontrados")
-            else:
-                raise HTTPException(
-                    status_code=404, detail=f"Dados de carga PMO para dt_inicio={dt_inicio} não encontrados")
-
-        # Convert to DataFrame and return as dict
-        columns = ['id', 'carga', 'mes', 'revisao', 'subsistema',
-                   'semana', 'dt_inicio', 'tipo', 'created_at', 'updated_at']
-        df = pd.DataFrame(result, columns=columns)
-        return df.to_dict('records')
+    def delete_by_product_date(date: datetime.date):
+        query = db.delete(CargaPmoDecomp.tb).where(
+            CargaPmoDecomp.tb.c.data_produto == date)
+        rows = __DB__.db_execute(query).rowcount
+        logger.info(f"{rows} linhas deletadas da carga_pmo_decomp")
+        return None
 
     @staticmethod
-    def get_most_recent_data():
-        """
-        Obtem os dados mais recentes de carga PMO.
-        Busca os 2 períodos mais recentes (periodicidade_inicial),
-        filtrando duplicatas por subsistema+dt_inicio e mantendo apenas registros com carga > 0.
-        """
-        today = datetime.date.today()
-
-        # Step 1: Get the top 2 most recent periods that have already started
-        query_periodos = db.select(
-            CargaPmo.tb.c.periodicidade_inicial.distinct()
-        ).order_by(
-            CargaPmo.tb.c.periodicidade_inicial.desc()
-        ).limit(3)
-
-        periodos_result = __DB__.db_execute(query_periodos).fetchall()
-
-        if not periodos_result:
-            raise HTTPException(
-                status_code=404, detail="Nenhum período válido encontrado")
-
-        # Extract the period dates
-        periodos_validos = [row[0] for row in periodos_result]
-
-        # Step 2: Get all records from these periods
-        query_dados = db.select(CargaPmo.tb).where(
-            CargaPmo.tb.c.periodicidade_inicial.in_(periodos_validos)
-        ).order_by(
-            CargaPmo.tb.c.periodicidade_inicial.desc(),
-            CargaPmo.tb.c.subsistema,
-            CargaPmo.tb.c.dt_inicio,
-            CargaPmo.tb.c.id.desc()
+    def get_last_date():
+        query = db.select(
+            db.func.max(CargaPmoDecomp.tb.c.data_produto)
         )
-
-        result = __DB__.db_execute(query_dados).fetchall()
-
-        if not result:
+        result = __DB__.db_execute(query).fetchone()
+        if result and result[0]:
+            return result[0]
+        else:
             raise HTTPException(
-                status_code=404, detail="Dados de carga PMO não encontrados")
-
-        # Step 3: Convert to DataFrame and apply deduplication logic
-        columns = ['id', 'carga', 'mes', 'revisao', 'subsistema', 'semana', 'dt_inicio', 'tipo',
-                   'periodicidade_inicial', 'periodicidade_final', 'created_at', 'updated_at']
-        df = pd.DataFrame(result, columns=columns)
-
-        # Step 4: Apply filters and deduplication
-        # Filter out records with carga <= 0
-        df = df[df['carga'] > 0]
-
-        # Deduplicate: keep only the first row for each subsistema+dt_inicio combination
-        # (already ordered by periodicidade_inicial desc, id desc)
-        df_deduplicated = df.drop_duplicates(
-            subset=['subsistema', 'dt_inicio'], keep='first')
-
-        # Final ordering
-        df_final = df_deduplicated.sort_values([
-            'periodicidade_inicial', 'subsistema', 'dt_inicio'
-        ], ascending=[False, True, True])
-
-        df_final['semana'] = df_final['semana'].fillna(0).astype(int)
-        print(f"Dados de carga PMO encontrados: {len(df_final)} registros")
-        print(df_final.to_string())
-        return df_final.to_dict('records')
+                status_code=404, detail="Nenhum dado de carga PMO DECOMP encontrado")
 
     @staticmethod
-    def get_historico_versus_previsao(dt_referencia: datetime.date, revisao: str):
-        """
-        Obtém os dados históricos (realizados) versus previsões para uma data de referência.
-
-        Args:
-            dt_referencia: Data de referência para comparação (normalmente a data atual)
-            revisao: Número da revisão a ser considerada
-
-        Returns:
-            Um dicionário com dados históricos e previsões separados
-        """
-        # Busca todos os registros com a revisão especificada
-        query = db.select(CargaPmo.tb).where(
-            db.and_(
-                CargaPmo.tb.c.revisao == revisao
-            )
-        ).order_by(CargaPmo.tb.c.dt_inicio, CargaPmo.tb.c.semana)
-
+    def get_by_product_date(data_produto: datetime.date | None):
+        if data_produto is None:
+            data_produto = CargaPmoDecomp.get_last_date()
+        query = db.select(
+            CargaPmoDecomp.tb
+        ).where(db.and_(
+                CargaPmoDecomp.tb.c.data_produto == data_produto
+                ))
         result = __DB__.db_execute(query).fetchall()
+        result = pd.DataFrame(result, columns=[
+            'data_produto', 'periodo', 'carga', 'patamar'
+        ])
+        return result.to_dict('records')
 
-        if not result:
-            raise HTTPException(
-                status_code=404, detail=f"Dados de carga PMO para revisão {revisao} não encontrados")
-
-        # Converte para DataFrame
-        columns = ['id', 'carga', 'mes', 'revisao', 'subsistema',
-                   'semana', 'dt_inicio', 'tipo', 'created_at', 'updated_at']
-        df = pd.DataFrame(result, columns=columns)
-
-        df['status'] = df.apply(
-            lambda row: 'realizado' if row['dt_inicio'] < dt_referencia else 'previsto',
-            axis=1
-        )
-
-        # Separa em histórico e previsão
-        historico = df[df['status'] == 'realizado'].to_dict('records')
-        previsao = df[df['status'] == 'previsto'].to_dict('records')
-
-        return {
-            "historico": historico,
-            "previsao": previsao,
-            "data_referencia": dt_referencia.isoformat()
-        }
-
-    @staticmethod
-    def marcar_realizado_previsto(dados_carga: List[dict], data_referencia: datetime.date):
-        """
-        Marca os registros como realizados ou previstos com base na data de referência.
-
-        Args:
-            dados_carga: Lista de dicionários contendo os dados de carga
-            data_referencia: Data de referência para comparação
-
-        Returns:
-            Lista com os dados de carga marcados como realizados ou previstos
-        """
-        for item in dados_carga:
-            dt_inicio = item.get('dt_inicio')
-            semana = item.get('semana')
-
-            # Verifica se é um registro mensal ou semanal
-            if item.get('tipo') == 'mensal':
-                item['status'] = 'realizado' if dt_inicio < data_referencia else 'previsto'
-            else:
-                # Para registros semanais, considera como realizado se for anterior à semana atual
-                semanas_passadas_desde_inicio = (
-                    data_referencia - dt_inicio).days // 7 + 1
-                item['status'] = 'realizado' if semana and semana <= semanas_passadas_desde_inicio else 'previsto'
-
-        return dados_carga
-    
 class NewavePrevisoesCargas:
     tb: db.Table = __DB__.getSchema('newave_previsoes_cargas')
 

@@ -14,7 +14,7 @@ from .schema import (
     WeolSemanalSchema,
     PatamaresDecompSchema,
     CargaSemanalDecompSchema,
-    CargaPmoSchema,
+    CargaPmoDecompSchema,
     NewavePatamarCargaUsinaSchema,
     NewavePatamarIntercambioSchema,
     CheckCvuCreateDto,
@@ -175,44 +175,18 @@ def get_carga_decomp_by_date(
     return service.CargaSemanalDecomp.get_by_product_date(dataProduto)
 
 
-@router.post("/carga-pmo", tags=["PMO"])
-def post_carga_pmo(
-    body: List[CargaPmoSchema]
+@router.post("/carga-pmo-decomp", tags=["Decomp"])
+def post_carga_pmo_decomp(
+    carga_body: List[CargaPmoDecompSchema]
 ):
-    return service.CargaPmo.create(body)
+    return service.CargaPmoDecomp.create(carga_body)
 
-
-@router.get("/carga-pmo", tags=["PMO"])
-def get_carga_pmo():
-    return service.CargaPmo.get_most_recent_data()
-
-
-@router.get("/carga-pmo/historico-previsao", tags=["PMO"])
-def get_carga_pmo_historico_previsao(
-    dt_referencia: Optional[datetime.date] = None,
-    revisao: Optional[str] = None
+@router.get("/carga-pmo-decomp", tags=["Decomp"])
+def get_carga_pmo_decomp(
+    data_produto: datetime.date | None = None
 ):
-    """
-    Retorna os dados de carga PMO separados em histórico (realizados) e previsões.
+    return service.CargaPmoDecomp.get_by_product_date(data_produto)
 
-    Args:
-        dt_referencia: Data de referência para comparação (se não fornecida, usa a data atual)
-        revisao: Número da revisão a ser considerada
-
-    Returns:
-        Um dicionário com dados históricos e previsões separados
-    """
-    # Se não for fornecida data de referência, usa a data atual
-    if dt_referencia is None:
-        dt_referencia = datetime.date.today()
-
-    # Se não for fornecida revisão, usa a mais recente
-    if revisao is None:
-        # Implementação para obter a revisão mais recente
-        # (temporariamente usando "4" como exemplo)
-        revisao = "0"
-
-    return service.CargaPmo.get_historico_versus_previsao(dt_referencia, revisao)
 
 @router.get("/newave/previsoes-cargas", tags=["Newave"])
 def get_newave_previsoes_cargas(

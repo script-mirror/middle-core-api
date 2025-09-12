@@ -1659,6 +1659,20 @@ class db_mysql_master():
                                     db.Column('ena_armazenavel_percentual_mlt', db.Float),
                                     extend_existing=True
                                     )
+        elif table_name.lower() == 'carga_pmo_decomp':
+            table_schema = db.Table('carga_pmo_decomp', self.meta,
+                                    db.Column('id', db.Integer,
+                                              primary_key=True, autoincrement=True),
+                                    db.Column('subsistema', db.String(4),
+                                              nullable=True),
+                                    db.Column('carga', db.Float,
+                                              nullable=True),
+                                    db.Column('periodo', db.String(15),
+                                              nullable=True),
+                                    db.Column('data_produto', db.Date,
+                                              nullable=True),
+                                    extend_existing=True
+                                    )
         return table_schema
     
     

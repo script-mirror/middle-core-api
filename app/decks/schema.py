@@ -114,16 +114,11 @@ class CargaSemanalDecompSchema(BaseModel):
     estagio: int
 
 
-class CargaPmoSchema(BaseModel):
+class CargaPmoDecompSchema(BaseModel):
     carga: float
-    mes: int
-    revisao: str
     subsistema: str
-    semana: Optional[int] = None
-    dt_inicio: str
-    tipo: str
-    periodicidade_inicial: datetime.datetime
-    periodicidade_final: datetime.datetime
+    data_produto: datetime.date
+    periodo: str
 
 class NewavePrevisoesCargasReadDto(BaseModel):
     id: int

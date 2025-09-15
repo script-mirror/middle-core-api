@@ -13,7 +13,8 @@ from app import (
     decks_controller,
     meteorologia_controller,
     pluvia_controller,
-    utils_controller
+    utils_controller,
+    ons_dados_abertos_controller,
 )
 auth_scheme = HTTPBearer()
 
@@ -62,11 +63,16 @@ app.include_router(
     Depends(cognito.auth_required)]
 )
 app.include_router(
-    utils_controller, prefix="/api/v2",
+    ons_dados_abertos_controller, prefix="/api/v2",
     dependencies=[Depends(auth_scheme),
     Depends(cognito.auth_required)]
 )
 
+app.include_router(
+    utils_controller, prefix="/api/v2",
+    dependencies=[Depends(auth_scheme),
+    Depends(cognito.auth_required)]
+)
 
 @app.get("/api/v2/health")
 def health():

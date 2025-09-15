@@ -30,7 +30,7 @@ from .schema import (
     SubmercadosEnum,
     NewavePatamarCargaUsinaSchema,
     NewavePatamarIntercambioSchema,
-    CargaNewaveSistemaEnergiaUpdateDto,
+    MMGDTotalUpdateDto,
     RestricoesEletricasSchema,
     NewavePrevisoesCargasCreateDto,
     DadosHidraulicosUheCreateDto,
@@ -453,7 +453,6 @@ class WeolSemanal:
             
         return {'html': html}
 
-
 class Patamares:
     tb: db.Table = __DB__.getSchema('tb_patamar_decomp')
 
@@ -513,7 +512,6 @@ class Patamares:
         result = result.rename(columns={'inicio': 'inicioSemana'})
         return result.to_dict("records")
 
-
 class CvuUsinasTermicas:
     tb: db.Table = __DB__.getSchema('tb_usinas_termicas')
 
@@ -523,7 +521,6 @@ class CvuUsinasTermicas:
         query = db.select(CvuUsinasTermicas.tb)
         rows = __DB__.db_execute(query)
         return pd.DataFrame(rows).to_dict('records')
-
 
 class Cvu:
     tb: db.Table = __DB__.getSchema('tb_cvu')
@@ -704,7 +701,6 @@ class Cvu:
         df_cvu = df_cvu.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df_cvu.to_dict('records')
 
-
 class CvuMerchant:
     tb: db.Table = __DB__.getSchema('tb_cvu_merchant')
 
@@ -736,7 +732,6 @@ class CvuMerchant:
         logger.info(f"{rows} linhas deletadas da tb_cvu")
         return None
 
-
 class CvuMerchantRecuperacaoCustoFixo:
     tb: db.Table = __DB__.getSchema('cvu_merchant_recupera_cf')
 
@@ -751,8 +746,6 @@ class CvuMerchantRecuperacaoCustoFixo:
         logger.warning("Nenhum dado encontrado na tabela cvu_merchant_recupera_cf")
         raise HTTPException(
             status_code=404, detail="Nenhum dado encontrado na tabela cvu_merchant_recupera_cf")
-
-
 
 class CargaSemanalDecomp:
     tb: db.Table = __DB__.getSchema('carga_semanal_dc')
@@ -802,7 +795,6 @@ class CargaSemanalDecomp:
         result = pd.DataFrame(result, columns=['id', 'data_produto', 'semana_operativa', 'patamar', 'duracao', 'submercado', 'carga',
                               'base_cgh', 'base_eol', 'base_ufv', 'base_ute', 'carga_mmgd', 'exp_cgh', 'exp_eol', 'exp_ufv', 'exp_ute', 'estagio'])
         return result.to_dict('records')
-
 
 class CargaPmo:
     tb: db.Table = __DB__.getSchema('carga_consolidada_pmo')
@@ -1113,112 +1105,47 @@ class NewaveSistEnergia:
         return df.to_dict('records')
 
     @staticmethod
-    def _check_if_definitivo_exists(dt_deck: datetime.date) -> bool:
-        """Verifica se já existe uma versão definitiva para o dt_deck especificado."""
-        query = db.select(
-            db.func.count()
-        ).select_from(NewaveSistEnergia.tb).where(
-            db.and_(
-                NewaveSistEnergia.tb.c.dt_deck == dt_deck,
-                NewaveSistEnergia.tb.c.versao == 'definitivo'
-            )
-        )
-        return __DB__.db_execute(query).scalar() > 0
-    
-    @staticmethod
-    def _delete_preliminar_by_dt_deck(dt_deck: datetime.date) -> int:
-        """Deleta registros preliminares para o dt_deck especificado."""
-        query = db.delete(NewaveSistEnergia.tb).where(
-            db.and_(
-                NewaveSistEnergia.tb.c.dt_deck == dt_deck,
-                NewaveSistEnergia.tb.c.versao == 'preliminar'
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros preliminares deletados para dt_deck {dt_deck}")
-        return rows_deleted
-    
-    @staticmethod
-    def _delete_existing_by_dt_deck_versao(dt_deck: datetime.date, versao: str) -> int:
-        """Deleta registros existentes para a combinação dt_deck + versao."""
-        query = db.delete(NewaveSistEnergia.tb).where(
-            db.and_(
-                NewaveSistEnergia.tb.c.dt_deck == dt_deck,
-                NewaveSistEnergia.tb.c.versao == versao
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros existentes deletados para dt_deck {dt_deck} versao {versao}")
-        return rows_deleted
-    
-    @staticmethod
-    def _process_version_logic(unique_combinations: pd.DataFrame):
-        """Processa a lógica de versões (definitivo/preliminar) para as combinações únicas."""
-        for _, row in unique_combinations.iterrows():
-            dt_deck = row['dt_deck']
-            versao = row['versao']
-            
-            existe_definitivo = NewaveSistEnergia._check_if_definitivo_exists(dt_deck)
-            
-            # Se está chegando preliminar e já existe definitivo, não fazer nada
-            if versao == 'preliminar' and existe_definitivo:
-                logger.info(f"Dados preliminares para dt_deck {dt_deck} ignorados - já existe versão definitiva")
-                continue
-            
-            # Se está chegando definitivo, deletar o preliminar (se existir)
-            if versao == 'definitivo':
-                NewaveSistEnergia._delete_preliminar_by_dt_deck(dt_deck)
-            
-            # Deletar registros existentes para esta combinação dt_deck + versao
-            NewaveSistEnergia._delete_existing_by_dt_deck_versao(dt_deck, versao)
-    
-    @staticmethod
-    def _filter_records_to_insert(body_dict: List[dict]) -> List[dict]:
-        """Filtra apenas os registros que devem ser inseridos baseado na lógica de versões."""
-        registros_para_inserir = []
-        for item in body_dict:
-            dt_deck = item['dt_deck']
-            versao = item['versao']
-            
-            # Verificar se é preliminar e existe definitivo
-            if versao == 'preliminar':
-                existe_definitivo = NewaveSistEnergia._check_if_definitivo_exists(dt_deck)
-                if not existe_definitivo:
-                    registros_para_inserir.append(item)
-            else:
-                registros_para_inserir.append(item)
+    def _delete_existing_by_dt_deck_versao(dt_deck_versao_combination: pd.DataFrame) -> int:
         
-        return registros_para_inserir
-
+        combos = [(r.dt_deck, r.versao) for r in dt_deck_versao_combination.itertuples(index=False)]
+            
+        query = db.select(
+            NewaveSistEnergia.tb.c.dt_deck, NewaveSistEnergia.tb.c.versao,
+            db.func.min(NewaveSistEnergia.tb.c.created_at).label('created_min')
+        ).where(
+            db.tuple_(NewaveSistEnergia.tb.c.dt_deck, NewaveSistEnergia.tb.c.versao).in_(combos)
+        ).group_by(NewaveSistEnergia.tb.c.dt_deck, NewaveSistEnergia.tb.c.versao)
+        
+        created_map = {(r.dt_deck, r.versao): r.created_min for r in __DB__.db_execute(query)}
+        
+        del_stmt = db.delete(NewaveSistEnergia.tb).where(db.tuple_(NewaveSistEnergia.tb.c.dt_deck, NewaveSistEnergia.tb.c.versao).in_(combos))
+        rows_deleted = __DB__.db_execute(del_stmt).rowcount
+        logger.info(f"{rows_deleted} registros deletados para {len(combos)} combinações")
+        return created_map
+    
     @staticmethod
     def post_newave_sist_energia(body: List[CargaNewaveSistemaEnergiaCreateDto]):
         
         body_dict = [x.model_dump() for x in body]
         
         for item in body_dict:
-            # Convert dt_deck from string to date if it's a string
             if isinstance(item['dt_deck'], str):
                 item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
-        
         if not body_dict:
-            return {"message": "0 registros de sistema de energia Newave inseridos com sucesso"}
+            return {"message": "Nenhum registro para ser inserido encontrado."}
         
         df = pd.DataFrame(body_dict)
-        unique_combinations = df[['dt_deck', 'versao']].drop_duplicates()
+        dt_deck_versao_combination = df[['dt_deck', 'versao']].drop_duplicates()
         
-        # Processar lógica de versões
-        NewaveSistEnergia._process_version_logic(unique_combinations)
+        created_map = NewaveSistEnergia._delete_existing_by_dt_deck_versao(dt_deck_versao_combination)
         
-        # Filtrar registros para inserir
-        registros_para_inserir = NewaveSistEnergia._filter_records_to_insert(body_dict)
+        for r in body_dict:
+            ca = created_map.get((r['dt_deck'], r['versao']))
+            if ca is not None:
+                r['created_at'] = ca
         
-        if registros_para_inserir:
-            query = db.insert(NewaveSistEnergia.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query).rowcount
-        else:
-            rows = 0
+        query = db.insert(NewaveSistEnergia.tb).values(body_dict)
+        rows = __DB__.db_execute(query).rowcount
         
         return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
     
@@ -1252,18 +1179,6 @@ class NewaveSistEnergia:
         return rows or []
        
     @staticmethod
-    def delete_sist_deck_by_dt_deck(dt_deck:datetime.date):
-        
-        query = db.delete(NewaveSistEnergia.tb).where(
-            NewaveSistEnergia.tb.c.dt_deck == dt_deck
-        )
-        
-        rows = __DB__.db_execute(query).rowcount
-        
-        logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
-        return None
-    
-    @staticmethod
     def get_sist_total_unsi_deck_values():
         """
         Obtém os valores de geração dos dois decks mais recentes, agrupados por deck,
@@ -1274,13 +1189,14 @@ class NewaveSistEnergia:
             de geração, organizados por mês e ano.
         """
         subquery = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"]
+            NewaveSistEnergia.tb.c["created_at"]
         ).distinct().order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
+            NewaveSistEnergia.tb.c["created_at"]
+        ).limit(2)
 
         query = db.select(
             NewaveSistEnergia.tb.c["dt_deck"],
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_mes"],
             NewaveSistEnergia.tb.c["vl_ano"],
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch"]).label("vl_geracao_pch"),
@@ -1288,29 +1204,32 @@ class NewaveSistEnergia:
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol"]).label("vl_geracao_eol"),
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv"]).label("vl_geracao_ufv")
         ).where(
-            NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+            NewaveSistEnergia.tb.c["created_at"].in_(db.select(subquery.c.created_at))
         ).group_by(
             NewaveSistEnergia.tb.c["dt_deck"],
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         ).order_by(
             NewaveSistEnergia.tb.c["dt_deck"].desc(),
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         )
 
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'PCH', 'PCT', 'EOL', 'UFV'
+            'dt_deck', 'versao', 'vl_mes', 'vl_ano', 'PCH', 'PCT', 'EOL', 'UFV'
         ])
 
         if df.empty:
             return []
 
         decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
+        for (dt_deck, versao), deck_group in df.groupby(['dt_deck','versao']):
             deck_info = {
                 "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                'versao': versao,
                 "data": []
             }
 
@@ -1328,6 +1247,8 @@ class NewaveSistEnergia:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
+            
+        decks_data.reverse()
 
         return decks_data
     
@@ -1335,13 +1256,14 @@ class NewaveSistEnergia:
     def get_sist_mmgd_total_deck_values():
         
         subquery = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"]
+            NewaveSistEnergia.tb.c["created_at"]
         ).distinct().order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
+            NewaveSistEnergia.tb.c["created_at"]
+        ).limit(2)
 
         query = db.select(
             NewaveSistEnergia.tb.c["dt_deck"],
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_mes"],
             NewaveSistEnergia.tb.c["vl_ano"],
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch_mmgd"]),
@@ -1349,29 +1271,32 @@ class NewaveSistEnergia:
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol_mmgd"]),
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv_mmgd"])
         ).where(
-            NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+            NewaveSistEnergia.tb.c["created_at"].in_(db.select(subquery.c.created_at))
         ).group_by(
             NewaveSistEnergia.tb.c["dt_deck"],
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         ).order_by(
             NewaveSistEnergia.tb.c["dt_deck"].desc(),
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         )
 
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'PCH_MMGD', 'PCT_MMGD', 'EOL_MMGD', 'UFV_MMGD'
+            'dt_deck', 'versao', 'vl_mes', 'vl_ano', 'PCH_MMGD', 'PCT_MMGD', 'EOL_MMGD', 'UFV_MMGD'
         ])
         
         if df.empty:
             return []
 
         decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
+        for (dt_deck,versao), deck_group in df.groupby(['dt_deck','versao']):
             deck_info = {
                 "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "versao": versao,
                 "data": []
             }
 
@@ -1389,11 +1314,13 @@ class NewaveSistEnergia:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
+            
+        decks_data.reverse()
         
         return decks_data
     
     @staticmethod
-    def put_sist_mmgd_com_previsoes_cargas_mensais(body: List[CargaNewaveSistemaEnergiaUpdateDto]):
+    def put_sist_mmgd_total_deck_values(body: List[MMGDTotalUpdateDto]):
         """
         Atualiza os valores MMGD de geração na tabela tb_nw_sist_energia.
         Usa UPDATE individual para cada registro baseado na chave composta 
@@ -1464,31 +1391,34 @@ class NewaveSistEnergia:
         boa_vista_values = NewaveCadic.get_cadic_boa_vista_values()
         
         subquery = db.select(
-            NewaveSistEnergia.tb.c["dt_deck"]
+            NewaveSistEnergia.tb.c["created_at"]
         ).distinct().order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
+            NewaveSistEnergia.tb.c["created_at"]
+        ).limit(2)
 
         query = db.select(
             NewaveSistEnergia.tb.c["dt_deck"],
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_mes"],
             NewaveSistEnergia.tb.c["vl_ano"],
             db.func.sum(NewaveSistEnergia.tb.c["vl_energia_total"]).label("vl_energia_total")
         ).where(
-            NewaveSistEnergia.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+            NewaveSistEnergia.tb.c["created_at"].in_(db.select(subquery.c.created_at))
         ).group_by(
             NewaveSistEnergia.tb.c["dt_deck"],
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         ).order_by(
             NewaveSistEnergia.tb.c["dt_deck"].desc(),
+            NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         )
         
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'vl_deck_energia_total'
+            'dt_deck', 'versao', 'vl_mes', 'vl_ano', 'vl_deck_energia_total'
         ])
         
         if df.empty:
@@ -1560,9 +1490,10 @@ class NewaveSistEnergia:
         
         # Formatando o resultado final
         decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
+        for (dt_deck,versao), deck_group in df.groupby(['dt_deck','versao']):
             deck_info = {
                 "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "versao": versao,
                 "data": []
             }
             
@@ -1575,6 +1506,8 @@ class NewaveSistEnergia:
                 deck_info["data"].append(data)
             
             decks_data.append(deck_info)
+            
+        decks_data.reverse()
         
         return decks_data
     
@@ -1593,14 +1526,12 @@ class NewaveSistEnergia:
         mmgd_total_values = NewaveSistEnergia.get_sist_mmgd_total_deck_values()
         unsi_values = NewaveSistEnergia.get_sist_total_unsi_deck_values()
         ande_values = NewaveCadic.get_cadic_total_ande_deck_values()
-        
-        if not carga_global_values or not mmgd_total_values or not unsi_values or not ande_values:
-            return []
             
         carga_liquida_values = []
         
         for deck_global in carga_global_values:
             dt_deck = deck_global.get('dt_deck')
+            versao = deck_global.get('versao')
             
             # Encontrar os decks correspondentes para MMGD, UNSI e ANDE
             deck_mmgd = None
@@ -1635,6 +1566,7 @@ class NewaveSistEnergia:
                 
                 deck_liquida = {
                     "dt_deck": dt_deck,
+                    "versao": versao,
                     "data": []
                 }
                 
@@ -1661,92 +1593,30 @@ class NewaveSistEnergia:
                     deck_liquida['data'].append(item_liquida)
                 
                 carga_liquida_values.append(deck_liquida)
-        
+                
         return carga_liquida_values
-    
     
 class NewaveCadic:
     tb:db.Table = __DB__.getSchema('tb_nw_cadic')
     
     @staticmethod
-    def _check_if_definitivo_exists(dt_deck: datetime.date) -> bool:
-        """Verifica se já existe uma versão definitiva para o dt_deck especificado."""
-        query = db.select(
-            db.func.count()
-        ).select_from(NewaveCadic.tb).where(
-            db.and_(
-                NewaveCadic.tb.c.dt_deck == dt_deck,
-                NewaveCadic.tb.c.versao == 'definitivo'
-            )
-        )
-        return __DB__.db_execute(query).scalar() > 0
-    
-    @staticmethod
-    def _delete_preliminar_by_dt_deck(dt_deck: datetime.date) -> int:
-        """Deleta registros preliminares para o dt_deck especificado."""
-        query = db.delete(NewaveCadic.tb).where(
-            db.and_(
-                NewaveCadic.tb.c.dt_deck == dt_deck,
-                NewaveCadic.tb.c.versao == 'preliminar'
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros preliminares CADIC deletados para dt_deck {dt_deck}")
-        return rows_deleted
-    
-    @staticmethod
-    def _delete_existing_by_dt_deck_versao(dt_deck: datetime.date, versao: str) -> int:
-        """Deleta registros existentes para a combinação dt_deck + versao."""
-        query = db.delete(NewaveCadic.tb).where(
-            db.and_(
-                NewaveCadic.tb.c.dt_deck == dt_deck,
-                NewaveCadic.tb.c.versao == versao
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros existentes CADIC deletados para dt_deck {dt_deck} versao {versao}")
-        return rows_deleted
-    
-    @staticmethod
-    def _process_version_logic(unique_combinations: pd.DataFrame):
-        """Processa a lógica de versões (definitivo/preliminar) para as combinações únicas."""
-        for _, row in unique_combinations.iterrows():
-            dt_deck = row['dt_deck']
-            versao = row['versao']
-            
-            existe_definitivo = NewaveCadic._check_if_definitivo_exists(dt_deck)
-            
-            # Se está chegando preliminar e já existe definitivo, não fazer nada
-            if versao == 'preliminar' and existe_definitivo:
-                logger.info(f"Dados preliminares CADIC para dt_deck {dt_deck} ignorados - já existe versão definitiva")
-                continue
-            
-            # Se está chegando definitivo, deletar o preliminar (se existir)
-            if versao == 'definitivo':
-                NewaveCadic._delete_preliminar_by_dt_deck(dt_deck)
-            
-            # Deletar registros existentes para esta combinação dt_deck + versao
-            NewaveCadic._delete_existing_by_dt_deck_versao(dt_deck, versao)
-    
-    @staticmethod
-    def _filter_records_to_insert(body_dict: List[dict]) -> List[dict]:
-        """Filtra apenas os registros que devem ser inseridos baseado na lógica de versões."""
-        registros_para_inserir = []
-        for item in body_dict:
-            dt_deck = item['dt_deck']
-            versao = item['versao']
-            
-            # Verificar se é preliminar e existe definitivo
-            if versao == 'preliminar':
-                existe_definitivo = NewaveCadic._check_if_definitivo_exists(dt_deck)
-                if not existe_definitivo:
-                    registros_para_inserir.append(item)
-            else:
-                registros_para_inserir.append(item)
+    def _delete_existing_by_dt_deck_versao(dt_deck_versao_combination: pd.DataFrame) -> int:
         
-        return registros_para_inserir
+        combos = [(r.dt_deck, r.versao) for r in dt_deck_versao_combination.itertuples(index=False)]
+            
+        query = db.select(
+            NewaveCadic.tb.c.dt_deck, NewaveCadic.tb.c.versao,
+            db.func.min(NewaveCadic.tb.c.created_at).label('created_min')
+        ).where(
+            db.tuple_(NewaveCadic.tb.c.dt_deck, NewaveCadic.tb.c.versao).in_(combos)
+        ).group_by(NewaveCadic.tb.c.dt_deck, NewaveCadic.tb.c.versao)
+        
+        created_map = {(r.dt_deck, r.versao): r.created_min for r in __DB__.db_execute(query)}
+        
+        del_stmt = db.delete(NewaveCadic.tb).where(db.tuple_(NewaveCadic.tb.c.dt_deck, NewaveCadic.tb.c.versao).in_(combos))
+        rows_deleted = __DB__.db_execute(del_stmt).rowcount
+        logger.info(f"{rows_deleted} registros deletados para {len(combos)} combinações")
+        return created_map
     
     @staticmethod
     def post_newave_cadic(body: List[CargaNewaveCadicCreateDto]):
@@ -1754,29 +1624,25 @@ class NewaveCadic:
         body_dict = [x.model_dump() for x in body]
         
         for item in body_dict:
-            # Convert dt_deck from string to date if it's a string
             if isinstance(item['dt_deck'], str):
                 item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
-        
         if not body_dict:
-            return {"message": "0 registros de CADIC Newave inseridos com sucesso"}
+            return {"message": "Nenhum registro para ser inserido encontrado."}
         
         df = pd.DataFrame(body_dict)
-        unique_combinations = df[['dt_deck', 'versao']].drop_duplicates()
+        dt_deck_versao_combination = df[['dt_deck', 'versao']].drop_duplicates()
         
-        # Processar lógica de versões
-        NewaveCadic._process_version_logic(unique_combinations)
+        created_map = NewaveCadic._delete_existing_by_dt_deck_versao(dt_deck_versao_combination)
         
-        # Filtrar registros para inserir
-        registros_para_inserir = NewaveCadic._filter_records_to_insert(body_dict)
+        for r in body_dict:
+            ca = created_map.get((r['dt_deck'], r['versao']))
+            if ca is not None:
+                r['created_at'] = ca
         
-        if registros_para_inserir:
-            query = db.insert(NewaveCadic.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query).rowcount
-        else:
-            rows = 0
+        query = db.insert(NewaveCadic.tb).values(body_dict)
+        rows = __DB__.db_execute(query).rowcount
         
-        return {"message": f"{rows} registros de CADIC Newave inseridos com sucesso"}
+        return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
     
     @staticmethod
     def get_last_newave_cadic() -> List[CargaNewaveCadicReadDto]:
@@ -1803,29 +1669,19 @@ class NewaveCadic:
         rows = result.mappings().all()
         
         return rows or []
-        
-    @staticmethod
-    def delete_cadic_deck_by_dt_deck(dt_deck:datetime.date):
-        query = db.delete(NewaveCadic.tb).where(
-            NewaveCadic.tb.c.dt_deck == dt_deck
-        )
-        
-        rows = __DB__.db_execute(query).rowcount
-        
-        logger.info(f"{rows} linhas deletadas da tb_nw_sist_energia")
-        return None
     
     @staticmethod
     def get_cadic_total_mmgd_base_deck_values():
         
         subquery = db.select(
-            NewaveCadic.tb.c["dt_deck"]
+            NewaveCadic.tb.c["created_at"]
         ).distinct().order_by(
-            NewaveCadic.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
+            NewaveCadic.tb.c["created_at"]
+        ).limit(2)
 
         query = db.select(
             NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_mes"],
             NewaveCadic.tb.c["vl_ano"],
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_se"]).label("vl_mmgd_se"),
@@ -1833,20 +1689,22 @@ class NewaveCadic:
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_ne"]).label("vl_mmgd_ne"),
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_n"]).label("vl_mmgd_n"),
         ).where(
-            NewaveCadic.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+            NewaveCadic.tb.c["created_at"].in_(db.select(subquery.c.created_at))
         ).group_by(
             NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         ).order_by(
             NewaveCadic.tb.c["dt_deck"].desc(),
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         )
         
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'MMGD_SE', 'MMGD_S', 'MMGD_NE', 'MMGD_N'
+            'dt_deck', 'versao', 'vl_mes', 'vl_ano', 'MMGD_SE', 'MMGD_S', 'MMGD_NE', 'MMGD_N'
         ])
 
         if df.empty:
@@ -1872,6 +1730,8 @@ class NewaveCadic:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
+        
+        decks_data.reverse()
 
         return decks_data
     
@@ -1879,18 +1739,20 @@ class NewaveCadic:
     def get_cadic_boa_vista_values():
         query = db.select(
             NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_mes"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_boa_vista"]
         ).order_by(
             NewaveCadic.tb.c["dt_deck"].desc(),
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         )
         
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'vl_boa_vista'
+            'dt_deck', 'versao', 'vl_mes', 'vl_ano', 'vl_boa_vista'
         ])
         
         if df.empty:
@@ -1912,6 +1774,8 @@ class NewaveCadic:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
+
+        decks_data.reverse()
 
         return decks_data
     
@@ -1978,41 +1842,45 @@ class NewaveCadic:
     @staticmethod
     def get_cadic_total_ande_deck_values():
         subquery = db.select(
-            NewaveCadic.tb.c["dt_deck"]
+            NewaveCadic.tb.c["created_at"]
         ).distinct().order_by(
-            NewaveCadic.tb.c["dt_deck"].desc()
-        ).limit(2).alias('latest_decks')
+            NewaveCadic.tb.c["created_at"]
+        ).limit(2)
 
         query = db.select(
             NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_mes"],
             NewaveCadic.tb.c["vl_ano"],
             db.func.sum(NewaveCadic.tb.c["vl_ande"]).label("vl_ande"),
             
         ).where(
-            NewaveCadic.tb.c["dt_deck"].in_(db.select(subquery.c.dt_deck))
+            NewaveCadic.tb.c["created_at"].in_(db.select(subquery.c.created_at))
         ).group_by(
             NewaveCadic.tb.c["dt_deck"],
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         ).order_by(
             NewaveCadic.tb.c["dt_deck"].desc(),
+            NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         )
         
         result = __DB__.db_execute(query)
         df = pd.DataFrame(result, columns=[
-            'dt_deck', 'vl_mes', 'vl_ano', 'vl_ande'
+            'dt_deck', 'versao', 'vl_mes', 'vl_ano', 'vl_ande'
         ])
         
         if df.empty:
             return []
 
         decks_data = []
-        for dt_deck, deck_group in df.groupby('dt_deck'):
+        for (dt_deck,versao), deck_group in df.groupby(['dt_deck','versao']):
             deck_info = {
                 "dt_deck": dt_deck.strftime('%Y-%m-%d') if isinstance(dt_deck, datetime.date) else str(dt_deck),
+                "versao": versao,
                 "data": []
             }
 
@@ -2030,152 +1898,74 @@ class NewaveCadic:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
+            
+        decks_data.reverse()
 
         return decks_data
-  
     
 class NewavePatamarCargaUsina:
     tb: db.Table = __DB__.getSchema('newave_patamar_carga_usina')
-
-    @staticmethod
-    def _check_if_definitivo_exists(dt_deck: datetime.date) -> bool:
-        """Verifica se já existe uma versão definitiva para o dt_deck especificado."""
-        query = db.select(
-            db.func.count()
-        ).select_from(NewavePatamarCargaUsina.tb).where(
-            db.and_(
-                NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck,
-                NewavePatamarCargaUsina.tb.c.versao == 'definitivo'
-            )
-        )
-        return __DB__.db_execute(query).scalar() > 0
     
     @staticmethod
-    def _delete_preliminar_by_dt_deck(dt_deck: datetime.date) -> int:
-        """Deleta registros preliminares para o dt_deck especificado."""
-        query = db.delete(NewavePatamarCargaUsina.tb).where(
-            db.and_(
-                NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck,
-                NewavePatamarCargaUsina.tb.c.versao == 'preliminar'
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros preliminares patamar carga usina deletados para dt_deck {dt_deck}")
-        return rows_deleted
-    
-    @staticmethod
-    def _delete_existing_by_dt_deck_versao(dt_deck: datetime.date, versao: str) -> int:
-        """Deleta registros existentes para a combinação dt_deck + versao."""
-        query = db.delete(NewavePatamarCargaUsina.tb).where(
-            db.and_(
-                NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck,
-                NewavePatamarCargaUsina.tb.c.versao == versao
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros existentes patamar carga usina deletados para dt_deck {dt_deck} versao {versao}")
-        return rows_deleted
-    
-    @staticmethod
-    def _process_version_logic(unique_combinations: pd.DataFrame):
-        """Processa a lógica de versões (definitivo/preliminar) para as combinações únicas."""
-        for _, row in unique_combinations.iterrows():
-            dt_deck = row['dt_deck']
-            versao = row['versao']
-            
-            existe_definitivo = NewavePatamarCargaUsina._check_if_definitivo_exists(dt_deck)
-            
-            # Se está chegando preliminar e já existe definitivo, não fazer nada
-            if versao == 'preliminar' and existe_definitivo:
-                logger.info(f"Dados preliminares patamar carga usina para dt_deck {dt_deck} ignorados - já existe versão definitiva")
-                continue
-            
-            # Se está chegando definitivo, deletar o preliminar (se existir)
-            if versao == 'definitivo':
-                NewavePatamarCargaUsina._delete_preliminar_by_dt_deck(dt_deck)
-            
-            # Deletar registros existentes para esta combinação dt_deck + versao
-            NewavePatamarCargaUsina._delete_existing_by_dt_deck_versao(dt_deck, versao)
-    
-    @staticmethod
-    def _filter_records_to_insert(df_filtrado: pd.DataFrame) -> List[dict]:
-        """Filtra apenas os registros que devem ser inseridos baseado na lógica de versões."""
-        registros_para_inserir = []
-        for _, row in df_filtrado.iterrows():
-            dt_deck = row['dt_deck']
-            versao = row['versao']
-            
-            # Verificar se é preliminar e existe definitivo
-            if versao == 'preliminar':
-                existe_definitivo = NewavePatamarCargaUsina._check_if_definitivo_exists(dt_deck)
-                if not existe_definitivo:
-                    registros_para_inserir.append(row.to_dict())
-            else:
-                registros_para_inserir.append(row.to_dict())
+    def _delete_existing_by_dt_deck_versao(dt_deck_versao_combination: pd.DataFrame) -> int:
         
-        return registros_para_inserir
+        combos = [(r.dt_deck, r.versao) for r in dt_deck_versao_combination.itertuples(index=False)]
+            
+        query = db.select(
+            NewavePatamarCargaUsina.tb.c.dt_deck, NewavePatamarCargaUsina.tb.c.versao,
+            db.func.min(NewavePatamarCargaUsina.tb.c.created_at).label('created_min')
+        ).where(
+            db.tuple_(NewavePatamarCargaUsina.tb.c.dt_deck, NewavePatamarCargaUsina.tb.c.versao).in_(combos)
+        ).group_by(NewavePatamarCargaUsina.tb.c.dt_deck, NewavePatamarCargaUsina.tb.c.versao)
+        
+        created_map = {(r.dt_deck, r.versao): r.created_min for r in __DB__.db_execute(query)}
+        
+        del_stmt = db.delete(NewavePatamarCargaUsina.tb).where(db.tuple_(NewavePatamarCargaUsina.tb.c.dt_deck, NewavePatamarCargaUsina.tb.c.versao).in_(combos))
+        rows_deleted = __DB__.db_execute(del_stmt).rowcount
+        logger.info(f"{rows_deleted} registros deletados para {len(combos)} combinações")
+        return created_map
 
     @staticmethod
     def post_newave_patamar_carga_usina(body: List[NewavePatamarCargaUsinaSchema]):
+        
         body_dict = [x.model_dump() for x in body]
-
+        
+        for item in body_dict:
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+        if not body_dict:
+            return {"message": "Nenhum registro para ser inserido encontrado."}
+        
         df = pd.DataFrame(body_dict)
+        dt_deck_versao_combination = df[['dt_deck', 'versao']].drop_duplicates()
         
-        if df.empty:
-            return {"message": "0 registros de patamar de carga de usina inseridos com sucesso"}
+        created_map = NewavePatamarCargaUsina._delete_existing_by_dt_deck_versao(dt_deck_versao_combination)
         
-        df['dt_deck'] = pd.to_datetime(df['dt_deck']).dt.date
-        df['dt_referente'] = pd.to_datetime(df['dt_referente']).dt.date
-
-        dt_corte = datetime.datetime.today().replace(day=1).date()
+        for r in body_dict:
+            ca = created_map.get((r['dt_deck'], r['versao']))
+            if ca is not None:
+                r['created_at'] = ca
         
-        df_filtrado = df[df['dt_referente'] >= dt_corte].copy()
-
-        if df_filtrado.empty:
-            return {"message": "0 registros de patamar de carga de usina inseridos com sucesso"}
-
-        # Implementar a lógica de versão definitivo/preliminar
-        unique_combinations = df_filtrado[['dt_deck', 'versao']].drop_duplicates()
+        query = db.insert(NewavePatamarCargaUsina.tb).values(body_dict)
+        rows = __DB__.db_execute(query).rowcount
         
-        # Processar lógica de versões
-        NewavePatamarCargaUsina._process_version_logic(unique_combinations)
-
-        # Regra 2: Para cada dt_referente que está chegando, 
-        # deletar do banco registros existentes com a mesma dt_referente mas dt_deck diferentes
-        dt_referentes_novos = df_filtrado['dt_referente'].unique()
-        dt_deck_novo = df_filtrado['dt_deck'].iloc[0]  
-
-        for dt_ref in dt_referentes_novos:
-            NewavePatamarCargaUsina.delete_patamar_carga_by_dt_referente_and_different_deck(dt_ref, dt_deck_novo)
-
-        # Filtrar registros para inserir
-        registros_para_inserir = NewavePatamarCargaUsina._filter_records_to_insert(df_filtrado)
-
-        if registros_para_inserir:
-            query = db.insert(NewavePatamarCargaUsina.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query).rowcount
-        else:
-            rows = 0
-
-        return {"message": f"{rows} registros de patamar de carga de usina inseridos com sucesso"}
-
+        return {"message": f"{rows} registros de Patamar de Carga inseridos com sucesso"}
+  
     @staticmethod
-    def delete_patamar_carga_by_dt_referente_and_different_deck(dt_referente: datetime.date, dt_deck_novo: datetime.date):
-        """
-        Deleta registros que tenham a mesma dt_referente mas dt_deck diferente do novo.
-        Isso garante que sempre mantemos a versão mais recente para cada dt_referente.
-        """
-        query = db.delete(NewavePatamarCargaUsina.tb).where(
-            db.and_(
-                NewavePatamarCargaUsina.tb.c.dt_referente == dt_referente,
-                NewavePatamarCargaUsina.tb.c.dt_deck != dt_deck_novo
-            )
+    def get_patamar_carga_by_dt_deck(dt_deck: datetime.date):
+        query = db.select(NewavePatamarCargaUsina.tb).where(
+            NewavePatamarCargaUsina.tb.c.dt_deck == dt_deck
         )
 
-        rows = __DB__.db_execute(query).rowcount
-        return None
+        result = __DB__.db_execute(query).fetchall()
+
+        if not result:
+            raise HTTPException(
+                status_code=404, detail=f"Patamar de intercâmbio para a data {dt_deck} não encontrado"
+            )
+
+        df = pd.DataFrame(result, columns=NewavePatamarCargaUsina.tb.columns.keys())
+        return df.to_dict('records')
   
     @staticmethod
     def get_patamar_carga_by_dt_referente(dt_inicial: datetime.date, dt_final: datetime.date, indice_bloco: Optional[IndiceBlocoEnum] = None):
@@ -2215,149 +2005,53 @@ class NewavePatamarCargaUsina:
         df = pd.DataFrame(result, columns=NewavePatamarCargaUsina.tb.columns.keys())
         return df.to_dict('records')
     
-    
 class NewavePatamarIntercambio:
     tb: db.Table = __DB__.getSchema('newave_patamar_intercambio')
-
-    @staticmethod
-    def _check_if_definitivo_exists(dt_deck: datetime.date) -> bool:
-        """Verifica se já existe uma versão definitiva para o dt_deck especificado."""
-        query = db.select(
-            db.func.count()
-        ).select_from(NewavePatamarIntercambio.tb).where(
-            db.and_(
-                NewavePatamarIntercambio.tb.c.dt_deck == dt_deck,
-                NewavePatamarIntercambio.tb.c.versao == 'definitivo'
-            )
-        )
-        return __DB__.db_execute(query).scalar() > 0
     
     @staticmethod
-    def _delete_preliminar_by_dt_deck(dt_deck: datetime.date) -> int:
-        """Deleta registros preliminares para o dt_deck especificado."""
-        query = db.delete(NewavePatamarIntercambio.tb).where(
-            db.and_(
-                NewavePatamarIntercambio.tb.c.dt_deck == dt_deck,
-                NewavePatamarIntercambio.tb.c.versao == 'preliminar'
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros preliminares patamar intercâmbio deletados para dt_deck {dt_deck}")
-        return rows_deleted
-    
-    @staticmethod
-    def _delete_existing_by_dt_deck_versao(dt_deck: datetime.date, versao: str) -> int:
-        """Deleta registros existentes para a combinação dt_deck + versao."""
-        query = db.delete(NewavePatamarIntercambio.tb).where(
-            db.and_(
-                NewavePatamarIntercambio.tb.c.dt_deck == dt_deck,
-                NewavePatamarIntercambio.tb.c.versao == versao
-            )
-        )
-        rows_deleted = __DB__.db_execute(query).rowcount
-        if rows_deleted > 0:
-            logger.info(f"{rows_deleted} registros existentes patamar intercâmbio deletados para dt_deck {dt_deck} versao {versao}")
-        return rows_deleted
-    
-    @staticmethod
-    def _process_version_logic(unique_combinations: pd.DataFrame):
-        """Processa a lógica de versões (definitivo/preliminar) para as combinações únicas."""
-        for _, row in unique_combinations.iterrows():
-            dt_deck = row['dt_deck']
-            versao = row['versao']
-            
-            existe_definitivo = NewavePatamarIntercambio._check_if_definitivo_exists(dt_deck)
-            
-            # Se está chegando preliminar e já existe definitivo, não fazer nada
-            if versao == 'preliminar' and existe_definitivo:
-                logger.info(f"Dados preliminares patamar intercâmbio para dt_deck {dt_deck} ignorados - já existe versão definitiva")
-                continue
-            
-            # Se está chegando definitivo, deletar o preliminar (se existir)
-            if versao == 'definitivo':
-                NewavePatamarIntercambio._delete_preliminar_by_dt_deck(dt_deck)
-            
-            # Deletar registros existentes para esta combinação dt_deck + versao
-            NewavePatamarIntercambio._delete_existing_by_dt_deck_versao(dt_deck, versao)
-    
-    @staticmethod
-    def _filter_records_to_insert(df_filtrado: pd.DataFrame) -> List[dict]:
-        """Filtra apenas os registros que devem ser inseridos baseado na lógica de versões."""
-        registros_para_inserir = []
-        for _, row in df_filtrado.iterrows():
-            dt_deck = row['dt_deck']
-            versao = row['versao']
-            
-            # Verificar se é preliminar e existe definitivo
-            if versao == 'preliminar':
-                existe_definitivo = NewavePatamarIntercambio._check_if_definitivo_exists(dt_deck)
-                if not existe_definitivo:
-                    registros_para_inserir.append(row.to_dict())
-            else:
-                registros_para_inserir.append(row.to_dict())
+    def _delete_existing_by_dt_deck_versao(dt_deck_versao_combination: pd.DataFrame) -> int:
         
-        return registros_para_inserir
+        combos = [(r.dt_deck, r.versao) for r in dt_deck_versao_combination.itertuples(index=False)]
+            
+        query = db.select(
+            NewavePatamarIntercambio.tb.c.dt_deck, NewavePatamarIntercambio.tb.c.versao,
+            db.func.min(NewavePatamarIntercambio.tb.c.created_at).label('created_min')
+        ).where(
+            db.tuple_(NewavePatamarIntercambio.tb.c.dt_deck, NewavePatamarIntercambio.tb.c.versao).in_(combos)
+        ).group_by(NewavePatamarIntercambio.tb.c.dt_deck, NewavePatamarIntercambio.tb.c.versao)
+        
+        created_map = {(r.dt_deck, r.versao): r.created_min for r in __DB__.db_execute(query)}
+        
+        del_stmt = db.delete(NewavePatamarIntercambio.tb).where(db.tuple_(NewavePatamarIntercambio.tb.c.dt_deck, NewavePatamarIntercambio.tb.c.versao).in_(combos))
+        rows_deleted = __DB__.db_execute(del_stmt).rowcount
+        logger.info(f"{rows_deleted} registros deletados para {len(combos)} combinações")
+        return created_map
 
     @staticmethod
     def post_newave_patamar_intercambio(body: List[NewavePatamarIntercambioSchema]):
+        
         body_dict = [x.model_dump() for x in body]
-
+        
+        for item in body_dict:
+            if isinstance(item['dt_deck'], str):
+                item['dt_deck'] = datetime.datetime.strptime(item['dt_deck'], '%Y-%m-%d').date()
+        if not body_dict:
+            return {"message": "Nenhum registro para ser inserido encontrado."}
+        
         df = pd.DataFrame(body_dict)
+        dt_deck_versao_combination = df[['dt_deck', 'versao']].drop_duplicates()
         
-        if df.empty:
-            return {"message": "0 registros de patamar de intercâmbio inseridos com sucesso"}
+        created_map = NewavePatamarIntercambio._delete_existing_by_dt_deck_versao(dt_deck_versao_combination)
         
-        df['dt_deck'] = pd.to_datetime(df['dt_deck']).dt.date
-        df['dt_referente'] = pd.to_datetime(df['dt_referente']).dt.date
-
-        dt_corte = datetime.datetime.today().replace(day=1).date()
+        for r in body_dict:
+            ca = created_map.get((r['dt_deck'], r['versao']))
+            if ca is not None:
+                r['created_at'] = ca
         
-        df_filtrado = df[df['dt_referente'] >= dt_corte].copy()
-
-        if df_filtrado.empty:
-            return {"message": "0 registros de patamar de intercâmbio inseridos com sucesso"}
-
-        # Implementar a lógica de versão definitivo/preliminar
-        unique_combinations = df_filtrado[['dt_deck', 'versao']].drop_duplicates()
-        
-        # Processar lógica de versões
-        NewavePatamarIntercambio._process_version_logic(unique_combinations)
-
-        # Regra 2: Para cada dt_referente que está chegando, 
-        # deletar do banco registros existentes com a mesma dt_referente mas dt_deck diferentes
-        dt_referentes_novos = df_filtrado['dt_referente'].unique()
-        dt_deck_novo = df_filtrado['dt_deck'].iloc[0]  
-
-        for dt_ref in dt_referentes_novos:
-            NewavePatamarIntercambio.delete_patamar_intercambio_by_dt_referente_and_different_deck(dt_ref, dt_deck_novo)
-
-        # Filtrar registros para inserir
-        registros_para_inserir = NewavePatamarIntercambio._filter_records_to_insert(df_filtrado)
-
-        if registros_para_inserir:
-            query = db.insert(NewavePatamarIntercambio.tb).values(registros_para_inserir)
-            rows = __DB__.db_execute(query).rowcount
-        else:
-            rows = 0
-
-        return {"message": f"{rows} registros de patamar de intercâmbio inseridos com sucesso"}
-
-    @staticmethod
-    def delete_patamar_intercambio_by_dt_referente_and_different_deck(dt_referente: datetime.date, dt_deck_novo: datetime.date):
-        """
-        Deleta registros que tenham a mesma dt_referente mas dt_deck diferente do novo.
-        Isso garante que sempre mantemos a versão mais recente para cada dt_referente.
-        """
-        query = db.delete(NewavePatamarIntercambio.tb).where(
-            db.and_(
-                NewavePatamarIntercambio.tb.c.dt_referente == dt_referente,
-                NewavePatamarIntercambio.tb.c.dt_deck != dt_deck_novo
-            )
-        )
-
+        query = db.insert(NewavePatamarIntercambio.tb).values(body_dict)
         rows = __DB__.db_execute(query).rowcount
-        return None
+        
+        return {"message": f"{rows} registros de Patamar de Intercambio inseridos com sucesso"}
     
     @staticmethod
     def get_patamar_intercambio_by_dt_deck(dt_deck: datetime.date):
@@ -2404,7 +2098,6 @@ class NewavePatamarIntercambio:
 
         df = pd.DataFrame(result, columns=NewavePatamarIntercambio.tb.columns.keys())
         return df.to_dict('records')
-    
 
 class CheckCvu:
     tb: db.Table = __DB__.getSchema('check_cvu')
@@ -2514,7 +2207,6 @@ class CheckCvu:
                 "previous_page": page - 1 if has_previous else None
             }
         }
-
 
 class DessemPrevisao:
     tb_ds_carga: db.Table = __DB__.getSchema('tb_ds_carga')

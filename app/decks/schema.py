@@ -197,10 +197,11 @@ class CargaNewaveSistemaEnergiaReadDto(BaseModel):
     vl_geracao_pct_mmgd: float
     vl_geracao_eol_mmgd: float
     vl_geracao_ufv_mmgd: float
+    created_at: datetime.datetime
     dt_deck: datetime.datetime
     versao: str
     
-class CargaNewaveSistemaEnergiaUpdateDto(BaseModel):
+class MMGDTotalUpdateDto(BaseModel):
     cd_submercado: int
     vl_ano: int
     vl_mes: int

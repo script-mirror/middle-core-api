@@ -794,7 +794,6 @@ class CargaSemanalDecomp:
                               'base_cgh', 'base_eol', 'base_ufv', 'base_ute', 'carga_mmgd', 'exp_cgh', 'exp_eol', 'exp_ufv', 'exp_ute', 'estagio'])
         return result.to_dict('records')
 
-
 class CargaPmoDecomp:
     tb: db.Table = __DB__.getSchema('carga_pmo_decomp')
 
@@ -983,7 +982,10 @@ class NewaveSistEnergia:
         query = db.insert(NewaveSistEnergia.tb).values(body_dict)
         rows = __DB__.db_execute(query).rowcount
         
-        return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
+        msg = f"{rows} registros de sistema de energia Newave inseridos com sucesso"
+        logger.info(msg)
+        
+        return {"message": msg}
     
     @staticmethod
     def get_last_newave_sist_energia() -> List[dict]:
@@ -1478,7 +1480,10 @@ class NewaveCadic:
         query = db.insert(NewaveCadic.tb).values(body_dict)
         rows = __DB__.db_execute(query).rowcount
         
-        return {"message": f"{rows} registros de sistema de energia Newave inseridos com sucesso"}
+        msg = f"{rows} registros de sistema de energia Newave inseridos com sucesso"
+        logger.info(msg)
+        
+        return {"message": msg}
     
     @staticmethod
     def get_last_newave_cadic() -> List[CargaNewaveCadicReadDto]:
@@ -1785,7 +1790,12 @@ class NewavePatamarCargaUsina:
         query = db.insert(NewavePatamarCargaUsina.tb).values(body_dict)
         rows = __DB__.db_execute(query).rowcount
         
-        return {"message": f"{rows} registros de Patamar de Carga inseridos com sucesso"}
+        msg = f"{rows} registros de Patamar de Carga inseridos com sucesso"
+        logger.info(msg)
+        
+        return {"message": msg}
+    
+    
   
     @staticmethod
     def get_patamar_carga_by_dt_deck(dt_deck: datetime.date):
@@ -1887,7 +1897,10 @@ class NewavePatamarIntercambio:
         query = db.insert(NewavePatamarIntercambio.tb).values(body_dict)
         rows = __DB__.db_execute(query).rowcount
         
-        return {"message": f"{rows} registros de Patamar de Intercambio inseridos com sucesso"}
+        msg = f"{rows} registros de Patamar de Intercambio inseridos com sucesso"
+        logger.info(msg)
+        
+        return {"message": msg}
     
     @staticmethod
     def get_patamar_intercambio_by_dt_deck(dt_deck: datetime.date):

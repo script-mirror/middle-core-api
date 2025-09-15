@@ -5,7 +5,7 @@ from .schema import (
     RestricoesEletricasSchema,
     CargaNewaveSistemaEnergiaCreateDto,
     CargaNewaveSistemaEnergiaReadDto,
-    CargaNewaveSistemaEnergiaUpdateDto,
+    MMGDTotalUpdateDto,
     CargaNewaveCadicCreateDto,
     CargaNewaveCadicUpdateDto,
     CargaNewaveCadicReadDto,
@@ -249,7 +249,7 @@ def get_sist_mmgd_total_deck_values():
 
 @router.put("/newave/sistema/mmgd_total", tags=["Newave"])
 def put_sist_mmgd_total_com_previsoes_cargas_mensais(
-    body: List[CargaNewaveSistemaEnergiaUpdateDto]
+    body: List[MMGDTotalUpdateDto]
 ):
     return service.NewaveSistEnergia.put_sist_mmgd_com_previsoes_cargas_mensais(body)
 

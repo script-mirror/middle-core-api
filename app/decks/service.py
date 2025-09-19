@@ -4,7 +4,6 @@ import numpy as np
 import numpy as np
 import pandas as pd
 from sys import path
-import sqlalchemy as sa
 import sqlalchemy as db
 from typing import List, Optional
 from fastapi import HTTPException
@@ -21,7 +20,7 @@ from .schema import (
     CargaNewaveSistemaEnergiaCreateDto,
     CargaNewaveCadicCreateDto,
     CargaNewaveCadicReadDto,
-    CargaNewaveCadicUpdateDto,
+    MMGDBaseUpdateDto,
     CheckCvuCreateDto,
     CheckCvuReadDto,
     TipoCvuEnum,
@@ -850,7 +849,7 @@ class NewavePrevisoesCargas:
     tb: db.Table = __DB__.getSchema('newave_previsoes_cargas')
 
     @staticmethod
-    def get_previsoes_cargas(data_revisao: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
+    def get_previsoes_cargas(data_revisao: Optional[datetime.date] = None, data_produto: Optional[datetime.date] = None, submercado: Optional[SubmercadosEnum] = None, patamar: Optional[PatamaresEnum] = None):
         query = db.select(
             NewavePrevisoesCargas.tb
         )
@@ -859,7 +858,8 @@ class NewavePrevisoesCargas:
         else:
             subq_max_dt = db.select(db.func.max(NewavePrevisoesCargas.tb.c.data_revisao)).scalar_subquery()
             query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == subq_max_dt)   
-            
+        if data_produto:
+                query = query.where(NewavePrevisoesCargas.tb.c.dataProduto == data_produto)
         if submercado:
             query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)
         if patamar:
@@ -1005,6 +1005,7 @@ class NewaveSistEnergia:
                 NewaveSistEnergia.tb.c.vl_geracao_pct_mmgd,
                 NewaveSistEnergia.tb.c.vl_geracao_eol_mmgd,
                 NewaveSistEnergia.tb.c.vl_geracao_ufv_mmgd,
+                NewaveSistEnergia.tb.c.created_at,
                 NewaveSistEnergia.tb.c.dt_deck,
                 NewaveSistEnergia.tb.c.versao
             )
@@ -1086,7 +1087,9 @@ class NewaveSistEnergia:
 
             decks_data.append(deck_info)
             
-        decks_data.reverse()
+        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
+            decks_data.reverse()
+
 
         return decks_data
     
@@ -1153,7 +1156,8 @@ class NewaveSistEnergia:
 
             decks_data.append(deck_info)
             
-        decks_data.reverse()
+        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
+            decks_data.reverse()
         
         return decks_data
     
@@ -1184,12 +1188,14 @@ class NewaveSistEnergia:
         
         df_body_to_import = pd.DataFrame(body_dict)
         dt_deck = df_body_to_import['dt_deck'].iloc[0]
+        versao = 'preliminar'
         
         updates_count = 0
         
         for _, row in df_body_to_import.iterrows():
             where_conditions = db.and_(
                 NewaveSistEnergia.tb.c.dt_deck == row['dt_deck'],
+                NewaveSistEnergia.tb.c.versao == versao,
                 NewaveSistEnergia.tb.c.vl_ano == row['vl_ano'],
                 NewaveSistEnergia.tb.c.vl_mes == row['vl_mes'],
                 NewaveSistEnergia.tb.c.cd_submercado == row['cd_submercado']
@@ -1200,7 +1206,7 @@ class NewaveSistEnergia:
                 'vl_geracao_pct_mmgd': row['vl_geracao_pct_mmgd'],
                 'vl_geracao_eol_mmgd': row['vl_geracao_eol_mmgd'],
                 'vl_geracao_ufv_mmgd': row['vl_geracao_ufv_mmgd'],
-                'versao': row['versao']
+                'versao': versao
             }
             
             update_query = db.update(NewaveSistEnergia.tb).where(
@@ -1345,7 +1351,8 @@ class NewaveSistEnergia:
             
             decks_data.append(deck_info)
             
-        decks_data.reverse()
+        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
+            decks_data.reverse()
         
         return decks_data
     
@@ -1572,7 +1579,8 @@ class NewaveCadic:
 
             decks_data.append(deck_info)
         
-        decks_data.reverse()
+        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
+            decks_data.reverse()
 
         return decks_data
     
@@ -1616,12 +1624,13 @@ class NewaveCadic:
 
             decks_data.append(deck_info)
 
-        decks_data.reverse()
+        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
+            decks_data.reverse()
 
         return decks_data
     
     @staticmethod
-    def put_cadic_total_mmgd_base_deck_values(body: List[CargaNewaveCadicUpdateDto]):
+    def put_cadic_total_mmgd_base_deck_values(body: List[MMGDBaseUpdateDto]):
         """
         Atualiza os valores MMGD base na tabela tb_nw_cadic.
         Usa UPDATE individual para cada registro baseado na chave composta 
@@ -1644,12 +1653,14 @@ class NewaveCadic:
         
         df_body_to_import = pd.DataFrame(body_dict)
         dt_deck = df_body_to_import['dt_deck'].iloc[0]
+        versao = 'preliminar'
         
         updates_count = 0
         
         for _, row in df_body_to_import.iterrows():
             where_conditions = db.and_(
                 NewaveCadic.tb.c.dt_deck == row['dt_deck'],
+                NewaveCadic.tb.c.versao == versao,
                 NewaveCadic.tb.c.vl_ano == row['vl_ano'],
                 NewaveCadic.tb.c.vl_mes == row['vl_mes']
             )
@@ -1659,7 +1670,7 @@ class NewaveCadic:
                 'vl_mmgd_s': row['vl_mmgd_s'],
                 'vl_mmgd_ne': row['vl_mmgd_ne'],
                 'vl_mmgd_n': row['vl_mmgd_n'],
-                'versao': row['versao']
+                'versao': versao
             }
             
             update_query = db.update(NewaveCadic.tb).where(
@@ -1740,7 +1751,8 @@ class NewaveCadic:
 
             decks_data.append(deck_info)
             
-        decks_data.reverse()
+        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
+            decks_data.reverse()
 
         return decks_data
     

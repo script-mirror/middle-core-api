@@ -593,7 +593,7 @@ class db_mysql_master():
                                     db.Column('vl_geracao_ufv_mmgd', db.Float),
                                     db.Column('created_at', db.DateTime, nullable=True),
                                     db.Column('dt_deck', db.DateTime),
-                                    db.Column('versao', db.String(10)),
+                                    db.Column('versao', db.String(13)),
                                     extend_existing=True
                                     )
 
@@ -612,7 +612,7 @@ class db_mysql_master():
                                     db.Column('vl_mmgd_n', db.Float),
                                     db.Column('created_at', db.DateTime, nullable=True),
                                     db.Column('dt_deck', db.DateTime),
-                                    db.Column('versao', db.String(10)),
+                                    db.Column('versao', db.String(13)),
                                     )
 
         elif table_name.lower() == 'tb_postos_completo':
@@ -1539,7 +1539,7 @@ class db_mysql_master():
                                     db.Column('indice_bloco', db.String(8), nullable=True),
                                     db.Column('created_at', db.DateTime, nullable=True),
                                     db.Column('dt_deck', db.Date, nullable=True),
-                                    db.Column('versao', db.String(10), nullable=True),
+                                    db.Column('versao', db.String(13), nullable=True),
                                     extend_existing=True
                                     )
 
@@ -1554,7 +1554,7 @@ class db_mysql_master():
                                     db.Column('duracao_mensal', db.Numeric(5, 4), nullable=True),
                                     db.Column('created_at', db.DateTime, nullable=True),
                                     db.Column('dt_deck', db.Date, nullable=True),
-                                    db.Column('versao', db.String(10), nullable=True),
+                                    db.Column('versao', db.String(13), nullable=True),
                                     extend_existing=True
                                     )
         elif table_name.lower() == 'restricao_eletrica':

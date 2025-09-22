@@ -989,6 +989,7 @@ class NewaveSistEnergia:
     
     @staticmethod
     def get_last_newave_sist_energia() -> List[dict]:
+        max_created_subq = db.select(db.func.max(NewaveSistEnergia.tb.c.created_at)).scalar_subquery()
         max_dt_subq = db.select(db.func.max(NewaveSistEnergia.tb.c.dt_deck)).scalar_subquery()
 
         query = (
@@ -1009,7 +1010,11 @@ class NewaveSistEnergia:
                 NewaveSistEnergia.tb.c.dt_deck,
                 NewaveSistEnergia.tb.c.versao
             )
-            .where(NewaveSistEnergia.tb.c.dt_deck == max_dt_subq)
+            .where(
+                NewaveSistEnergia.tb.c.created_at == max_created_subq,
+                NewaveSistEnergia.tb.c.dt_deck == max_dt_subq
+            )
+            
         )
 
         result = __DB__.db_execute(query)

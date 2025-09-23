@@ -2219,9 +2219,11 @@ class RestricoesEletricas:
     @staticmethod
     def get_datas_produto():
         query = db.select(
-            db.func.distinct(RestricoesEletricas.tb.c['data_produto'])
-        ).order_by(
-            RestricoesEletricas.tb.c['data_produto'].desc()
+            RestricoesEletricas.tb.c['data_produto'],
+            RestricoesEletricas.tb.c['tipo']
+        ).distinct().order_by(
+            RestricoesEletricas.tb.c['data_produto'].desc(),
+            RestricoesEletricas.tb.c['tipo']
         )
         
         result = __DB__.db_execute(query).fetchall()
@@ -2229,5 +2231,11 @@ class RestricoesEletricas:
         if not result:
             raise HTTPException(status_code=404, detail="Nenhuma data de produto encontrada")
         
-        datas_produto = [row[0] for row in result]
+        datas_produto = []
+        for row in result:
+            datas_produto.append({
+                "data_produto": row[0].strftime("%Y-%m-%d") if row[0] else None,
+                "tipo": row[1]
+            })
+        
         return datas_produto

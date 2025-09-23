@@ -161,7 +161,7 @@ class NewavePrevisoesCargasCreateDto(BaseModel):
     data_revisao: datetime.date
     data_produto: datetime.date
     data_referente: datetime.date
-    quadrimestral: bool = False
+    quadrimestral: bool 
 
 class CargaNewaveSistemaEnergiaCreateDto(BaseModel):
     cd_submercado: int
@@ -192,20 +192,19 @@ class CargaNewaveSistemaEnergiaReadDto(BaseModel):
     vl_geracao_pct_mmgd: float
     vl_geracao_eol_mmgd: float
     vl_geracao_ufv_mmgd: float
+    created_at: datetime.datetime
     dt_deck: datetime.datetime
     versao: str
     
-class CargaNewaveSistemaEnergiaUpdateDto(BaseModel):
+class MMGDTotalUpdateDto(BaseModel):
     cd_submercado: int
+    dt_deck: datetime.datetime
     vl_ano: int
     vl_mes: int
-    vl_energia_total: float
     vl_geracao_pch_mmgd: float
     vl_geracao_pct_mmgd: float
     vl_geracao_eol_mmgd: float
     vl_geracao_ufv_mmgd: float
-    dt_deck: datetime.datetime
-    versao: str
 
 
 class CargaNewaveCadicCreateDto(BaseModel):
@@ -234,26 +233,14 @@ class CargaNewaveCadicReadDto(BaseModel):
     dt_deck: datetime.datetime
     versao: str
     
-class CargaNewaveCadicQuadUpdateDto(BaseModel):
+class MMGDBaseUpdateDto(BaseModel):
     vl_ano: int
     vl_mes: int
+    dt_deck: datetime.datetime
     vl_mmgd_se: float
     vl_mmgd_s: float
     vl_mmgd_ne: float
     vl_mmgd_n: float
-    vl_boa_vista: Optional[float] = None
-    dt_deck: datetime.datetime
-    versao: str
-    
-class CargaNewaveCadicUpdateDto(BaseModel):
-    vl_ano: int
-    vl_mes: int
-    vl_mmgd_se: float
-    vl_mmgd_s: float
-    vl_mmgd_ne: float
-    vl_mmgd_n: float
-    dt_deck: datetime.datetime
-    versao: str
         
 class NewavePatamarCargaUsinaSchema(BaseModel):
     dt_referente: Optional[datetime.date] = None

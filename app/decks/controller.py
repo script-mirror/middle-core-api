@@ -5,9 +5,9 @@ from .schema import (
     RestricoesEletricasSchema,
     CargaNewaveSistemaEnergiaCreateDto,
     CargaNewaveSistemaEnergiaReadDto,
-    CargaNewaveSistemaEnergiaUpdateDto,
+    MMGDTotalUpdateDto,
     CargaNewaveCadicCreateDto,
-    CargaNewaveCadicUpdateDto,
+    MMGDBaseUpdateDto,
     CargaNewaveCadicReadDto,
     CvuSchema,
     CvuMerchantSchema,
@@ -249,9 +249,9 @@ def get_sist_mmgd_total_deck_values():
 
 @router.put("/newave/sistema/mmgd_total", tags=["Newave"])
 def put_sist_mmgd_total_com_previsoes_cargas_mensais(
-    body: List[CargaNewaveSistemaEnergiaUpdateDto]
+    body: List[MMGDTotalUpdateDto]
 ):
-    return service.NewaveSistEnergia.put_sist_mmgd_com_previsoes_cargas_mensais(body)
+    return service.NewaveSistEnergia.put_sist_mmgd_total_deck_values(body)
 
 @router.get("/newave/sistema/cargas/total_carga_global", tags=["Newave"])
 def get_sist_total_carga_global_deck_values():
@@ -285,7 +285,7 @@ def get_cadic_total_mmgd_base_deck_values():
 
 @router.put("/newave/cadic/total_mmgd_base", tags=["Newave"])
 def put_cadic_total_mmgd_base_deck_values(
-    body: List[CargaNewaveCadicUpdateDto]
+    body: List[MMGDBaseUpdateDto]
 ):
     return service.NewaveCadic.put_cadic_total_mmgd_base_deck_values(body)
 

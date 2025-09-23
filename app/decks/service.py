@@ -2158,19 +2158,20 @@ class RestricoesEletricas:
     tb: db.Table = __DB__.getSchema('restricao_eletrica')
 
     @staticmethod
-    def remove_restricoes_eletricas_by_data_produto(data_produto: datetime.date):
+    def remove_restricoes_eletricas_by_data_produto(data_produto: datetime.date, tipo: str):
         query = db.delete(RestricoesEletricas.tb).where(
-            RestricoesEletricas.tb.c['data_produto'] == data_produto
+            RestricoesEletricas.tb.c['data_produto'] == data_produto,
+            RestricoesEletricas.tb.c['tipo'] == tipo
         )
         result = __DB__.db_execute(query)
-        logger.info(f"{result.rowcount} restricoes eletricas removidas para a data {data_produto}")
+        logger.info(f"{result.rowcount} restricoes eletricas removidas para a data {data_produto} e tipo {tipo}")
         return None
 
 
     @staticmethod
     def post_restricoes_eletricas(body: List[RestricoesEletricasSchema]):
         data = [x.model_dump() for x in body]
-        RestricoesEletricas.remove_restricoes_eletricas_by_data_produto(data[0]['data_produto'])
+        RestricoesEletricas.remove_restricoes_eletricas_by_data_produto(data[0]['data_produto'], data[0]['tipo'])
         query = db.insert(RestricoesEletricas.tb).values(data)
         result = __DB__.db_execute(query)
         
@@ -2195,7 +2196,8 @@ class RestricoesEletricas:
 
     @staticmethod
     def get_restricoes_eletricas_by_data_produto(
-        data_produto: Optional[datetime.date] = None
+        data_produto: Optional[datetime.date] = None,
+        tipo: Optional[str] = None
     ):
         if not data_produto:
             data_produto = RestricoesEletricas.get_last_data_produto()
@@ -2203,6 +2205,8 @@ class RestricoesEletricas:
         query = db.select(RestricoesEletricas.tb).where(
             RestricoesEletricas.tb.c['data_produto'] == data_produto
         )
+        if tipo:
+            query = query.where(RestricoesEletricas.tb.c['tipo'] == tipo)
         
         result = __DB__.db_execute(query).fetchall()
         

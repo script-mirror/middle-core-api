@@ -391,11 +391,12 @@ def create_restricoes_eletricas(
 @router.get("/restricoes-eletricas", tags=["Restricoes Eletricas"])
 def get_restricoes_eletricas_by_data_produto(
     data_produto: Optional[datetime.date] = None,
+    tipo: Optional[str] = None
 ):
     """
     Obtém restrições elétricas por data de produto.
     """
-    return service.RestricoesEletricas.get_restricoes_eletricas_by_data_produto(data_produto)
+    return service.RestricoesEletricas.get_restricoes_eletricas_by_data_produto(data_produto, tipo)
 
 @router.get("/restricoes-eletricas/historico", tags=["Restricoes Eletricas"])
 def get_restricoes_eletricas_historico():

@@ -1566,6 +1566,7 @@ class db_mysql_master():
                                     db.Column('patamar', db.String(100), nullable=False),
                                     db.Column('valor', db.Numeric(10, 2), nullable=False),
                                     db.Column('data_produto', db.Date, nullable=False),
+                                    db.Column('tipo', db.String(10), nullable=False),
                                     db.Column('created_at', db.DateTime, default=db.func.current_timestamp()),
                                     extend_existing=True
                                     )

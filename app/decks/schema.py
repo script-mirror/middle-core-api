@@ -284,5 +284,6 @@ class RestricoesEletricasSchema(BaseModel):
     mes_ano: datetime.date
     patamar: str
     valor: float
+    tipo: str
     data_produto: datetime.date
     

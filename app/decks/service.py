@@ -880,11 +880,11 @@ class NewavePrevisoesCargas:
         return df.to_dict('records')
     
     @staticmethod
-    def delete_by_data_produto_data_revisao_equals(data_produto: datetime.date, data_revisao: datetime.date):
+    def delete_by_data_produto_data_revisao_equals(data_produto: datetime.date, datas_revisao: List[datetime.date]):
         query = db.delete(NewavePrevisoesCargas.tb).where(
             db.and_(
                 NewavePrevisoesCargas.tb.c["data_produto"] == data_produto,
-                NewavePrevisoesCargas.tb.c["data_revisao"] == data_revisao
+                NewavePrevisoesCargas.tb.c["data_revisao"].in_(datas_revisao)
             )
         )
         rows = __DB__.db_execute(query).rowcount
@@ -894,7 +894,7 @@ class NewavePrevisoesCargas:
     @staticmethod
     def create(body: List[NewavePrevisoesCargasCreateDto]):
         body_dict = [x.model_dump() for x in body]
-        delete_dates = (body_dict[0]['data_produto'], body_dict[0]['data_revisao'])
+        delete_dates = (body_dict[0]['data_produto'], pd.DataFrame(body_dict)['data_revisao'].unique().tolist())
         NewavePrevisoesCargas.delete_by_data_produto_data_revisao_equals(*delete_dates)
         
         query = db.insert(NewavePrevisoesCargas.tb).values(body_dict)

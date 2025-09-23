@@ -2182,15 +2182,8 @@ class RestricoesEletricas:
 
 
     @staticmethod
-    def get_last_data_produto():
-        query = db.select(
-            db.func.max(RestricoesEletricas.tb.c['data_produto'])
-        )
-        result = __DB__.db_execute(query).scalar()
-        
-        if not result:
-            raise HTTPException(status_code=404, detail="Nenhuma data de produto encontrada")
-        
+    def get_last_data_produto_by_priority():
+        result = RestricoesEletricas.get_historico()[0]
         return result
 
 
@@ -2200,8 +2193,11 @@ class RestricoesEletricas:
         tipo: Optional[str] = None
     ):
         if not data_produto:
-            data_produto = RestricoesEletricas.get_last_data_produto()
-            
+            mais_atualizado = RestricoesEletricas.get_historico()[0]
+            data_produto = mais_atualizado['data_produto']
+            if not tipo:
+                tipo = mais_atualizado['tipo']
+                        
         query = db.select(RestricoesEletricas.tb).where(
             RestricoesEletricas.tb.c['data_produto'] == data_produto
         )
@@ -2217,14 +2213,14 @@ class RestricoesEletricas:
         return df.to_dict('records')
     
     @staticmethod
-    def get_historico():
+    def get_historico(limite: int = 10):
         query = db.select(
             RestricoesEletricas.tb.c['data_produto'],
             RestricoesEletricas.tb.c['tipo']
         ).distinct().order_by(
             RestricoesEletricas.tb.c['data_produto'].desc(),
             RestricoesEletricas.tb.c['tipo'].asc()
-        )
+        ).limit(limite)
         
         result = __DB__.db_execute(query).fetchall()
         

@@ -2217,13 +2217,13 @@ class RestricoesEletricas:
         return df.to_dict('records')
     
     @staticmethod
-    def get_datas_produto():
+    def get_historico():
         query = db.select(
             RestricoesEletricas.tb.c['data_produto'],
             RestricoesEletricas.tb.c['tipo']
         ).distinct().order_by(
             RestricoesEletricas.tb.c['data_produto'].desc(),
-            RestricoesEletricas.tb.c['tipo']
+            RestricoesEletricas.tb.c['tipo'].asc()
         )
         
         result = __DB__.db_execute(query).fetchall()

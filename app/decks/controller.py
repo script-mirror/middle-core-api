@@ -400,6 +400,6 @@ def get_restricoes_eletricas_by_data_produto(
 
 @router.get("/restricoes-eletricas/historico", tags=["Restricoes Eletricas"])
 def get_restricoes_eletricas_historico():
-    return service.RestricoesEletricas.get_datas_produto()
+    return service.RestricoesEletricas.get_historico()
 
 

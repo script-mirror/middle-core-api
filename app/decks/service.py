@@ -2195,8 +2195,8 @@ class RestricoesEletricas:
         if not data_produto:
             mais_atualizado = RestricoesEletricas.get_historico()[0]
             data_produto = mais_atualizado['data_produto']
-            if not tipo:
-                tipo = mais_atualizado['tipo']
+        if not tipo:
+            tipo = mais_atualizado['tipo']
                         
         query = db.select(RestricoesEletricas.tb).where(
             RestricoesEletricas.tb.c['data_produto'] == data_produto

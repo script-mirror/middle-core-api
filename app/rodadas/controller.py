@@ -304,9 +304,9 @@ def get_vazao_observada_pdp(
         data_inicio, data_fim
     )
 
-@router.post("/vazao-observada-pdb", tags=['Rodadas'])
+@router.post("/vazao-observada-pdp", tags=['Rodadas'])
 def post_vazao_observada(
-    body: VazoesObservadasCreateDTO
+    body: List[VazoesObservadasCreateDTO]
 ):
     return service.VazoesObs.post_vazao_observada(body)
 

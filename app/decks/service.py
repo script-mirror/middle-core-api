@@ -553,13 +553,6 @@ class Cvu:
         return None
 
     @staticmethod
-    def delete_():
-        query = db.delete(Cvu.tb).where(Cvu.tb.c.mes_referencia == '202503')
-        rows = __DB__.db_execute(query).rowcount
-        logger.info(f"{rows} linhas deletadas da tb_cvu")
-        return None
-
-    @staticmethod
     def delete_by_params(**kwargs):
         query = db.delete(Cvu.tb).where(
             db.and_(*[getattr(Cvu.tb.c, key) == value for key, value in kwargs.items()]))
@@ -698,6 +691,32 @@ class Cvu:
         df_cvu = df_cvu.replace({np.nan: None, np.inf: None, -np.inf: None})
         return df_cvu.to_dict('records')
 
+
+    @staticmethod
+    def get_sigla_parcela():
+        df = pd.DataFrame()
+        for tipo_cvu in ['ccee_conjuntural', 'ccee_estrutural', 'ccee_merchant']:
+            data_atualizacao = Cvu.get_last_data_atualizacao_por_tipo_cvu(tipo_cvu)
+            if 'merchant' in tipo_cvu.lower():
+                query = db.select(
+                    CvuMerchant.tb.c.cd_usina,
+                    CvuMerchant.tb.c.empreendimento
+                ).distinct().where(
+                    CvuMerchant.tb.c.dt_atualizacao == data_atualizacao
+                )
+            else:
+                query = db.select(
+                    Cvu.tb.c.cd_usina,
+                    Cvu.tb.c.sigla_parcela
+                ).distinct().where(
+                    db.and_(
+                        Cvu.tb.c.fonte == tipo_cvu,
+                        Cvu.tb.c.dt_atualizacao == data_atualizacao
+                    )
+                )
+            rows = __DB__.db_execute(query)
+            df = pd.concat([df, pd.DataFrame(rows, columns=['cd_usina', 'sigla_parcela'])])
+        return df.drop_duplicates(['cd_usina']).to_dict('records')
 class CvuMerchant:
     tb: db.Table = __DB__.getSchema('tb_cvu_merchant')
 

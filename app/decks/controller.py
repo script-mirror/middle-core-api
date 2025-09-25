@@ -322,11 +322,6 @@ def get_newave_patamar_intercambio_by_dt_referente(
     return service.NewavePatamarIntercambio.get_patamar_intercambio_by_dt_referente(dt_inicial, dt_final)
 
 
-
-
-
-
-
 @router.post("/check-cvu", tags=["CVU"])
 def post_check_cvu(
     body: CheckCvuCreateDto
@@ -367,6 +362,9 @@ def get_all(
 ):
     return service.CheckCvu.get_all(page, page_size)
 
+@router.get("/siglas-cvu", tags=["CVU"])
+def get_siglas_cvu():
+    return service.Cvu.get_sigla_parcela()
 
 @router.get("/dessem/previsao", tags=["Dessem"])
 def get_previsao_dessem():

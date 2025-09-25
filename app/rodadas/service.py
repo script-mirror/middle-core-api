@@ -1860,11 +1860,13 @@ class VazoesObs:
         return df.to_dict('records')
     
     @staticmethod
-    def delete_by_data_produto_data_revisao_equals(dt_referente: datetime.date):
+    def delete_by_dt_interval_and_subbacias(dt_min, dt_max, subbacias):
         query = db.delete(VazoesObs.tb).where(
             db.and_(
-                VazoesObs.tb.c["dt_referente"] == dt_referente,
-            )
+                    VazoesObs.tb.c.dt_referente >= dt_min,
+                    VazoesObs.tb.c.dt_referente <= dt_max,
+                    VazoesObs.tb.c.txt_subbacia.in_(subbacias)
+                )
         )
         rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas deletadas de vazoes observadas")
@@ -1872,13 +1874,38 @@ class VazoesObs:
     
     @staticmethod
     def post_vazao_observada(body: List[VazoesObservadasCreateDTO]):
-        body_dict = [x.model_dump() for x in body]
-        delete_dates = (body_dict[0]['dt_referente'])
-        VazoesObs.delete_by_data_produto_data_revisao_equals(*delete_dates)
-        
-        query = db.insert(VazoesObs.tb).values(body_dict)
-        rows = __DB__.db_execute(query).rowcount
-        logger.info(f"{rows} linhas adicionadas de vazoes observadas")
+    
+        data = []
+        for item in body:
+            data.append({
+                "txt_subbacia": item.txt_subbacia,
+                "cd_estacao": item.cd_estacao,
+                "txt_tipo_vaz": item.txt_tipo_vaz,
+                "dt_referente": item.dt_referente,
+                "vl_vaz": item.vl_vaz
+            })
+            
+        df_values_total = pd.DataFrame(data)
+
+        # Usar nomes de colunas em vez de índices
+        df_contagem_dias = df_values_total.groupby('txt_subbacia')[['vl_vaz']].count().reset_index().set_index('vl_vaz')
+
+        for num_dias in df_contagem_dias.index.unique():
+            subbacias = df_contagem_dias.loc[num_dias]['txt_subbacia'].unique()
+            df_values = df_values_total[df_values_total['txt_subbacia'].isin(subbacias)]
+
+            df_values = df_values.fillna(0)
+
+            dt_min = df_values['dt_referente'].min()
+            dt_max = df_values['dt_referente'].max()
+
+            VazoesObs.delete_by_dt_interval_and_subbacias(dt_min, dt_max, subbacias)
+
+            first_values = df_values.values.tolist()
+            query = db.insert(VazoesObs.tb).values(first_values)
+            rows = __DB__.db_execute(query).rowcount
+            logger.info(f"{rows} linhas adicionadas de vazoes observadas")
+
         return {"message": f"{rows} linhas adicionadas de vazoes observadas"}
 
 

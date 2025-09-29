@@ -49,9 +49,13 @@ def get_bacias_segmentadas():
 
 @router.get('/acomph')
 def get_acomph_by_dt_referente(
-    data: datetime.date
+    data_referente: Optional[datetime.date] = None,
+    data_produto: Optional[datetime.date] = None,
 ):
-    return service.Acomph.get_acomph_by_dt_referente(data)
+    if data_referente:
+        return service.Acomph.get_acomph_by_dt_referente(data_referente)
+    elif data_produto:
+        return service.Acomph.get_acomph_by_data_produto(data_produto)
 
 
 @router.post('/acomph')
@@ -62,12 +66,6 @@ def post_acomph(
         [item.model_dump() for item in body]
     )
 
-
-@router.get('/acomph/data-acomph')
-def get_acomphby_dt_acomph(
-    data_acomph: datetime.date
-):
-    return service.Acomph.get_acomph_by_dt_acomph(data_acomph)
 
 
 @router.get('/acomph/products-available')

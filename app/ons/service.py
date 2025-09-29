@@ -117,7 +117,7 @@ class Acomph:
         return df.to_dict('records')
 
     @staticmethod
-    def get_acomph_by_dt_acomph(data: datetime.date):
+    def get_acomph_by_data_produto(data: datetime.date):
         query = db.select(
             db.func.date(Acomph.tb.c['dt_referente']),
             Acomph.tb.c['cd_posto'],

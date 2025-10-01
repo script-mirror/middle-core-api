@@ -67,7 +67,6 @@ def post_acomph(
     )
 
 
-
 @router.get('/acomph/products-available')
 def get_acomph_products_available(
     year: int,
@@ -180,3 +179,17 @@ def post_rdh(
     return service.Rdh.post_rdh(
         [item.model_dump() for item in body]
     )
+
+@router.get('/mlt/submercado')
+def get_mlt_submercado():
+    """
+    Obtém MLT por submercado e data de referência.
+    """
+    return service.EnaSubmercado.get_mlt()
+
+@router.get('/mlt/bacia')
+def get_mlt_bacia():
+    """
+    Obtém MLT por bacia e data de referência.
+    """
+    return service.EnaBacia.get_mlt()

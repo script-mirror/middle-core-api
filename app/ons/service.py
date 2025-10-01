@@ -547,6 +547,60 @@ class Rdh:
         return {"inserts": result.rowcount}
 
 
+class EnaSubmercado:
+    tb: db.Table = __DB__.getSchema('tb_ena_submercado')
+    
+    def get_mlt():
+        
+        cod_submercados = {1:'SE',2:'S',3:'NE',4:'N'}
+        
+        query = db.select(
+                EnaSubmercado.tb.c['id_submercado'],
+                EnaSubmercado.tb.c['dt_ref'],
+                EnaSubmercado.tb.c['vl_mwmed'],
+                EnaSubmercado.tb.c['vl_percent']
+            ).where(
+                EnaSubmercado.tb.c['dt_ref'].between('2022-01-01','2022-12-31')
+            )
+        df = pd.DataFrame(
+            __DB__.db_execute(query).fetchall(),
+            columns=['cd_submercado','data_referente','mwmed','porcentagem_mlt']
+        )
+        df['cd_submercado'] = df['cd_submercado'].replace(cod_submercados)
+        df['data_referente'] = pd.to_datetime(df['data_referente'])
+        df['mes'] = df['data_referente'].dt.month
+        df['mlt'] = ((df['mwmed'] * 100) / df['porcentagem_mlt']).astype(int)
+        df.drop(columns=['data_referente'], inplace=True)
+        df.pivot(index='cd_submercado', columns='mes', values='mlt').reset_index().reset_index(drop=1)
+        
+        return df[['cd_submercado', 'mes', 'mlt']].to_dict('records')
+    
+
+class EnaBacia:
+    tb: db.Table = __DB__.getSchema('tb_ena_bacia')
+    def get_mlt():
+        query = db.select(
+                EnaBacia.tb.c['id_bacia'],
+                EnaBacia.tb.c['dt_ref'],
+                EnaBacia.tb.c['vl_mwmed'],
+                EnaBacia.tb.c['vl_percent']
+            ).where(
+                EnaBacia.tb.c['dt_ref'].between('2022-01-01','2022-12-31')
+            )
+        df = pd.DataFrame(
+            __DB__.db_execute(query).fetchall(),
+            columns=['id_bacia','data_referente','mwmed','porcentagem_mlt']
+        )
+        pdb.set_trace()
+        df['id_bacia'] = df['id_bacia'].replace('')
+        df['data_referente'] = pd.to_datetime(df['data_referente'])
+        df['mes'] = df['data_referente'].dt.month
+        df['mlt'] = ((df['mwmed'] * 100) / df['porcentagem_mlt']).astype(int)
+        df.drop(columns=['data_referente'], inplace=True)
+        df.pivot(index='id_bacia', columns='mes', values='mlt').reset_index().reset_index(drop=1)
+        
+        return df[['id_bacia', 'mes', 'mlt']].to_dict('records')
+
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

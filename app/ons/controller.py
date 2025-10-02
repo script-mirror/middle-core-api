@@ -11,6 +11,7 @@ from .schema import (
     AcomphSchema,
     RdhCreateDto,
     CargaIpdoCreateDto,
+    PrevEnaCreateDto,
 )
 from app.core.utils import cache
 
@@ -193,3 +194,22 @@ def get_mlt_bacia():
     Obtém MLT por bacia e data de referência.
     """
     return service.EnaBacia.get_mlt()
+
+@router.post('/prev/ena')
+def post_prev_ena(
+    body: List[PrevEnaCreateDto]
+):
+    """
+    Insere previsão de ENA para o ONS.
+    """
+    return service.Previsoes.post_prev_ena(body)
+    
+@router.get('/prev/ena')
+def get_prev_ena(
+    dt_revisao: Optional[datetime.date] = None,
+    submercado: Optional[int] = None
+):
+    """
+    Insere previsão de ENA para o ONS.
+    """
+    return service.Previsoes.get_prev_ena()

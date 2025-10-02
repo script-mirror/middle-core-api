@@ -9,9 +9,11 @@ from app.core.utils import date_util
 from fastapi import HTTPException
 from app.core.database.wx_dbClass import db_mysql_master
 from app.core.utils.logger import logging
+from typing import List, Optional
 
 from .schema import (
     CargaIpdoCreateDto,
+    PrevEnaCreateDto,
 )
 __DB__ = db_mysql_master('db_ons')
 logger = logging.getLogger(__name__)
@@ -601,6 +603,55 @@ class EnaBacia:
         
         return df[['id_bacia', 'mes', 'mlt']].to_dict('records')
 
+
+class Previsoes:
+    tb: db.Table = __DB__.getSchema('tb_prev_ena_submercado')
+    
+    def _delete_prev_ena_by_equal_dates(dt_previsao: datetime.date):
+        data_str = dt_previsao.strftime('%Y-%m-%d 00:00:00')
+        query = db.delete(Previsoes.tb).where(
+            Previsoes.tb.c['dt_previsao'] == data_str
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes:": result.rowcount}
+    
+    def post_prev_ena(
+        body: List[PrevEnaCreateDto]
+    ):
+        df = pd.DataFrame([item.model_dump() for item in body])
+        Previsoes._delete_prev_ena_by_equal_dates(df['dt_previsao'].unique().tolist()[0])
+        query = db.insert(Previsoes.tb).values(df.to_dict('records'))
+        result = __DB__.db_execute(query)
+        return {"inserts": result.rowcount}
+        
+    def get_prev_ena(dt_revisao: Optional[datetime.date] = None, submercado: Optional[int] = None): 
+        query = db.select(
+            Previsoes.tb.c['cd_submercado'],
+            Previsoes.tb.c['dt_previsao'],
+            Previsoes.tb.c['dt_ref'],
+            Previsoes.tb.c['vl_mwmed'],
+            Previsoes.tb.c['vl_perc_mlt']
+        )
+        if dt_revisao:
+            query = query.where(
+                Previsoes.tb.c['dt_previsao'] == dt_revisao
+            )
+        if submercado:
+            query = query.where(
+                Previsoes.tb.c['cd_submercado'] == submercado
+            )
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'cd_submercado', 'dt_previsao', 'dt_ref', 'vl_mwmed', 'vl_perc_mlt'
+        ])
+        if df.empty:
+            raise HTTPException(
+                status_code=404, detail="Nenhum registro encontrado com os filtros informados"
+            )
+        df['dt_previsao'] = pd.to_datetime(df['dt_previsao']).dt.date
+        df['dt_ref'] = pd.to_datetime(df['dt_ref']).dt.date
+        return df.to_dict('records')     
+    
 if __name__ == "__main__":
     teste = [
         'tb_bacias',
@@ -611,3 +662,6 @@ if __name__ == "__main__":
     ]
     print(set(teste))
     pass
+
+
+    

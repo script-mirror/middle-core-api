@@ -51,3 +51,11 @@ class CargaIpdoCreateDto(BaseModel):
     carga_s: float
     carga_ne: float
     carga_n: float
+
+class PrevEnaCreateDto(BaseModel):
+    cd_submercado: int
+    dt_previsao: datetime.date
+    dt_ref: datetime.date
+    vl_mwmed: float
+    vl_perc_mlt: float
+    

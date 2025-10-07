@@ -593,7 +593,6 @@ class EnaBacia:
             __DB__.db_execute(query).fetchall(),
             columns=['id_bacia','data_referente','mwmed','porcentagem_mlt']
         )
-        pdb.set_trace()
         df['id_bacia'] = df['id_bacia'].replace('')
         df['data_referente'] = pd.to_datetime(df['data_referente'])
         df['mes'] = df['data_referente'].dt.month

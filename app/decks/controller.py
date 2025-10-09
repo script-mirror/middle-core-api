@@ -409,7 +409,7 @@ def create_historico_vazoes(
     return service.HistoricoVazoes.create(body)
 
 
-@router.get("/historico-vazoes/{ano}", tags=["Historico Vazoes"])
+@router.get("/historico-vazoes", tags=["Historico Vazoes"])
 def get_historico_vazoes_by_ano(
     ano: int
 ):

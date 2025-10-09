@@ -625,31 +625,56 @@ class Previsoes:
         return {"inserts": result.rowcount}
         
     def get_prev_ena(dt_revisao: Optional[datetime.date] = None, submercado: Optional[int] = None): 
-        query = db.select(
+        if dt_revisao is None:
+            
+            subquery = db.select(
+                db.func.max(Previsoes.tb.c['dt_previsao'])
+            ).scalar_subquery()
+            
+            query = db.select(
+                Previsoes.tb.c['cd_submercado'],
+                Previsoes.tb.c['dt_previsao'],
+                Previsoes.tb.c['dt_ref'],
+                Previsoes.tb.c['vl_mwmed'],
+                Previsoes.tb.c['vl_perc_mlt']
+            ).where(
+                Previsoes.tb.c['dt_previsao'] == subquery
+            )
+            
+        else:
+            
+            query = db.select(
             Previsoes.tb.c['cd_submercado'],
             Previsoes.tb.c['dt_previsao'],
             Previsoes.tb.c['dt_ref'],
             Previsoes.tb.c['vl_mwmed'],
             Previsoes.tb.c['vl_perc_mlt']
-        )
-        if dt_revisao:
+            )
+            
             query = query.where(
                 Previsoes.tb.c['dt_previsao'] == dt_revisao
             )
+            
         if submercado:
             query = query.where(
                 Previsoes.tb.c['cd_submercado'] == submercado
             )
+            
         result = __DB__.db_execute(query).fetchall()
+        
         df = pd.DataFrame(result, columns=[
             'cd_submercado', 'dt_previsao', 'dt_ref', 'vl_mwmed', 'vl_perc_mlt'
         ])
+        
         if df.empty:
             raise HTTPException(
                 status_code=404, detail="Nenhum registro encontrado com os filtros informados"
             )
+            
         df['dt_previsao'] = pd.to_datetime(df['dt_previsao']).dt.date
+        
         df['dt_ref'] = pd.to_datetime(df['dt_ref']).dt.date
+        
         return df.to_dict('records')     
     
 if __name__ == "__main__":

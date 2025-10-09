@@ -212,4 +212,4 @@ def get_prev_ena(
     """
     Insere previsão de ENA para o ONS.
     """
-    return service.Previsoes.get_prev_ena()
+    return service.Previsoes.get_prev_ena(dt_revisao, submercado)

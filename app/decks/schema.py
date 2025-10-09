@@ -286,4 +286,11 @@ class RestricoesEletricasSchema(BaseModel):
     valor: float
     tipo: str
     data_produto: datetime.date
+
+
+class HistoricoVazoesSchema(BaseModel):
+    vazao: int
+    mes: int
+    ano: int
+    posto: int
     

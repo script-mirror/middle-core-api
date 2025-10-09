@@ -24,6 +24,7 @@ from .schema import (
     PatamaresEnum,
     NewavePrevisoesCargasReadDto,
     NewavePrevisoesCargasCreateDto,
+    HistoricoVazoesSchema,
     )
 import datetime
 
@@ -399,5 +400,20 @@ def get_restricoes_eletricas_by_data_produto(
 @router.get("/restricoes-eletricas/historico", tags=["Restricoes Eletricas"])
 def get_restricoes_eletricas_historico():
     return service.RestricoesEletricas.get_historico()
+
+
+@router.post("/historico-vazoes", tags=["Historico Vazoes"])
+def create_historico_vazoes(
+    body: List[HistoricoVazoesSchema]
+):
+    return service.HistoricoVazoes.create(body)
+
+
+@router.get("/historico-vazoes/{ano}", tags=["Historico Vazoes"])
+def get_historico_vazoes_by_ano(
+    ano: int
+):
+    return service.HistoricoVazoes.get_by_ano(ano)
+
 
 

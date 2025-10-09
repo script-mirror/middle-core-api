@@ -32,6 +32,7 @@ from .schema import (
     MMGDTotalUpdateDto,
     RestricoesEletricasSchema,
     NewavePrevisoesCargasCreateDto,
+    HistoricoVazoesSchema,
 )
 
 logger = logging.getLogger(__name__)
@@ -2254,3 +2255,40 @@ class RestricoesEletricas:
             })
         
         return datas_produto
+    
+class HistoricoVazoes:
+    tb: db.Table = __DB__.getSchema('historico_vazoes')
+
+    @staticmethod
+    def get_by_ano(ano: int):
+        query = db.select(HistoricoVazoes.tb).where(
+            HistoricoVazoes.tb.c.ano == ano
+        ).order_by(
+            HistoricoVazoes.tb.c.mes.asc(),
+        )
+        result = __DB__.db_execute(query).fetchall()
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Nenhum registro encontrado para o ano {ano}")
+        df = pd.DataFrame(result, columns=HistoricoVazoes.tb.columns.keys())
+        return df.to_dict('records')
+
+    @staticmethod
+    def delete_by_ano(ano: int):
+        query = db.delete(HistoricoVazoes.tb).where(
+            HistoricoVazoes.tb.c.ano == ano
+        )
+        result = __DB__.db_execute(query)
+        logger.info(f"{result.rowcount} registros deletados para o ano {ano}")
+        return result.rowcount
+
+    @staticmethod
+    def create(body: List[HistoricoVazoesSchema]):
+        data = [x.model_dump() for x in body]
+        anos = set(item['ano'] for item in data)
+        for ano in anos:
+            HistoricoVazoes.delete_by_ano(ano)
+        query = db.insert(HistoricoVazoes.tb).values(data)
+        result = __DB__.db_execute(query)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=500, detail="Erro ao inserir histórico de vazões")
+        return {"message": f"{result.rowcount} registros inseridos com sucesso"}

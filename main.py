@@ -40,39 +40,29 @@ app.add_middleware(
 )
 
 
-app.include_router(rodadas_controller, prefix="/api/v2",)
-app.include_router(
-    ons_controller, prefix="/api/v2",
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
-app.include_router(bbce_controller, prefix="/api/v2")
-app.include_router(
-    decks_controller, prefix="/api/v2",
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
-app.include_router(
-    meteorologia_controller, prefix="/api/v2",
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
-app.include_router(
-    pluvia_controller, prefix="/api/v2",
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
-app.include_router(
-    ons_dados_abertos_controller, prefix="/api/v2",
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
+controllers_without_auth = [
+    rodadas_controller,
+    bbce_controller,
+]
 
-app.include_router(
-    utils_controller, prefix="/api/v2",
-    dependencies=[Depends(auth_scheme),
-    Depends(cognito.auth_required)]
-)
+controllers_with_auth = [
+    ons_controller,
+    decks_controller,
+    meteorologia_controller,
+    pluvia_controller,
+    ons_dados_abertos_controller,
+    utils_controller,
+]
+
+for controller in controllers_without_auth:
+    app.include_router(controller, prefix="/api/v2")
+
+for controller in controllers_with_auth:
+    app.include_router(
+        controller, 
+        prefix="/api/v2",
+        dependencies=[Depends(auth_scheme), Depends(cognito.auth_required)]
+    )
 
 @app.get("/api/v2/health")
 def health():

@@ -1678,6 +1678,22 @@ class db_mysql_master():
                                               nullable=True),
                                     extend_existing=True
                                     )
+        elif table_name.lower() == 'historico_vazoes':
+            table_schema = db.Table('historico_vazoes', self.meta,
+                                    db.Column('id', db.Integer, 
+                                              primary_key=True, autoincrement=True),
+                                    db.Column('vazao', db.Integer),
+                                    db.Column('mes', db.Integer),
+                                    db.Column('ano', db.Integer),
+                                    db.Column('posto', db.Integer),
+                                    db.Column('created_at', db.TIMESTAMP, 
+                                              default=db.func.current_timestamp()),
+                                    db.Column('updated_at', db.TIMESTAMP, 
+                                              default=db.func.current_timestamp(),
+                                              onupdate=db.func.current_timestamp()),
+                                    extend_existing=True
+                                    )
+
         return table_schema
     
     

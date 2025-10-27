@@ -1042,18 +1042,27 @@ class NewaveSistEnergia:
     @staticmethod
     def get_sist_total_unsi_deck_values():
         """
-        Obtém os valores de geração dos dois decks mais recentes, agrupados por deck,
-        mês e ano, sem agrupamento por submercado.
-
-        Returns:
-            Lista com informações dos dois decks mais recentes, contendo dados
-            de geração, organizados por mês e ano.
+        Obtém os valores de geração dos dois dt_deck mais recentes,
+        pegando a versão mais recente de cada dt_deck.
         """
-        subquery = db.select(
-            NewaveSistEnergia.tb.c["created_at"]
+        # Subquery para pegar os 2 dt_deck mais recentes
+        dt_deck_subquery = db.select(
+            NewaveSistEnergia.tb.c["dt_deck"]
         ).distinct().order_by(
-            NewaveSistEnergia.tb.c["created_at"]
-        ).limit(2)
+            NewaveSistEnergia.tb.c["dt_deck"].desc()
+        ).limit(2).subquery()
+
+        # Para cada dt_deck, pegar o created_at mais recente
+        max_created_subquery = db.select(
+            NewaveSistEnergia.tb.c["dt_deck"],
+            db.func.max(NewaveSistEnergia.tb.c["created_at"]).label("max_created")
+        ).where(
+            NewaveSistEnergia.tb.c["dt_deck"].in_(
+                db.select(dt_deck_subquery.c.dt_deck)
+            )
+        ).group_by(
+            NewaveSistEnergia.tb.c["dt_deck"]
+        ).subquery()
 
         query = db.select(
             NewaveSistEnergia.tb.c["dt_deck"],
@@ -1064,16 +1073,19 @@ class NewaveSistEnergia:
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct"]).label("vl_geracao_pct"),
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol"]).label("vl_geracao_eol"),
             db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv"]).label("vl_geracao_ufv")
-        ).where(
-            NewaveSistEnergia.tb.c["created_at"].in_(db.select(subquery.c.created_at))
+        ).join(
+            max_created_subquery,
+            db.and_(
+                NewaveSistEnergia.tb.c["dt_deck"] == max_created_subquery.c.dt_deck,
+                NewaveSistEnergia.tb.c["created_at"] == max_created_subquery.c.max_created
+            )
         ).group_by(
             NewaveSistEnergia.tb.c["dt_deck"],
             NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         ).order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc(),
-            NewaveSistEnergia.tb.c["versao"],
+            NewaveSistEnergia.tb.c["dt_deck"].asc(),
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         )
@@ -1096,53 +1108,68 @@ class NewaveSistEnergia:
 
             for (ano, mes), month_group in deck_group.groupby(['vl_ano', 'vl_mes']):
                 row = month_group.iloc[0]
-
                 total_geracao = float(row['PCH']) + float(row['PCT']) + float(row['EOL']) + float(row['UFV'])
-            
+
                 data = {
                     "vl_mes": int(mes),
                     "vl_ano": int(ano),
                     "vl_deck_unsi": total_geracao
                 }
-
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
+
+        decks_data.reverse()
             
-        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
-            decks_data.reverse()
-
-
         return decks_data
     
     @staticmethod
     def get_sist_mmgd_total_deck_values():
-        
-        subquery = db.select(
-            NewaveSistEnergia.tb.c["created_at"]
+        """
+        Obtém os valores MMGD dos dois dt_deck mais recentes,
+        pegando a versão mais recente de cada dt_deck.
+        """
+        # Subquery para pegar os 2 dt_deck mais recentes
+        dt_deck_subquery = db.select(
+            NewaveSistEnergia.tb.c["dt_deck"]
         ).distinct().order_by(
-            NewaveSistEnergia.tb.c["created_at"]
-        ).limit(2)
+            NewaveSistEnergia.tb.c["dt_deck"].desc()
+        ).limit(2).subquery()
+
+        # Para cada dt_deck, pegar o created_at mais recente
+        max_created_subquery = db.select(
+            NewaveSistEnergia.tb.c["dt_deck"],
+            db.func.max(NewaveSistEnergia.tb.c["created_at"]).label("max_created")
+        ).where(
+            NewaveSistEnergia.tb.c["dt_deck"].in_(
+                db.select(dt_deck_subquery.c.dt_deck)
+            )
+        ).group_by(
+            NewaveSistEnergia.tb.c["dt_deck"]
+        ).subquery()
 
         query = db.select(
             NewaveSistEnergia.tb.c["dt_deck"],
             NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_mes"],
             NewaveSistEnergia.tb.c["vl_ano"],
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch_mmgd"]),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct_mmgd"]),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol_mmgd"]),
-            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv_mmgd"])
-        ).where(
-            NewaveSistEnergia.tb.c["created_at"].in_(db.select(subquery.c.created_at))
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pch_mmgd"]).label("vl_geracao_pch_mmgd"),
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_pct_mmgd"]).label("vl_geracao_pct_mmgd"),
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_eol_mmgd"]).label("vl_geracao_eol_mmgd"),
+            db.func.sum(NewaveSistEnergia.tb.c["vl_geracao_ufv_mmgd"]).label("vl_geracao_ufv_mmgd")
+        ).join(
+            max_created_subquery,
+            db.and_(
+                NewaveSistEnergia.tb.c["dt_deck"] == max_created_subquery.c.dt_deck,
+                NewaveSistEnergia.tb.c["created_at"] == max_created_subquery.c.max_created
+            )
         ).group_by(
             NewaveSistEnergia.tb.c["dt_deck"],
             NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         ).order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc(),
-            NewaveSistEnergia.tb.c["versao"],
+            NewaveSistEnergia.tb.c["dt_deck"].asc(),
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         )
@@ -1177,9 +1204,8 @@ class NewaveSistEnergia:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
-            
-        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
-            decks_data.reverse()
+        
+        decks_data.reverse()
         
         return decks_data
     
@@ -1251,16 +1277,32 @@ class NewaveSistEnergia:
     
     @staticmethod
     def get_sist_total_carga_global_deck_values():
-        
+        """
+        Obtém os valores totais de carga global dos dois dt_deck mais recentes,
+        pegando a versão mais recente de cada dt_deck.
+        """
         # Get MMGD total values
         mmgd_base_values = NewaveCadic.get_cadic_total_mmgd_base_deck_values()
         boa_vista_values = NewaveCadic.get_cadic_boa_vista_values()
         
-        subquery = db.select(
-            NewaveSistEnergia.tb.c["created_at"]
+        # Subquery para pegar os 2 dt_deck mais recentes
+        dt_deck_subquery = db.select(
+            NewaveSistEnergia.tb.c["dt_deck"]
         ).distinct().order_by(
-            NewaveSistEnergia.tb.c["created_at"]
-        ).limit(2)
+            NewaveSistEnergia.tb.c["dt_deck"].desc()
+        ).limit(2).subquery()
+
+        # Para cada dt_deck, pegar o created_at mais recente
+        max_created_subquery = db.select(
+            NewaveSistEnergia.tb.c["dt_deck"],
+            db.func.max(NewaveSistEnergia.tb.c["created_at"]).label("max_created")
+        ).where(
+            NewaveSistEnergia.tb.c["dt_deck"].in_(
+                db.select(dt_deck_subquery.c.dt_deck)
+            )
+        ).group_by(
+            NewaveSistEnergia.tb.c["dt_deck"]
+        ).subquery()
 
         query = db.select(
             NewaveSistEnergia.tb.c["dt_deck"],
@@ -1268,16 +1310,19 @@ class NewaveSistEnergia:
             NewaveSistEnergia.tb.c["vl_mes"],
             NewaveSistEnergia.tb.c["vl_ano"],
             db.func.sum(NewaveSistEnergia.tb.c["vl_energia_total"]).label("vl_energia_total")
-        ).where(
-            NewaveSistEnergia.tb.c["created_at"].in_(db.select(subquery.c.created_at))
+        ).join(
+            max_created_subquery,
+            db.and_(
+                NewaveSistEnergia.tb.c["dt_deck"] == max_created_subquery.c.dt_deck,
+                NewaveSistEnergia.tb.c["created_at"] == max_created_subquery.c.max_created
+            )
         ).group_by(
             NewaveSistEnergia.tb.c["dt_deck"],
             NewaveSistEnergia.tb.c["versao"],
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         ).order_by(
-            NewaveSistEnergia.tb.c["dt_deck"].desc(),
-            NewaveSistEnergia.tb.c["versao"],
+            NewaveSistEnergia.tb.c["dt_deck"].asc(),
             NewaveSistEnergia.tb.c["vl_ano"],
             NewaveSistEnergia.tb.c["vl_mes"]
         )
@@ -1372,9 +1417,8 @@ class NewaveSistEnergia:
                 deck_info["data"].append(data)
             
             decks_data.append(deck_info)
-            
-        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
-            decks_data.reverse()
+        
+        decks_data.reverse()
         
         return decks_data
     
@@ -1542,12 +1586,28 @@ class NewaveCadic:
     
     @staticmethod
     def get_cadic_total_mmgd_base_deck_values():
-        
-        subquery = db.select(
-            NewaveCadic.tb.c["created_at"]
+        """
+        Obtém os valores MMGD base dos dois dt_deck mais recentes,
+        pegando a versão mais recente de cada dt_deck.
+        """
+        # Subquery para pegar os 2 dt_deck mais recentes
+        dt_deck_subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"]
         ).distinct().order_by(
-            NewaveCadic.tb.c["created_at"]
-        ).limit(2)
+            NewaveCadic.tb.c["dt_deck"].desc()
+        ).limit(2).subquery()
+
+        # Para cada dt_deck, pegar o created_at mais recente
+        max_created_subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"],
+            db.func.max(NewaveCadic.tb.c["created_at"]).label("max_created")
+        ).where(
+            NewaveCadic.tb.c["dt_deck"].in_(
+                db.select(dt_deck_subquery.c.dt_deck)
+            )
+        ).group_by(
+            NewaveCadic.tb.c["dt_deck"]
+        ).subquery()
 
         query = db.select(
             NewaveCadic.tb.c["dt_deck"],
@@ -1558,16 +1618,19 @@ class NewaveCadic:
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_s"]).label("vl_mmgd_s"),
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_ne"]).label("vl_mmgd_ne"),
             db.func.sum(NewaveCadic.tb.c["vl_mmgd_n"]).label("vl_mmgd_n"),
-        ).where(
-            NewaveCadic.tb.c["created_at"].in_(db.select(subquery.c.created_at))
+        ).join(
+            max_created_subquery,
+            db.and_(
+                NewaveCadic.tb.c["dt_deck"] == max_created_subquery.c.dt_deck,
+                NewaveCadic.tb.c["created_at"] == max_created_subquery.c.max_created
+            )
         ).group_by(
             NewaveCadic.tb.c["dt_deck"],
             NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         ).order_by(
-            NewaveCadic.tb.c["dt_deck"].desc(),
-            NewaveCadic.tb.c["versao"],
+            NewaveCadic.tb.c["dt_deck"].asc(),
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         )
@@ -1600,23 +1663,50 @@ class NewaveCadic:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
-        
-        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
-            decks_data.reverse()
+
+        decks_data.reverse()
 
         return decks_data
     
     @staticmethod
     def get_cadic_boa_vista_values():
+        """
+        Obtém os valores Boa Vista dos dois dt_deck mais recentes,
+        pegando a versão mais recente de cada dt_deck.
+        """
+        # Subquery para pegar os 2 dt_deck mais recentes
+        dt_deck_subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"]
+        ).distinct().order_by(
+            NewaveCadic.tb.c["dt_deck"].desc()
+        ).limit(2).subquery()
+
+        # Para cada dt_deck, pegar o created_at mais recente
+        max_created_subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"],
+            db.func.max(NewaveCadic.tb.c["created_at"]).label("max_created")
+        ).where(
+            NewaveCadic.tb.c["dt_deck"].in_(
+                db.select(dt_deck_subquery.c.dt_deck)
+            )
+        ).group_by(
+            NewaveCadic.tb.c["dt_deck"]
+        ).subquery()
+
         query = db.select(
             NewaveCadic.tb.c["dt_deck"],
             NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_mes"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_boa_vista"]
+        ).join(
+            max_created_subquery,
+            db.and_(
+                NewaveCadic.tb.c["dt_deck"] == max_created_subquery.c.dt_deck,
+                NewaveCadic.tb.c["created_at"] == max_created_subquery.c.max_created
+            )
         ).order_by(
-            NewaveCadic.tb.c["dt_deck"].desc(),
-            NewaveCadic.tb.c["versao"],
+            NewaveCadic.tb.c["dt_deck"].asc(),
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         )
@@ -1646,8 +1736,7 @@ class NewaveCadic:
 
             decks_data.append(deck_info)
 
-        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
-            decks_data.reverse()
+        decks_data.reverse()
 
         return decks_data
     
@@ -1715,11 +1804,28 @@ class NewaveCadic:
         
     @staticmethod
     def get_cadic_total_ande_deck_values():
-        subquery = db.select(
-            NewaveCadic.tb.c["created_at"]
+        """
+        Obtém os valores ANDE dos dois dt_deck mais recentes,
+        pegando a versão mais recente de cada dt_deck.
+        """
+        # Subquery para pegar os 2 dt_deck mais recentes
+        dt_deck_subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"]
         ).distinct().order_by(
-            NewaveCadic.tb.c["created_at"]
-        ).limit(2)
+            NewaveCadic.tb.c["dt_deck"].desc()
+        ).limit(2).subquery()
+
+        # Para cada dt_deck, pegar o created_at mais recente
+        max_created_subquery = db.select(
+            NewaveCadic.tb.c["dt_deck"],
+            db.func.max(NewaveCadic.tb.c["created_at"]).label("max_created")
+        ).where(
+            NewaveCadic.tb.c["dt_deck"].in_(
+                db.select(dt_deck_subquery.c.dt_deck)
+            )
+        ).group_by(
+            NewaveCadic.tb.c["dt_deck"]
+        ).subquery()
 
         query = db.select(
             NewaveCadic.tb.c["dt_deck"],
@@ -1728,16 +1834,19 @@ class NewaveCadic:
             NewaveCadic.tb.c["vl_ano"],
             db.func.sum(NewaveCadic.tb.c["vl_ande"]).label("vl_ande"),
             
-        ).where(
-            NewaveCadic.tb.c["created_at"].in_(db.select(subquery.c.created_at))
+        ).join(
+            max_created_subquery,
+            db.and_(
+                NewaveCadic.tb.c["dt_deck"] == max_created_subquery.c.dt_deck,
+                NewaveCadic.tb.c["created_at"] == max_created_subquery.c.max_created
+            )
         ).group_by(
             NewaveCadic.tb.c["dt_deck"],
             NewaveCadic.tb.c["versao"],
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         ).order_by(
-            NewaveCadic.tb.c["dt_deck"].desc(),
-            NewaveCadic.tb.c["versao"],
+            NewaveCadic.tb.c["dt_deck"].asc(),
             NewaveCadic.tb.c["vl_ano"],
             NewaveCadic.tb.c["vl_mes"]
         )
@@ -1772,9 +1881,8 @@ class NewaveCadic:
                 deck_info["data"].append(data)
 
             decks_data.append(deck_info)
-            
-        if len(decks_data) == 2 and decks_data[0]['dt_deck'] == decks_data[1]['dt_deck']:
-            decks_data.reverse()
+
+        decks_data.reverse()
 
         return decks_data
     

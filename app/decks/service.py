@@ -873,6 +873,9 @@ class NewavePrevisoesCargas:
         query = db.select(
             NewavePrevisoesCargas.tb
         )
+        if data_revisao is None:
+            data_revisao = CargaPmoDecomp.get_last_date()
+            
         if data_revisao:
             query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == data_revisao)
         if data_produto:
@@ -910,7 +913,18 @@ class NewavePrevisoesCargas:
         rows = __DB__.db_execute(query).rowcount
         logger.info(f"{rows} linhas adicionadas na newave_previsoes_cargas")
         return {"message": f"{rows} linhas adicionadas na newave_previsoes_cargas"}
-
+    
+    @staticmethod
+    def get_last_date():
+        query = db.select(
+            db.func.max(NewavePrevisoesCargas.tb.c.data_revisao)
+        )
+        result = __DB__.db_execute(query).fetchone()
+        if result and result[0]:
+            return result[0]
+        else:
+            raise HTTPException(
+                status_code=404, detail="Nenhum dado de carga PMO DECOMP encontrado")
 class NewaveSistEnergia:
     tb: db.Table = __DB__.getSchema('tb_nw_sist_energia')
 

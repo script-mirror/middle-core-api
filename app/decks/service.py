@@ -874,7 +874,7 @@ class NewavePrevisoesCargas:
             NewavePrevisoesCargas.tb
         )
         if data_revisao is None:
-            data_revisao = CargaPmoDecomp.get_last_date()
+            data_revisao = NewavePrevisoesCargas.get_last_date()
             
         if data_revisao:
             query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == data_revisao)

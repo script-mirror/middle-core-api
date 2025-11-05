@@ -13,7 +13,9 @@ from typing import List, Optional
 
 from .schema import (
     CargaIpdoCreateDto,
-    PrevEnaCreateDto,
+    PrevisaoDiariaEnaCreateDto,
+    PrevisaoSemanalEnaCreateDto,
+    PrevisaoSemanalEnaPorBaciaCreateDto
 )
 __DB__ = db_mysql_master('db_ons')
 logger = logging.getLogger(__name__)
@@ -603,60 +605,60 @@ class EnaBacia:
         return df[['id_bacia', 'mes', 'mlt']].to_dict('records')
 
 
-class Previsoes:
+class PrevisoesDiarias:
     tb: db.Table = __DB__.getSchema('tb_prev_ena_submercado')
     
-    def _delete_prev_ena_by_equal_dates(dt_previsao: datetime.date):
+    def _delete_prev_diaria_ena_by_equal_dates(dt_previsao: datetime.date):
         data_str = dt_previsao.strftime('%Y-%m-%d 00:00:00')
-        query = db.delete(Previsoes.tb).where(
-            Previsoes.tb.c['dt_previsao'] == data_str
+        query = db.delete(PrevisoesDiarias.tb).where(
+            PrevisoesDiarias.tb.c['dt_previsao'] == data_str
         )
         result = __DB__.db_execute(query)
         return {"deletes:": result.rowcount}
     
-    def post_prev_ena(
-        body: List[PrevEnaCreateDto]
+    def post_prev_diaria_ena(
+        body: List[PrevisaoDiariaEnaCreateDto]
     ):
         df = pd.DataFrame([item.model_dump() for item in body])
-        Previsoes._delete_prev_ena_by_equal_dates(df['dt_previsao'].unique().tolist()[0])
-        query = db.insert(Previsoes.tb).values(df.to_dict('records'))
+        PrevisoesDiarias._delete_prev_ena_by_equal_dates(df['dt_previsao'].unique().tolist()[0])
+        query = db.insert(PrevisoesDiarias.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
         return {"inserts": result.rowcount}
         
-    def get_prev_ena(dt_revisao: Optional[datetime.date] = None, submercado: Optional[int] = None): 
+    def get_prev_diaria_ena(dt_revisao: Optional[datetime.date] = None, submercado: Optional[int] = None): 
         if dt_revisao is None:
             
             subquery = db.select(
-                db.func.max(Previsoes.tb.c['dt_previsao'])
+                db.func.max(PrevisoesDiarias.tb.c['dt_previsao'])
             ).scalar_subquery()
             
             query = db.select(
-                Previsoes.tb.c['cd_submercado'],
-                Previsoes.tb.c['dt_previsao'],
-                Previsoes.tb.c['dt_ref'],
-                Previsoes.tb.c['vl_mwmed'],
-                Previsoes.tb.c['vl_perc_mlt']
+                PrevisoesDiarias.tb.c['cd_submercado'],
+                PrevisoesDiarias.tb.c['dt_previsao'],
+                PrevisoesDiarias.tb.c['dt_ref'],
+                PrevisoesDiarias.tb.c['vl_mwmed'],
+                PrevisoesDiarias.tb.c['vl_perc_mlt']
             ).where(
-                Previsoes.tb.c['dt_previsao'] == subquery
+                PrevisoesDiarias.tb.c['dt_previsao'] == subquery
             )
             
         else:
             
             query = db.select(
-            Previsoes.tb.c['cd_submercado'],
-            Previsoes.tb.c['dt_previsao'],
-            Previsoes.tb.c['dt_ref'],
-            Previsoes.tb.c['vl_mwmed'],
-            Previsoes.tb.c['vl_perc_mlt']
+            PrevisoesDiarias.tb.c['cd_submercado'],
+            PrevisoesDiarias.tb.c['dt_previsao'],
+            PrevisoesDiarias.tb.c['dt_ref'],
+            PrevisoesDiarias.tb.c['vl_mwmed'],
+            PrevisoesDiarias.tb.c['vl_perc_mlt']
             )
             
             query = query.where(
-                Previsoes.tb.c['dt_previsao'] == dt_revisao
+                PrevisoesDiarias.tb.c['dt_previsao'] == dt_revisao
             )
             
         if submercado:
             query = query.where(
-                Previsoes.tb.c['cd_submercado'] == submercado
+                PrevisoesDiarias.tb.c['cd_submercado'] == submercado
             )
             
         result = __DB__.db_execute(query).fetchall()
@@ -675,7 +677,211 @@ class Previsoes:
         df['dt_ref'] = pd.to_datetime(df['dt_ref']).dt.date
         
         return df.to_dict('records')     
+
+
+class PrevisoesSemanais:
+    tb_ve: db.Table = __DB__.getSchema('tb_ve')
+    tb_ve_bacias: db.Table = __DB__.getSchema('tb_ve_bacias')
     
+    def _delete_prev_semanal_by_equal_dates(ano: int, mes: int):
+        
+        query = db.delete(PrevisoesSemanais.tb_ve).where(
+            PrevisoesSemanais.tb_ve.c['vl_ano'] == ano,
+            PrevisoesSemanais.tb_ve.c['vl_mes'] == mes
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes:": result.rowcount}
+    
+    def _delete_prev_semanal_por_bacia_by_equal_dates(ano: int, mes: int):
+        
+        query = db.delete(PrevisoesSemanais.tb_ve_bacias).where(
+            PrevisoesSemanais.tb_ve_bacias.c['vl_ano'] == ano,
+            PrevisoesSemanais.tb_ve_bacias.c['vl_mes'] == mes
+        )
+        result = __DB__.db_execute(query)
+        return {"deletes:": result.rowcount}
+    
+    def post_prev_semanal_ena(
+        body: List[PrevisaoSemanalEnaCreateDto]
+    ):
+        df = pd.DataFrame([item.model_dump() for item in body])
+        PrevisoesSemanais._delete_prev_semanal_by_equal_dates(df['vl_ano'].unique().tolist()[0],df['vl_mes'].unique().tolist()[0])
+        query = db.insert(PrevisoesSemanais.tb_ve).values(df.to_dict('records'))
+        result = __DB__.db_execute(query)
+        return {"inserts": result.rowcount}
+    
+    def get_prev_semanal_ena(
+        dt_inicio_semana: Optional[datetime.date] = None,
+        ano: Optional[int] = None,
+        mes: Optional[int] = None,
+        cd_submercado: Optional[int] = None
+    ): 
+        # Validação: se passar mês, deve passar ano
+        if mes is not None and ano is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Para filtrar por mês, o ano também deve ser informado"
+            )
+
+        # Se nenhum filtro foi passado, busca a semana mais recente
+        if all(param is None for param in [dt_inicio_semana, ano, mes]):
+            subquery = db.select(
+                db.func.max(PrevisoesSemanais.tb_ve.c['dt_inicio_semana'])
+            ).scalar_subquery()
+
+            query = db.select(
+                PrevisoesSemanais.tb_ve.c['vl_ano'],
+                PrevisoesSemanais.tb_ve.c['vl_mes'],
+                PrevisoesSemanais.tb_ve.c['cd_revisao'],
+                PrevisoesSemanais.tb_ve.c['cd_submercado'],
+                PrevisoesSemanais.tb_ve.c['dt_inicio_semana'],
+                PrevisoesSemanais.tb_ve.c['vl_ena']
+            ).where(
+                PrevisoesSemanais.tb_ve.c['dt_inicio_semana'] == subquery
+            )
+        else:
+            query = db.select(
+                PrevisoesSemanais.tb_ve.c['vl_ano'],
+                PrevisoesSemanais.tb_ve.c['vl_mes'],
+                PrevisoesSemanais.tb_ve.c['cd_revisao'],
+                PrevisoesSemanais.tb_ve.c['cd_submercado'],
+                PrevisoesSemanais.tb_ve.c['dt_inicio_semana'],
+                PrevisoesSemanais.tb_ve.c['vl_ena']
+            )
+
+            # Aplica filtros condicionalmente
+            if dt_inicio_semana is not None:
+                query = query.where(
+                    PrevisoesSemanais.tb_ve.c['dt_inicio_semana'] == dt_inicio_semana
+                )
+
+            if ano is not None:
+                query = query.where(
+                    PrevisoesSemanais.tb_ve.c['vl_ano'] == ano
+                )
+
+            if mes is not None:
+                query = query.where(
+                    PrevisoesSemanais.tb_ve.c['vl_mes'] == mes
+                )
+
+        # Filtro de submercado (independente)
+        if cd_submercado is not None:
+            query = query.where(
+                PrevisoesSemanais.tb_ve.c['cd_submercado'] == cd_submercado
+            )
+
+        # Ordena por data para facilitar visualização
+        query = query.order_by(
+            PrevisoesSemanais.tb_ve.c['dt_inicio_semana'].desc(),
+            PrevisoesSemanais.tb_ve.c['cd_submercado']
+        )
+
+        result = __DB__.db_execute(query).fetchall()
+
+        df = pd.DataFrame(result, columns=[
+            'vl_ano', 'vl_mes', 'cd_revisao', 'cd_submercado', 'dt_inicio_semana', 'vl_ena'
+        ])
+
+        if df.empty:
+            raise HTTPException(
+                status_code=404,
+                detail="Nenhum registro encontrado com os filtros informados"
+            )
+
+        df['dt_inicio_semana'] = pd.to_datetime(df['dt_inicio_semana']).dt.date
+
+        return df.to_dict('records')
+    
+    def post_prev_semanal_ena_por_bacia(
+        body: List[PrevisaoSemanalEnaPorBaciaCreateDto]
+    ):
+        df = pd.DataFrame([item.model_dump() for item in body])
+        PrevisoesSemanais._delete_prev_semanal_por_bacia_by_equal_dates(df['vl_ano'].unique().tolist()[0],df['vl_mes'].unique().tolist()[0])
+        query = db.insert(PrevisoesSemanais.tb_ve_bacias).values(df.to_dict('records'))
+        result = __DB__.db_execute(query)
+        return {"inserts": result.rowcount}
+    
+    def get_prev_semanal_ena_por_bacia(
+        dt_inicio_semanal: Optional[datetime.date] = None,
+        ano: Optional[int] = None,
+        mes: Optional[int] = None,
+        cd_bacia: Optional[int] = None
+    ):
+        # Validação: se passar mês, deve passar ano
+        if mes is not None and ano is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Para filtrar por mês, o ano também deve ser informado"
+            )
+
+        # Se nenhum filtro foi passado, busca a semana mais recente
+        if all(param is None for param in [dt_inicio_semanal, ano, mes]):
+            subquery = db.select(
+                db.func.max(PrevisoesSemanais.tb_ve_bacias.c['dt_inicio_semana'])
+            ).scalar_subquery()
+
+            query = db.select(
+                PrevisoesSemanais.tb_ve_bacias.c['vl_ano'],
+                PrevisoesSemanais.tb_ve_bacias.c['vl_mes'],
+                PrevisoesSemanais.tb_ve_bacias.c['cd_revisao'],
+                PrevisoesSemanais.tb_ve_bacias.c['cd_bacia'],
+                PrevisoesSemanais.tb_ve_bacias.c['dt_inicio_semana'],
+                PrevisoesSemanais.tb_ve_bacias.c['vl_ena']
+            ).where(
+                PrevisoesSemanais.tb_ve_bacias.c['dt_inicio_semana'] == subquery
+            )
+        else:
+            query = db.select(
+                PrevisoesSemanais.tb_ve_bacias.c['vl_ano'],
+                PrevisoesSemanais.tb_ve_bacias.c['vl_mes'],
+                PrevisoesSemanais.tb_ve_bacias.c['cd_revisao'],
+                PrevisoesSemanais.tb_ve_bacias.c['cd_bacia'],
+                PrevisoesSemanais.tb_ve_bacias.c['dt_inicio_semana'],
+                PrevisoesSemanais.tb_ve_bacias.c['vl_ena']
+            )
+
+            # Aplica filtros condicionalmente
+            if dt_inicio_semanal is not None:
+                query = query.where(
+                    PrevisoesSemanais.tb_ve_bacias.c['dt_inicio_semana'] == dt_inicio_semanal
+                )
+
+            if ano is not None:
+                query = query.where(
+                    PrevisoesSemanais.tb_ve_bacias.c['vl_ano'] == ano
+                )
+
+            if mes is not None:
+                query = query.where(
+                    PrevisoesSemanais.tb_ve_bacias.c['vl_mes'] == mes
+                )
+
+        # Filtro de bacia (independente)
+        if cd_bacia is not None:
+            query = query.where(
+                PrevisoesSemanais.tb_ve_bacias.c['cd_bacia'] == cd_bacia
+            )
+            
+        # Ordena por data para facilitar visualização
+        query = query.order_by(
+            PrevisoesSemanais.tb_ve_bacias.c['dt_inicio_semana'].desc(),
+            PrevisoesSemanais.tb_ve_bacias.c['cd_bacia']
+        )
+        
+        result = __DB__.db_execute(query).fetchall()
+        df = pd.DataFrame(result, columns=[
+            'vl_ano', 'vl_mes', 'cd_revisao', 'cd_bacia', 'dt_inicio_semana', 'vl_ena'
+        ])
+        if df.empty:
+            raise HTTPException(
+                status_code=404,
+                detail="Nenhum registro encontrado com os filtros informados"
+            )
+        df['dt_inicio_semana'] = pd.to_datetime(df['dt_inicio_semana']).dt.date
+        
+        return df.to_dict('records')
+   
 if __name__ == "__main__":
     teste = [
         'tb_bacias',

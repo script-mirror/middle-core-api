@@ -1678,6 +1678,7 @@ class db_mysql_master():
                                               nullable=True),
                                     extend_existing=True
                                     )
+            
         elif table_name.lower() == 'historico_vazoes':
             table_schema = db.Table('historico_vazoes', self.meta,
                                     db.Column('id', db.Integer, 
@@ -1693,6 +1694,16 @@ class db_mysql_master():
                                               onupdate=db.func.current_timestamp()),
                                     extend_existing=True
                                     )
+
+        elif table_name.lower() == 'tb_cadastro_teleconexoes_indice':
+            table_schema = db.Table('tb_cadastro_teleconexoes_indice', self.meta,
+                db.Column('str_modelo', db.String(20)),
+                db.Column('dt_rodada', db.Date),
+                db.Column('dt_prevista', db.Date),
+                db.Column('vl_indice', db.Float),
+                db.Column('str_indice', db.String(20)),
+            )
+
 
         return table_schema
     

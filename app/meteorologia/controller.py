@@ -162,7 +162,7 @@ def post_indices_sst_previstos(df_tc: List[dict]):
     Cria cadastro de índices SST previstos.
     """
 
-    return service.IndicesSST.post_indices_sst_previstos(df_tc)
+    return service.IndicesSST.insert_indices_sst_previsto(df_tc)
 
 ##############################################################################################################################################################
 

@@ -371,6 +371,7 @@ class VentoPrevistoWEOL:
 class IndicesSST:
 
     tb_indices_diarios_sst = __DB__.getSchema('tb_indices_diarios_sst')
+    tb_indices_sst_previstos = __DB__.getSchema('tb_cadastro_teleconexoes_indice')
 
     @staticmethod
     def insert_indices_sst(valores) -> Dict[str, Any]:
@@ -433,6 +434,39 @@ class IndicesSST:
 
         return df_results.to_dict('records')
 
+
+    @staticmethod
+    def insert_indices_sst_previsto(df_tc: dict) -> Dict[str, Any]:
+        """
+        Insere os dados de índices de temperatura da superfície do mar (SST) previstos.
+        """
+
+        df_tc = pd.DataFrame(df_tc)
+        df_tc = df_tc.rename({'indice': 'str_indice'}, axis=1)
+        dt_rodada = df_tc['dt_rodada'].unique()[0]
+        dt_rodada_fmt = pd.to_datetime(dt_rodada).strftime('%d/%m/%Y')
+        modelo = df_tc['str_modelo'].unique()[0]
+        dt_prevista = df_tc['dt_prevista']
+
+        valores_existentes_query = IndicesSST.tb_indices_sst_previstos.delete().where(
+            IndicesSST.tb_indices_sst_previstos.c.dt_rodada == dt_rodada,
+            IndicesSST.tb_indices_sst_previstos.c.str_modelo == modelo,
+            IndicesSST.tb_indices_sst_previstos.c.dt_prevista.in_(dt_prevista.values),
+            IndicesSST.tb_indices_sst_previstos.c.str_indice.in_(df_tc['str_indice'].unique())  # Verifica os índices específicos
+        )
+
+        n_values = __DB__.db_execute(valores_existentes_query).rowcount
+
+        if n_values > 0:
+            print(f"{n_values} registros deletados na tb_cadastro_teleconexoes_indice para a rodada {dt_rodada_fmt} e modelo {modelo}")
+
+        # Inserir apenas os novos valores
+        valores = df_tc.to_dict('records')
+        insert_values = IndicesSST.tb_indices_sst_previstos.insert().values(valores)
+        print(f"Inserindo {len(valores)} novos valores na tb_cadastro_teleconexoes_indice para a rodada {dt_rodada_fmt} e modelo {modelo}")
+        __DB__.db_execute(insert_values)
+
+        return {'message': f'{len(df_tc)} registros inseridos com sucesso.'}
 
 class IndicesITCZObservados:
     
@@ -598,9 +632,6 @@ class IndicesITCZPrevistos:
             
         return {'message': f'Inseridos {rows} registros de índices ITCZ previstos.'}
         
-    
-    
-
 class EstacoesMeteorologicas:
 
     tb_estacoes = __DB__.getSchema('tb_inmet_dados_estacoes')

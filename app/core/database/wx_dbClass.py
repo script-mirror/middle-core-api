@@ -1702,6 +1702,7 @@ class db_mysql_master():
                 db.Column('dt_prevista', db.Date),
                 db.Column('vl_indice', db.Float),
                 db.Column('str_indice', db.String(20)),
+                extend_existing=True,
             )
 
 

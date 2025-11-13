@@ -620,7 +620,7 @@ class PrevisoesDiarias:
         body: List[PrevisaoDiariaEnaCreateDto]
     ):
         df = pd.DataFrame([item.model_dump() for item in body])
-        PrevisoesDiarias._delete_prev_ena_by_equal_dates(df['dt_previsao'].unique().tolist()[0])
+        PrevisoesDiarias._delete_prev_diaria_ena_by_equal_dates(df['dt_previsao'].unique().tolist()[0])
         query = db.insert(PrevisoesDiarias.tb).values(df.to_dict('records'))
         result = __DB__.db_execute(query)
         return {"inserts": result.rowcount}

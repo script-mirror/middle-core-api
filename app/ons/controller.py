@@ -11,7 +11,11 @@ from .schema import (
     AcomphSchema,
     RdhCreateDto,
     CargaIpdoCreateDto,
-    PrevEnaCreateDto,
+    PrevisaoDiariaEnaCreateDto,
+    PrevisaoSemanalEnaCreateDto,
+    PrevisaoSemanalEnaReadDto,
+    PrevisaoSemanalEnaPorBaciaCreateDto,
+    PrevisaoSemanalEnaPorBaciaReadDto,
 )
 from app.core.utils import cache
 
@@ -196,20 +200,63 @@ def get_mlt_bacia():
     return service.EnaBacia.get_mlt()
 
 @router.post('/prev/ena')
-def post_prev_ena(
-    body: List[PrevEnaCreateDto]
+def post_prev_diaria_ena(
+    body: List[PrevisaoDiariaEnaCreateDto]
 ):
     """
-    Insere previsão de ENA para o ONS.
+    Insere previsão diária de ENA para o ONS.
     """
-    return service.Previsoes.post_prev_ena(body)
+    return service.PrevisoesDiarias.post_prev_diaria_ena(body)
     
 @router.get('/prev/ena')
-def get_prev_ena(
+def get_prev_diaria_ena(
     dt_revisao: Optional[datetime.date] = None,
     submercado: Optional[int] = None
 ):
     """
-    Insere previsão de ENA para o ONS.
+    Insere previsão diária de ENA para o ONS.
     """
-    return service.Previsoes.get_prev_ena(dt_revisao, submercado)
+    return service.PrevisoesDiarias.get_prev_diaria_ena(dt_revisao, submercado)
+
+
+@router.post('/prev-semanal/ena')
+def post_prev_semanal_ena(
+    body: List[PrevisaoSemanalEnaCreateDto]
+):
+    """
+    Insere previsão semanal de ENA para o ONS.
+    """
+    return service.PrevisoesSemanais.post_prev_semanal_ena(body)
+
+@router.get('/prev-semanal/ena')
+def get_prev_semanal_ena(
+    dt_inicio_semana: Optional[datetime.date] = None,
+    ano: Optional[int] = None,
+    mes: Optional[int] = None,
+    cd_submercado: Optional[int] = None
+) -> PrevisaoSemanalEnaReadDto:
+    """
+    Insere previsão semanal de ENA para o ONS.
+    """
+    return service.PrevisoesSemanais.get_prev_semanal_ena(dt_inicio_semana, ano, mes, cd_submercado)
+
+@router.post('/prev-semanal/ena/bacia')
+def post_prev_semanal_ena_por_bacia(
+    body: List[PrevisaoSemanalEnaPorBaciaCreateDto]
+):
+    """
+    Insere previsão semanal de ENA para o ONS.
+    """
+    return service.PrevisoesSemanais.post_prev_semanal_ena_por_bacia(body)
+
+@router.get('/prev-semanal/ena/bacia')
+def get_prev_semanal_ena_por_bacia(
+    dt_inicio_semana: Optional[datetime.date] = None,
+    ano: Optional[int] = None,
+    mes: Optional[int] = None,
+    cd_bacia: Optional[int] = None
+) -> PrevisaoSemanalEnaPorBaciaReadDto:
+    """
+    Obtém previsão semanal de ENA por bacia.
+    """
+    return service.PrevisoesSemanais.get_prev_semanal_ena_por_bacia(dt_inicio_semana, ano, mes, cd_bacia)

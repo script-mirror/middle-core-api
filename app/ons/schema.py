@@ -52,10 +52,47 @@ class CargaIpdoCreateDto(BaseModel):
     carga_ne: float
     carga_n: float
 
-class PrevEnaCreateDto(BaseModel):
+class PrevisaoDiariaEnaCreateDto(BaseModel):
     cd_submercado: int
     dt_previsao: datetime.date
     dt_ref: datetime.date
     vl_mwmed: float
     vl_perc_mlt: float
+    
+class PrevisaoSemanalEnaCreateDto(BaseModel):
+    vl_ano: int
+    vl_mes: int
+    cd_revisao: int
+    cd_submercado: int
+    dt_inicio_semana: datetime.date
+    vl_ena: float
+    
+class PrevisaoSemanalEnaReadDto(BaseModel):
+    vl_ano: int
+    vl_mes: int
+    cd_revisao: int
+    cd_submercado: int
+    dt_inicio_semana: datetime.date
+    vl_ena: float
+    
+class PrevisaoSemanalEnaPorBaciaCreateDto(BaseModel):
+    vl_ano: int
+    vl_mes: int
+    cd_revisao: int
+    cd_bacia: int
+    dt_inicio_semana: datetime.date
+    vl_ena: float
+    vl_perc_mlt: float
+    
+class PrevisaoSemanalEnaPorBaciaReadDto(BaseModel):
+    vl_ano: int
+    vl_mes: int
+    cd_revisao: int
+    cd_bacia: int
+    dt_inicio_semana: datetime.date
+    vl_ena: float
+    vl_perc_mlt: float
+    
+    
+    
     

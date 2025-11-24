@@ -156,6 +156,16 @@ def post_indices_diarios_sst(request: IndicesSSTPOSTRequest):
 
 ##############################################################################################################################################################
 
+@router.post('/indices-sst-previstos', tags=['Meteorologia'])
+def post_indices_sst_previstos(df_tc: List[dict]):
+    """
+    Cria cadastro de índices SST previstos.
+    """
+
+    return service.IndicesSST.insert_indices_sst_previsto(df_tc)
+
+##############################################################################################################################################################
+
 @router.post('/estacoes-meteorologicas', tags=['Meteorologia'])
 def post_estacoes_chuva(request: List[EstacoesMeteorologicasPostRequest]):
     """

@@ -4,6 +4,7 @@ import numpy as np
 import numpy as np
 import pandas as pd
 from sys import path
+import locale
 import sqlalchemy as db
 from typing import List, Optional
 from fastapi import HTTPException
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 __DB__ = db_mysql_master('db_decks')
 
-
+locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 class WeolSemanal:
     tb: db.Table = __DB__.getSchema('tb_dc_weol_semanal')
 

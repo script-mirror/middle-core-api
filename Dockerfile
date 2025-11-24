@@ -11,19 +11,15 @@ RUN apk add --no-cache \
     && pip install --no-cache-dir -r /app/requirements.txt \
     && apk del gcc musl-dev linux-headers
 
-# === ESSAS 2 LINHAS RESOLVEM O LOCALE NO ALPINE ===
-RUN apk add --no-cache musl-locales musl-locales-lang
-ENV LANG=pt_BR.UTF-8 LC_ALL=pt_BR.UTF-8
-# ===============================================
-
-RUN apk add --no-cache \
-    ffmpeg \
-    tzdata \
-    xvfb-run \
+# === LOCALE PT-BR + TZ ===
+RUN apk add --no-cache musl-locales musl-locales-lang tzdata ffmpeg xvfb-run \
     && ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
     && echo "America/Sao_Paulo" > /etc/timezone
 
-ENV TZ=America/Sao_Paulo   
+ENV LANG=pt_BR.UTF-8 \
+    LC_ALL=pt_BR.UTF-8 \
+    TZ=America/Sao_Paulo
+# =========================
 
 COPY . /app
 

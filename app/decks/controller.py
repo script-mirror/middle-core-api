@@ -377,7 +377,7 @@ def get_previsao_dessem():
     """
     return service.DessemPrevisao.get_previsao_dessem()
 
-@router.get("/limites-pld", tags=["Dessem"])
+@router.get("/dessem/limites-pld", tags=["Dessem"])
 def get_limites_pld():
     return service.LimitesPLD.get_all()
 

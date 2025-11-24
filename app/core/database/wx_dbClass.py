@@ -1704,6 +1704,15 @@ class db_mysql_master():
                 db.Column('str_indice', db.String(20)),
                 extend_existing=True,
             )
+            
+        elif table_name.lower() == 'limites_pld':
+            table_schema = db.Table('limites_pld', self.meta,
+                                    db.Column('ano', db.Integer),
+                                    db.Column('pld_max_horario', db.Float),
+                                    db.Column('pld_max_estrutural', db.Float),
+                                    db.Column('pld_min', db.Float),
+                                    extend_existing=True
+            )
 
 
         return table_schema

@@ -286,6 +286,7 @@ class WeolSemanal:
             str) + '-' + df_eol_newave['mes'].astype(str)
         columns_rename = [MONTH_DICT[int(
             row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
+        columns_rename = sorted(columns_rename, key=lambda x: pd.to_datetime(x, format='%b %Y'))
 
         df['ano'] = [ElecData(row).anoReferente if type(
             row) is not str else row for row in df['inicioSemana']]
@@ -304,7 +305,7 @@ class WeolSemanal:
         df.sort_values(['ano', 'mes'], inplace=True)
 
         df.drop(columns=['mes', 'ano'], inplace=True)
-        df.sort_values('yearMonth', ascending=True)
+        df.sort_values('yearMonth', ascending=False)
         df['yearMonth'] = columns_rename
         df.rename(columns={'yearMonth': 'Origem',
                   'geracaoEolica': 'Eolica Newave'}, inplace=True)

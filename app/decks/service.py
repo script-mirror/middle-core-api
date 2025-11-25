@@ -287,11 +287,11 @@ class WeolSemanal:
             str) + '-' + df_eol_newave['mes'].astype(str)
         columns_rename = [MONTH_DICT[int(
             row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
-        
+        pdb.set_trace()
         month_year_pairs = [(int(row['mes']), int(row['ano'])) for i, row in df_eol_newave.iterrows()]
         sorted_indices = sorted(range(len(month_year_pairs)), key=lambda i: (month_year_pairs[i][1], month_year_pairs[i][0]))
         columns_rename = [columns_rename[i] for i in sorted_indices]
-        
+
         df['ano'] = [ElecData(row).anoReferente if type(
             row) is not str else row for row in df['inicioSemana']]
         df['mes'] = [ElecData(row).mesReferente if type(
@@ -930,6 +930,7 @@ class NewavePrevisoesCargas:
         else:
             raise HTTPException(
                 status_code=404, detail="Nenhum dado de carga PMO DECOMP encontrado")
+            
 class NewaveSistEnergia:
     tb: db.Table = __DB__.getSchema('tb_nw_sist_energia')
 
@@ -2419,3 +2420,29 @@ class HistoricoVazoes:
         if result.rowcount == 0:
             raise HTTPException(status_code=500, detail="Erro ao inserir histórico de vazões")
         return {"message": f"{result.rowcount} registros inseridos com sucesso"}
+
+class LimitesPLD:
+    tb: db.Table = __DB__.getSchema('limites_pld')
+
+    @staticmethod
+    def get_all():
+        query = db.select(
+            LimitesPLD.tb.c['ano'],
+            LimitesPLD.tb.c['pld_max_horario'],
+            LimitesPLD.tb.c['pld_max_estrutural'],
+            LimitesPLD.tb.c['pld_min'],
+        )
+        
+    
+        result = __DB__.db_execute(query)
+        df = pd.DataFrame(result, columns=[
+            'ano', 'pld_max_horario', 'pld_max_estrutural', 'pld_min'
+        ])
+        
+        if df.empty:
+            raise HTTPException(
+                status_code=404,
+                detail="Nenhum registro de limites do PLD encontrado com os filtros informados"
+            )
+        
+        return df.to_dict('records')

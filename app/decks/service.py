@@ -922,7 +922,7 @@ class NewavePrevisoesCargas:
     @staticmethod
     def get_last_date():
         query = db.select(
-            db.func.max(NewavePrevisoesCargas.tb.c.data_produto)
+            db.func.max(NewavePrevisoesCargas.tb.c.dataProduto)
         )
         result = __DB__.db_execute(query).fetchone()
         if result and result[0]:

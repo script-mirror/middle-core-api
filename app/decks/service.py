@@ -287,7 +287,7 @@ class WeolSemanal:
             str) + '-' + df_eol_newave['mes'].astype(str)
         columns_rename = [MONTH_DICT[int(
             row['mes'])] + f' {int(row["ano"])}' for i, row in df_eol_newave.iterrows()]
-        pdb.set_trace()
+
         month_year_pairs = [(int(row['mes']), int(row['ano'])) for i, row in df_eol_newave.iterrows()]
         sorted_indices = sorted(range(len(month_year_pairs)), key=lambda i: (month_year_pairs[i][1], month_year_pairs[i][0]))
         columns_rename = [columns_rename[i] for i in sorted_indices]

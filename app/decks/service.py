@@ -884,7 +884,7 @@ class NewavePrevisoesCargas:
         if data_revisao:
             query = query.where(NewavePrevisoesCargas.tb.c.data_revisao == data_revisao)
         if data_produto:
-                query = query.where(NewavePrevisoesCargas.tb.c.dataProduto == data_produto)
+                query = query.where(NewavePrevisoesCargas.tb.c.data_produto == data_produto)
         if submercado:
             query = query.where(NewavePrevisoesCargas.tb.c.submercado == submercado)
         if patamar:
@@ -922,7 +922,7 @@ class NewavePrevisoesCargas:
     @staticmethod
     def get_last_date():
         query = db.select(
-            db.func.max(NewavePrevisoesCargas.tb.c.dataProduto)
+            db.func.max(NewavePrevisoesCargas.tb.c.data_produto)
         )
         
         result = __DB__.db_execute(query).fetchone()
